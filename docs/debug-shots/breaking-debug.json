@@ -1,0 +1,123 @@
+{
+  "logs": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "carousel runtime {articles: 0, breakingNews: 0, slides: 5}"
+    },
+    {
+      "type": "log",
+      "text": "carousel runtime {articles: 50, breakingNews: 20, slides: 20}"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "ticker runtime"
+    },
+    {
+      "type": "log",
+      "text": "slider runtime {articles: 0, breakingNews: 0, featuredSlides: 0}"
+    },
+    {
+      "type": "log",
+      "text": "ticker runtime"
+    },
+    {
+      "type": "log",
+      "text": "ticker runtime"
+    },
+    {
+      "type": "log",
+      "text": "slider runtime {articles: 50, breakingNews: 20, featuredSlides: 20}"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "ticker runtime"
+    },
+    {
+      "type": "log",
+      "text": "slider runtime {articles: 0, breakingNews: 0, featuredSlides: 0}"
+    },
+    {
+      "type": "log",
+      "text": "ticker runtime"
+    },
+    {
+      "type": "log",
+      "text": "ticker runtime"
+    },
+    {
+      "type": "log",
+      "text": "slider runtime {articles: 50, breakingNews: 20, featuredSlides: 20}"
+    }
+  ],
+  "errors": [],
+  "results": {
+    "home": {
+      "url": "http://127.0.0.1:5173/",
+      "carouselActive": 1,
+      "tickerActive": 0,
+      "sliderActive": 0,
+      "bodyText": "शनिवार, 13 जून 2026\nSingle-tenant newsroom CMS demo install.\nSitamarhi Live\n\nEditorial Office\n\nGoogle Adsense Advertisement\nHeader Banner Ad · 728x90\nHeader Banner Ad\n\nPremium masthead inventory for campaign launches\n\nYour Brand Here\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nGoogle Adsense Advertisement\nHeader Banner Ad\n728x90\nAdSense\nCTR-ready\nAnalytics-ready\nManaged ad slot placeholder\nLearn More\nSitamarhi Live\nHome\nबिहार\nसीतामढ़ी\nराजनीति\nक्राइम\nशिक्षा\nनौकरी\nखेल\nमनोरंजन\nAdmin\nBREAKING CAROUSEL ACTIVE\nBREAKING LIVE\n1\n/\n20\nबिहार\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n\nबिहार से जुड़ी यह डेमो रिपोर्ट विकास पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\nअमन कुमार\n13 Jun 2026\nLive updates\nAuto rotates every 5 seconds\nSTORY 1 OF 20\nDirect Promotion Demo\nHero Section Ad · 728x90\nPatna Hospital\n\n24x7 emergency, ICU, and specialist care for families across the region\n\nPatna Hospital\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nPatna Hospital\n728X90\n24x7 emergency, ICU, and specialist care for families across the region\nPatna Hospital\nBook Appointment\nCTR-ready\nAnalytics-ready\nSponsored placement placeholder\nBook Appointment\nLatest News\nView all\nबिहार\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n\nबिहार से जुड़ी यह डेमो रिपोर्ट विकास पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n13/6/2026\nसीतामढ़ी\nसीतामढ़ी : यातायात से जुड़ी बड़ी खबर 02\n13/6/2026\nराजनीति\nराजनीति : राजद से जुड़ी बड़ी खबर 03\n13/6/2026\nक्राइम\nक्राइम : FIR से जुड़ी बड़ी खबर 04\n12/6/2026\nशिक्षा\nशिक्षा : कॉलेज से जुड़ी बड़ी खबर 05\n\nशिक्षा से जुड़ी यह डेमो रिपोर्ट कॉलेज पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n12/6/2026\nनौकरी\nनौकरी : सरकारी नौकरी से जुड़ी बड़ी खबर 06\n\nनौकरी से जुड़ी यह डेमो रिपोर्ट सरकारी नौकरी पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n12/6/2026\nखेल\nखेल : फाइनल से जुड़ी बड़ी खबर 07\n\nखेल से जुड़ी यह डेमो रिपोर्ट फाइनल पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n11/6/2026\nमनोरंजन\nमनोरंजन : फिल्म से जुड़ी बड़ी खबर 08\n\nमनोरंजन से जुड़ी यह डेमो रिपोर्ट फिल्म पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n11/6/2026\nDirect Promotion Demo\nMid Content Ad · 336x280\nSitamarhi Coaching Center\n\nAdmissions open for 2026 batch with test series and mentoring\n\nSitamarhi Coaching Center\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nSitamarhi Coaching Center\n336X280\nAdmissions open for 2026 batch with test series and mentoring\nSitamarhi Coaching Center\nEnroll Now\nCTR-ready\nAnalytics-ready\nSponsored placement placeholder\nEnroll Now\nराजनीति\nView all\nराजनीति\nराजनीति : राजद से जुड़ी बड़ी खबर 03\n\nराजनीति से जुड़ी यह डेमो रिपोर्ट राजद पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n13/6/2026\nराजनीति\nराजनीति : चुनाव से जुड़ी बड़ी खबर 13\n10/6/2026\nराजनीति\nराजनीति : भाजपा से जुड़ी बड़ी खबर 23\n7/6/2026\nराजनीति\nराजनीति : विपक्ष से जुड़ी बड़ी खबर 33\n4/6/2026\nक्राइम\nView all\nक्राइम\nक्राइम : FIR से जुड़ी बड़ी खबर 04\n\nक्राइम से जुड़ी यह डेमो रिपोर्ट FIR पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n12/6/2026\nक्राइम\nक्राइम : कोर्ट से जुड़ी बड़ी खबर 14\n9/6/2026\nक्राइम\nक्राइम : जांच से जुड़ी बड़ी खबर 24\n7/6/2026\nक्राइम\nक्राइम : अपराध से जुड़ी बड़ी खबर 34\n4/6/2026\nशिक्षा\nView all\nशिक्षा\nशिक्षा : कॉलेज से जुड़ी बड़ी खबर 05\n\nशिक्षा से जुड़ी यह डेमो रिपोर्ट कॉलेज पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n12/6/2026\nशिक्षा\nशिक्षा : परीक्षा से जुड़ी बड़ी खबर 15\n9/6/2026\nशिक्षा\nशिक्षा : स्कूल से जुड़ी बड़ी खबर 25\n6/6/2026\nशिक्षा\nशिक्षा : क्लास से जुड़ी बड़ी खबर 35\n3/6/2026\nनौकरी\nView all\nनौकरी\nनौकरी : सरकारी नौकरी से जुड़ी बड़ी खबर 06\n\nनौकरी से जुड़ी यह डेमो रिपोर्ट सरकारी नौकरी पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n12/6/2026\nनौकरी\nनौकरी : वैकेंसी से जुड़ी बड़ी खबर 16\n9/6/2026\nनौकरी\nनौकरी : अधिसूचना से जुड़ी बड़ी खबर 26\n6/6/2026\nनौकरी\nनौकरी : भर्ती से जुड़ी बड़ी खबर 36\n3/6/2026\nखेल\nView all\nखेल\nखेल : फाइनल से जुड़ी बड़ी खबर 07\n\nखेल से जुड़ी यह डेमो रिपोर्ट फाइनल पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n11/6/2026\nखेल\nखेल : कबड्डी से जुड़ी बड़ी खबर 17\n9/6/2026\nखेल\nखेल : प्रदर्शन से जुड़ी बड़ी खबर 27\n6/6/2026\nखेल\nखेल : फुटबॉल से जुड़ी बड़ी खबर 37\n3/6/2026\nमनोरंजन\nView all\nमनोरंजन\nमनोरंजन : फिल्म से जुड़ी बड़ी खबर 08\n\nमनोरंजन से जुड़ी यह डेमो रिपोर्ट फिल्म पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n11/6/2026\nमनोरंजन\nमनोरंजन : इवेंट से जुड़ी बड़ी खबर 18\n8/6/2026\nमनोरंजन\nमनोरंजन : प्रमोशन से जुड़ी बड़ी खबर 28\n5/6/2026\nमनोरंजन\nमनोरंजन : गाना से जुड़ी बड़ी खबर 38\n2/6/2026\nVideo News\nView all\nVideo News\nView all\n3 min read\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n4 min read\nनौकरी : सरकारी नौकरी से जुड़ी बड़ी खबर 06\n5 min read\nबिहार : स्वास्थ्य से जुड़ी बड़ी खबर 11\n6 min read\nनौकरी : वैकेंसी से जुड़ी बड़ी खबर 16\n3 min read\nबिहार : अधिकारियों से जुड़ी बड़ी खबर 21\n4 min read\nनौकरी : अधिसूचना से जुड़ी बड़ी खबर 26\nNewsletter\n\nGet the latest news, breaking alerts, and selected reports in your inbox.\n\nSubscribe\nबिहार\nराज्य की बड़ी खबरें, नीतियां और विकास अपडेट\nसीतामढ़ी\nजिले की स्थानीय खबरें, घटनाएं और जनसरोकार\nराजनीति\nराजनीतिक बयान, चुनाव और प्रशासनिक निर्णय\nक्राइम\nपुलिस कार्रवाई, जांच और आपराधिक घटनाएं\nMost Read\nTrending Today\nLatest Updates\nLatest News\nबिहार\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n13/6/2026\nक्राइम\nक्राइम : FIR से जुड़ी बड़ी खबर 04\n12/6/2026\nखेल\nखेल : फाइनल से जुड़ी बड़ी खबर 07\n11/6/2026\nटेक्नोलॉजी\nटेक्नोलॉजी : ऐप से जुड़ी बड़ी खबर 10\n11/6/2026\nराजनीति\nराजनीति : चुनाव से जुड़ी बड़ी खबर 13\n10/6/2026\nनौकरी\nनौकरी : वैकेंसी से जुड़ी बड़ी खबर 16\n9/6/2026\nDirect Promotion Demo\nSidebar Ad · 300x250\nSwiftGrowthDigital\n\nLocal brand growth, social ads, and campaign strategy for ambitious businesses\n\nSwiftGrowthDigital\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nSwiftGrowthDigital\n300X250\nLocal brand growth, social ads, and campaign strategy for ambitious businesses\nSwiftGrowthDigital\nSee Offer\nCTR-ready\nAnalytics-ready\nSponsored placement placeholder\nSee Offer\nGoogle Adsense Advertisement\nFooter Banner Ad · 728x90\nFooter Banner Ad\n\nFooter inventory for persistent brand recall\n\nYour Brand Here\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nGoogle Adsense Advertisement\nFooter Banner Ad\n728x90\nAdSense\nCTR-ready\nAnalytics-ready\nManaged ad slot placeholder\nLearn More\nNewsletter Subscription\n\nReceive breaking news and selected reports in your inbox\n\nSubscribe\nSitamarhi Live\nSitamarh\nLive\n\nSingle-tenant newsroom CMS demo install.\n\nQuick Links\nHome\nबिहार\nसीतामढ़ी\nराजनीति\nक्राइम\nशिक्षा\nInformation\nAbout\nAdvertisement\nAdmin\nPrivacy Policy\nTerms\nContact\nContact\nEditorial Office\n+91 98765 43210\n+91 98765 43210\neditorial@sitamarhilive.com\n\nCopyright 2026 Sitamarhi Live. All rights reserved.\n\nSingle-tenant newsroom CMS demo install.",
+      "labels": [
+        "<div class=\"fixed left-4 top-44 z-[9999] rounded-xl bg-emerald-600 px-5 py-4 text-xl font-black uppercase tracking-[0.2em] text-white shadow-2xl\">BREAKING CAROUSEL ACTIVE</div>"
+      ]
+    },
+    "article": {
+      "url": "http://127.0.0.1:5173/article/demo-article-1",
+      "carouselActive": 0,
+      "tickerActive": 2,
+      "sliderActive": 2,
+      "bodyText": "शनिवार, 13 जून 2026\nSingle-tenant newsroom CMS demo install.\nSitamarhi Live\n\nEditorial Office\n\nSitamarhi Live\nHome\nबिहार\nसीतामढ़ी\nराजनीति\nक्राइम\nशिक्षा\nनौकरी\nखेल\nमनोरंजन\nAdmin\nBREAKING TICKER ACTIVE\nBREAKING TICKER ACTIVE\nBREAKING SLIDER ACTIVE\nBREAKING SLIDER ACTIVE\nBREAKING LIVE\n1\n/\n20\nबिहार\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n\nबिहार से जुड़ी यह डेमो रिपोर्ट विकास पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\nअमन कुमार\n13 Jun 2026\nAuto rotates every 5 seconds\nBreaking Highlights\n6 stories\nBREAKING\nबिहार अपडेट 1: बिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n13 Jun 2026\nBREAKING\nसीतामढ़ी अपडेट 2: सीतामढ़ी : यातायात से जुड़ी बड़ी खबर 02\n13 Jun 2026\nBREAKING\nराजनीति अपडेट 3: राजनीति : राजद से जुड़ी बड़ी खबर 03\n13 Jun 2026\nBREAKING\nक्राइम अपडेट 4: क्राइम : FIR से जुड़ी बड़ी खबर 04\n12 Jun 2026\nBREAKING\nशिक्षा अपडेट 5: शिक्षा : कॉलेज से जुड़ी बड़ी खबर 05\n12 Jun 2026\nBREAKING\nनौकरी अपडेट 6: नौकरी : सरकारी नौकरी से जुड़ी बड़ी खबर 06\n12 Jun 2026\nTrending News\nToday\nटेक्नोलॉजी : AI से जुड़ी बड़ी खबर 50\n30 May 2026\nव्यापार : डील से जुड़ी बड़ी खबर 49\n30 May 2026\nमनोरंजन : शूटिंग से जुड़ी बड़ी खबर 48\n31 May 2026\nखेल : जीत से जुड़ी बड़ी खबर 47\n31 May 2026\nनौकरी : साक्षात्कार से जुड़ी बड़ी खबर 46\n31 May 2026\nSitamarhi Live live breaking coverage\nHome\nबिहार\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\nGoogle Adsense Advertisement\nTop Article Ad · 728x90\nTop Article Ad\n\nHigh-impact placement above the main article frame\n\nYour Brand Here\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nGoogle Adsense Advertisement\nTop Article Ad\n728x90\nAdSense\nCTR-ready\nAnalytics-ready\nManaged ad slot placeholder\nLearn More\nबिहार\nBreaking\nTrending\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n\nबिहार से जुड़ी यह डेमो रिपोर्ट विकास पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\nअमन कुमार\n3 min read\n13/6/2026\nराजनीति संवाददाता\n\nबिहार क्षेत्र से जुड़ी यह डेमो रिपोर्ट विकास को केंद्र में रखती है और पाठकों को ताज़ा अपडेट देती है।\n\nGoogle Adsense Advertisement\nIn-Article Ad · 336x280\nIn-Article Ad #1\n\nAdmissions and competitive exam support for Bihar students\n\nSitamarhi Coaching Center\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nGoogle Adsense Advertisement\nIn-Article Ad #1\n336x280\nAdSense\nCTR-ready\nAnalytics-ready\nManaged ad slot placeholder\nEnroll Now\n\nस्थानीय प्रशासन, नागरिक प्रतिक्रिया और मौके की तस्वीरों के साथ यह खबर 1 नंबर की प्रस्तुति के लिए तैयार की गई है।\n\nDirect Promotion Demo\nIn-Article Ad · 336x280\nIn-Article Ad #2\n\nPremium plots and ready-to-move homes in a growing city corridor\n\nLocal Real Estate Project\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nLocal Real Estate Project\n336X280\nPremium plots and ready-to-move homes in a growing city corridor\nIn-Article Ad #2\nExplore Project\nCTR-ready\nAnalytics-ready\nSponsored placement placeholder\nExplore Project\n\nइस कहानी का उद्देश्य न्यूज़ पोर्टल के लेआउट, कार्ड, आर्टिकल पेज और शेयरिंग यूआई को वास्तविक कंटेंट जैसा दिखाना है।\n\nShare This Story\nFacebook\nX\nWhatsApp\nCopy Link\nबिहार\nविकास\nवीडियो\nGoogle Adsense Advertisement\nIn-Article Ad · 336x280\nSponsored Promo Strip\n\nAdditional editorial-safe monetization placeholder\n\nCampaign Network\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nGoogle Adsense Advertisement\nSponsored Promo Strip\n336x280\nAdSense\nCTR-ready\nAnalytics-ready\nManaged ad slot placeholder\nPartner Ad\nComments\nPost Comment\nNo comments have been published yet.\nSidebar Widgets\nTrending Now\nबिहार\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n13/6/2026\nक्राइम\nक्राइम : FIR से जुड़ी बड़ी खबर 04\n12/6/2026\nखेल\nखेल : फाइनल से जुड़ी बड़ी खबर 07\n11/6/2026\nGoogle Adsense Advertisement\nSidebar Ad · 300x250\nSidebar Ad\n\nAdvertiser-ready sidebar slot on article pages\n\nPublisher Network\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nGoogle Adsense Advertisement\nSidebar Ad\n300x250\nAdSense\nCTR-ready\nAnalytics-ready\nManaged ad slot placeholder\nLearn More\nRelated News\nबिहार\nबिहार : स्वास्थ्य से जुड़ी बड़ी खबर 11\n\nबिहार से जुड़ी यह डेमो रिपोर्ट स्वास्थ्य पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n10/6/2026\nबिहार\nबिहार : अधिकारियों से जुड़ी बड़ी खबर 21\n\nबिहार से जुड़ी यह डेमो रिपोर्ट अधिकारियों पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n7/6/2026\nबिहार\nबिहार : सड़क से जुड़ी बड़ी खबर 31\n\nबिहार से जुड़ी यह डेमो रिपोर्ट सड़क पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n4/6/2026\nबिहार\nबिहार : बजट से जुड़ी बड़ी खबर 41\n\nबिहार से जुड़ी यह डेमो रिपोर्ट बजट पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n2/6/2026\nGoogle Adsense Advertisement\nRelated News Ad · 300x250\nRelated News Ad\n\nMonetization slot below the related stories rail\n\nYour Brand Here\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nGoogle Adsense Advertisement\nRelated News Ad\n300x250\nAdSense\nCTR-ready\nAnalytics-ready\nManaged ad slot placeholder\nLearn More\nGoogle Adsense Advertisement\nFooter Banner Ad · 728x90\nFooter Ad\n\nArticle footer banner with strong brand recall\n\nYour Brand Here\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nGoogle Adsense Advertisement\nFooter Ad\n728x90\nAdSense\nCTR-ready\nAnalytics-ready\nManaged ad slot placeholder\nLearn More\nNewsletter Subscription\n\nReceive breaking news and selected reports in your inbox\n\nSubscribe\nSitamarhi Live\nSitamarh\nLive\n\nSingle-tenant newsroom CMS demo install.\n\nQuick Links\nHome\nबिहार\nसीतामढ़ी\nराजनीति\nक्राइम\nशिक्षा\nInformation\nAbout\nAdvertisement\nAdmin\nPrivacy Policy\nTerms\nContact\nContact\nEditorial Office\n+91 98765 43210\n+91 98765 43210\neditorial@sitamarhilive.com\n\nCopyright 2026 Sitamarhi Live. All rights reserved.\n\nSingle-tenant newsroom CMS demo install.",
+      "labels": [
+        "<div class=\"fixed left-4 top-24 z-[9999] rounded-xl bg-red-600 px-5 py-4 text-xl font-black uppercase tracking-[0.2em] text-white shadow-2xl\">BREAKING TICKER ACTIVE</div>",
+        "<div class=\"fixed left-4 top-4 z-[9999] rounded-xl bg-fuchsia-600 px-5 py-4 text-xl font-black uppercase tracking-[0.2em] text-white shadow-2xl\">BREAKING SLIDER ACTIVE</div>"
+      ]
+    },
+    "category": {
+      "url": "http://127.0.0.1:5173/category/%E0%A4%AC%E0%A4%BF%E0%A4%B9%E0%A4%BE%E0%A4%B0",
+      "carouselActive": 0,
+      "tickerActive": 2,
+      "sliderActive": 2,
+      "bodyText": "शनिवार, 13 जून 2026\nSingle-tenant newsroom CMS demo install.\nSitamarhi Live\n\nEditorial Office\n\nSitamarhi Live\nHome\nबिहार\nसीतामढ़ी\nराजनीति\nक्राइम\nशिक्षा\nनौकरी\nखेल\nमनोरंजन\nAdmin\nBREAKING TICKER ACTIVE\nBREAKING TICKER ACTIVE\nBREAKING SLIDER ACTIVE\nBREAKING SLIDER ACTIVE\nBREAKING LIVE\n1\n/\n20\nबिहार\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n\nबिहार से जुड़ी यह डेमो रिपोर्ट विकास पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\nअमन कुमार\n13 Jun 2026\nAuto rotates every 5 seconds\nBreaking Highlights\n6 stories\nBREAKING\nबिहार अपडेट 1: बिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n13 Jun 2026\nBREAKING\nसीतामढ़ी अपडेट 2: सीतामढ़ी : यातायात से जुड़ी बड़ी खबर 02\n13 Jun 2026\nBREAKING\nराजनीति अपडेट 3: राजनीति : राजद से जुड़ी बड़ी खबर 03\n13 Jun 2026\nBREAKING\nक्राइम अपडेट 4: क्राइम : FIR से जुड़ी बड़ी खबर 04\n12 Jun 2026\nBREAKING\nशिक्षा अपडेट 5: शिक्षा : कॉलेज से जुड़ी बड़ी खबर 05\n12 Jun 2026\nBREAKING\nनौकरी अपडेट 6: नौकरी : सरकारी नौकरी से जुड़ी बड़ी खबर 06\n12 Jun 2026\nTrending News\nToday\nटेक्नोलॉजी : AI से जुड़ी बड़ी खबर 50\n30 May 2026\nव्यापार : डील से जुड़ी बड़ी खबर 49\n30 May 2026\nमनोरंजन : शूटिंग से जुड़ी बड़ी खबर 48\n31 May 2026\nखेल : जीत से जुड़ी बड़ी खबर 47\n31 May 2026\nनौकरी : साक्षात्कार से जुड़ी बड़ी खबर 46\n31 May 2026\nSitamarhi Live live breaking coverage\nGoogle Adsense Advertisement\nCategory Section Ad · 728x90\nTop Banner Ad\n\nCategory lead-in banner for premium inventory\n\nYour Brand Here\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nGoogle Adsense Advertisement\nTop Banner Ad\n728x90\nAdSense\nCTR-ready\nAnalytics-ready\nManaged ad slot placeholder\nLearn More\nबिहार\nबिहार\n\nराज्य की बड़ी खबरें, नीतियां और विकास अपडेट\n\nDirect Promotion Demo\nMid Content Ad · 336x280\nJewellery Store\n\nFestive collection, bridal sets, and gold offers for the season\n\nJewellery Store\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nJewellery Store\n336X280\nFestive collection, bridal sets, and gold offers for the season\nJewellery Store\nShop Now\nCTR-ready\nAnalytics-ready\nSponsored placement placeholder\nShop Now\nबिहार\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n\nबिहार से जुड़ी यह डेमो रिपोर्ट विकास पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n13/6/2026\nबिहार\nबिहार : स्वास्थ्य से जुड़ी बड़ी खबर 11\n\nबिहार से जुड़ी यह डेमो रिपोर्ट स्वास्थ्य पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n10/6/2026\nबिहार\nबिहार : अधिकारियों से जुड़ी बड़ी खबर 21\n\nबिहार से जुड़ी यह डेमो रिपोर्ट अधिकारियों पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n7/6/2026\nबिहार\nबिहार : सड़क से जुड़ी बड़ी खबर 31\n\nबिहार से जुड़ी यह डेमो रिपोर्ट सड़क पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n4/6/2026\nबिहार\nबिहार : बजट से जुड़ी बड़ी खबर 41\n\nबिहार से जुड़ी यह डेमो रिपोर्ट बजट पर केंद्रित है और बिक्री प्रस्तुति में एक सक्रिय न्यूज़ रूम का अनुभव देती है।\n\n2/6/2026\nPrevious\n1\n2\n3\nNext\nGoogle Adsense Advertisement\nSidebar Ad · 300x250\nSidebar Ad\n\nCategory sidebar placeholder for direct or network ads\n\nRegional Partner\nResponsive ad unit\nEditorial-safe placeholder\nAD PREVIEW\nGoogle Adsense Advertisement\nSidebar Ad\n300x250\nAdSense\nCTR-ready\nAnalytics-ready\nManaged ad slot placeholder\nLearn More\nSidebar\nबिहार\nबिहार में विकास की नई रफ्तार, मुख्यमंत्री ने कई परियोजनाओं का शुभारंभ किया\n13/6/2026\nक्राइम\nक्राइम : FIR से जुड़ी बड़ी खबर 04\n12/6/2026\nखेल\nखेल : फाइनल से जुड़ी बड़ी खबर 07\n11/6/2026\nटेक्नोलॉजी\nटेक्नोलॉजी : ऐप से जुड़ी बड़ी खबर 10\n11/6/2026\nराजनीति\nराजनीति : चुनाव से जुड़ी बड़ी खबर 13\n10/6/2026\nNewsletter Subscription\n\nReceive breaking news and selected reports in your inbox\n\nSubscribe\nSitamarhi Live\nSitamarh\nLive\n\nSingle-tenant newsroom CMS demo install.\n\nQuick Links\nHome\nबिहार\nसीतामढ़ी\nराजनीति\nक्राइम\nशिक्षा\nInformation\nAbout\nAdvertisement\nAdmin\nPrivacy Policy\nTerms\nContact\nContact\nEditorial Office\n+91 98765 43210\n+91 98765 43210\neditorial@sitamarhilive.com\n\nCopyright 2026 Sitamarhi Live. All rights reserved.\n\nSingle-tenant newsroom CMS demo install.",
+      "labels": [
+        "<div class=\"fixed left-4 top-24 z-[9999] rounded-xl bg-red-600 px-5 py-4 text-xl font-black uppercase tracking-[0.2em] text-white shadow-2xl\">BREAKING TICKER ACTIVE</div>",
+        "<div class=\"fixed left-4 top-4 z-[9999] rounded-xl bg-fuchsia-600 px-5 py-4 text-xl font-black uppercase tracking-[0.2em] text-white shadow-2xl\">BREAKING SLIDER ACTIVE</div>"
+      ]
+    }
+  }
+}

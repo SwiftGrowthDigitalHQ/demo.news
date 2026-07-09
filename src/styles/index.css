@@ -1,0 +1,86 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+@keyframes carouselFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.carousel-fade-up {
+  animation: carouselFadeUp 0.6s ease both;
+}
+
+@keyframes tickerScroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-marquee {
+  animation: tickerScroll 26s linear infinite;
+  will-change: transform;
+}
+
+.group:hover .ticker-marquee {
+  animation-play-state: paused;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.25s ease-out;
+}
+
+/* Hide scrollbar for navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ═══ Responsive Ad Heights ═══ */
+
+/* Mobile default (< 768px) */
+.ad-height { height: 100px; }
+.ad-height[data-placement*="sidebar"] { height: 100px; }
+.ad-height[data-placement*="in-article"] { height: 250px; }
+
+/* Tablet (768px - 1279px) */
+@media (min-width: 768px) {
+  .ad-height { height: 90px; }
+  .ad-height[data-placement*="sidebar"] { height: 250px; }
+  .ad-height[data-placement*="in-article"] { height: 250px; }
+}
+
+/* Desktop (>=1280px) — Premium tall vertical format */
+@media (min-width: 1280px) {
+  .ad-height { height: 200px; }
+  .ad-height[data-placement*="header"] { height: 150px; }
+  .ad-height[data-placement*="sidebar"] { height: 600px; }
+  .ad-height[data-placement*="sidebar-rectangle"] { height: 500px; }
+  .ad-height[data-placement*="in-article"] { height: 500px; }
+  .ad-height[data-placement*="hero"] { height: 200px; }
+  .ad-height[data-placement*="category"] { height: 200px; }
+  .ad-height[data-placement*="footer"] { height: 180px; }
+}

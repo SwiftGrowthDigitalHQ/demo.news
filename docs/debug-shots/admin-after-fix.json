@@ -1,0 +1,17 @@
+{
+  "route": "/admin",
+  "screenshot": "docs/debug-shots/admin-after-fix.png",
+  "sessionBootstrapMs": 1,
+  "sessionUserEmail": "hello@swiftgrowthdigital.com",
+  "authUserRowQuery": {
+    "status": 200,
+    "rows": 0
+  },
+  "adminPageState": "Admin Login",
+  "loadingSpinnerVisible": false,
+  "loginAttempt": {
+    "email": "admin@example.com",
+    "password": "secret",
+    "result": "invalid_credentials"
+  }
+}
