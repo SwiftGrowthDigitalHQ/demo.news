@@ -12,6 +12,18 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    open: true,
+  },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+          firebase: ['firebase/app', 'firebase/messaging'],
+          charts: ['recharts'],
+        },
+      },
+    },
   },
 });

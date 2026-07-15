@@ -7,7 +7,7 @@ function getEnv(key: string) {
 }
 
 export function hasSupabaseConfig() {
-  return Boolean(getEnv('VITE_SUPABASE_URL') && getEnv('VITE_SUPABASE_ANON_KEY'));
+  return Boolean(getEnv('VITE_SUPABASE_URL') && getEnv('VITE_SUPABASE_PUBLISHABLE_KEY'));
 }
 
 export function getSupabaseClient() {
@@ -16,13 +16,11 @@ export function getSupabaseClient() {
   }
 
   if (!browserClient) {
-    browserClient = createClient(getEnv('VITE_SUPABASE_URL')!, getEnv('VITE_SUPABASE_ANON_KEY')!, {
+    browserClient = createClient(getEnv('VITE_SUPABASE_URL')!, getEnv('VITE_SUPABASE_PUBLISHABLE_KEY')!, {
       auth: {
         persistSession: true,
-        // Avoid auth bootstrap deadlocks from stale browser sessions.
-        // The app hydrates the session explicitly in AuthProvider instead.
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
       },
     });
   }

@@ -50,7 +50,7 @@ export function SeoBridge() {
 
     const safeTheme = siteSettings?.theme_config ?? {};
     const siteName = siteSettings.site_name;
-    const siteUrl = safeTheme.site_url || window.location.origin;
+    const siteUrl = (safeTheme.site_url || import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/+$/, '');
     const defaultDescription =
       safeTheme.tagline ||
       siteSettings?.footer_text ||

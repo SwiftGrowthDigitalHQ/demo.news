@@ -5,14 +5,12 @@
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
-firebase.initializeApp({
-  apiKey: 'AIzaSyCRYDqA-JUOdszXhLDzQlPHoKAIyjvubgo',
-  authDomain: 'buxar-news-3e075.firebaseapp.com',
-  projectId: 'buxar-news-3e075',
-  storageBucket: 'buxar-news-3e075.firebasestorage.app',
-  messagingSenderId: '996657792968',
-  appId: '1:996657792968:web:0c7f2f0249cfe9f04ca2fd',
-});
+var encodedConfig = new URL(self.location.href).searchParams.get('config');
+if (!encodedConfig) {
+  throw new Error('Firebase messaging worker is missing its public configuration.');
+}
+
+firebase.initializeApp(JSON.parse(atob(encodedConfig)));
 
 const messaging = firebase.messaging();
 

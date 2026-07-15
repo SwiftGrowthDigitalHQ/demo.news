@@ -26,42 +26,6 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function getAuthStorageKey() {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  if (!url) {
-    return null;
-  }
-
-  try {
-    return `sb-${new URL(url).hostname.split('.')[0]}-auth-token`;
-  } catch {
-    return null;
-  }
-}
-
-function readStoredSession(): Session | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  const storageKey = getAuthStorageKey();
-  if (!storageKey) {
-    return null;
-  }
-
-  const raw = window.localStorage.getItem(storageKey);
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as Session;
-    return parsed?.user?.id ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
 async function loadProfile(userId: string): Promise<AuthProfile | null> {
   const client = getSupabaseClient();
   if (!client) {
@@ -106,19 +70,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     let isMounted = true;
 
-    const storedSession = readStoredSession();
-    setSession(storedSession);
-    if (storedSession?.user) {
-      void loadProfile(storedSession.user.id).then(result => {
-        if (isMounted) {
-          setProfile(result);
-        }
-      });
-    }
-    setLoading(false);
-    setReady(true);
+    void client.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (!isMounted) return;
+      setSession(currentSession);
+      if (currentSession?.user) {
+        void loadProfile(currentSession.user.id).then(result => {
+          if (isMounted) setProfile(result);
+        });
+      }
+      setLoading(false);
+      setReady(true);
+    });
 
     const { data: listener } = client.auth.onAuthStateChange(async (_event, nextSession) => {
+      if (!isMounted) return;
       setSession(nextSession);
       if (nextSession?.user) {
         setProfile(await loadProfile(nextSession.user.id));

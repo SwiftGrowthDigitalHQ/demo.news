@@ -183,7 +183,6 @@ export async function triggerArticleNotification(articleId: string): Promise<{ s
   if (emailLogs.length > 0) {
     const { error: logError } = await supabase.from('notification_logs').insert(emailLogs);
     if (logError) {
-      console.error('[Notification] Failed to create email logs:', logError);
       failed += emailLogs.length;
     } else {
       sent += emailLogs.length;
@@ -212,7 +211,6 @@ export async function triggerArticleNotification(articleId: string): Promise<{ s
   if (pushLogs.length > 0) {
     const { error: pushLogError } = await supabase.from('notification_logs').insert(pushLogs);
     if (pushLogError) {
-      console.error('[Notification] Failed to create push logs:', pushLogError);
       failed += pushLogs.length;
     } else {
       sent += pushLogs.length;

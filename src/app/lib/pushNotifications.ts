@@ -15,7 +15,6 @@ import { getSupabaseClient } from '../../lib/supabase';
  *    VITE_FIREBASE_MESSAGING_SENDER_ID=
  *    VITE_FIREBASE_APP_ID=
  *    VITE_FIREBASE_VAPID_KEY=
- * 5. Update public/firebase-messaging-sw.js with same config
  */
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
@@ -28,7 +27,6 @@ async function getFirebaseMessaging() {
 
   const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
   if (!apiKey) {
-    console.warn('[Push] Firebase not configured. Set VITE_FIREBASE_* env vars.');
     return null;
   }
 
@@ -49,8 +47,7 @@ async function getFirebaseMessaging() {
 
     messagingInstance = getMessaging(firebaseApp as ReturnType<typeof initializeApp>);
     return messagingInstance;
-  } catch (err) {
-    console.warn('[Push] Failed to initialize Firebase:', err);
+  } catch {
     return null;
   }
 }
@@ -85,7 +82,17 @@ export async function requestPushPermission(): Promise<{ success: boolean; token
     }
 
     // Register service worker
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    const serviceWorkerUrl = new URL('/firebase-messaging-sw.js', window.location.origin);
+    const firebaseConfig = {
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+      appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+    };
+    serviceWorkerUrl.searchParams.set('config', btoa(JSON.stringify(firebaseConfig)));
+    const registration = await navigator.serviceWorker.register(serviceWorkerUrl);
     await navigator.serviceWorker.ready;
 
     // Get FCM token
@@ -110,7 +117,6 @@ export async function requestPushPermission(): Promise<{ success: boolean; token
     return { success: true, token };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[Push] Registration failed:', message);
     return { success: false, error: message };
   }
 }
@@ -142,7 +148,7 @@ async function savePushToken(token: string): Promise<void> {
 
   // Ignore duplicate key error (token already exists)
   if (error && !error.message.includes('duplicate') && !error.code?.includes('23505')) {
-    console.error('[Push] Failed to save token:', error.message);
+    throw error;
   }
 }
 
@@ -180,7 +186,6 @@ export async function unregisterPush(): Promise<void> {
 
     const { deleteToken } = await import('firebase/messaging');
     await deleteToken(messaging as ReturnType<typeof import('firebase/messaging').getMessaging>);
-  } catch (err) {
-    console.warn('[Push] Unregister failed:', err);
+  } catch {
   }
 }

@@ -733,7 +733,7 @@ export async function markAuditLog(payload: {
       ip_address: payload.ip_address ?? null,
     });
     if (error) {
-      console.warn('[Audit] Log failed (non-critical):', error.message);
+      return;
     }
   } catch {
     // Audit logging is non-critical — never block the main operation

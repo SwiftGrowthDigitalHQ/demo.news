@@ -1,3 +1,8 @@
 User-agent: *
 Allow: /
-Sitemap: http://localhost:4173/sitemap.xml
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Sitemap: /sitemap.xml

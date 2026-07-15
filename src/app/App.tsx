@@ -1,29 +1,31 @@
+import { lazy, Suspense } from 'react';
 import { AppNavigationProvider, useAppNavigation } from './lib/navigation';
 import { CmsProvider } from './lib/cms';
 import { AuthProvider, useAuth } from './lib/auth';
-import { HomePage } from './pages/HomePage';
-import { ArticlePage } from './pages/ArticlePage';
-import { CategoryPage } from './pages/CategoryPage';
-import { SearchPage } from './pages/SearchPage';
-import { AdminPage } from './pages/AdminPage';
-import { AuthPage } from './pages/AuthPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { AboutPage } from './pages/AboutPage';
-import { ContactPage } from './pages/ContactPage';
-import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
-import { TermsPage } from './pages/TermsPage';
-import { DisclaimerPage } from './pages/DisclaimerPage';
-import { EditorialPolicyPage } from './pages/EditorialPolicyPage';
-import { AdvertisePage } from './pages/AdvertisePage';
-import { CookiePolicyPage } from './pages/CookiePolicyPage';
-import { SitemapPage } from './pages/SitemapPage';
-import { UnsubscribePage } from './pages/UnsubscribePage';
 import { Toaster } from './components/ui/sonner';
 import { BrandingBridge } from './components/BrandingBridge';
 import { SeoBridge } from './components/SeoBridge';
 import { PushNotificationPrompt } from './components/PushNotificationPrompt';
 
 /* MARKER-MAKE-KIT-INVOKED */
+
+const HomePage = lazy(() => import('./pages/HomePage').then(module => ({ default: module.HomePage })));
+const ArticlePage = lazy(() => import('./pages/ArticlePage').then(module => ({ default: module.ArticlePage })));
+const CategoryPage = lazy(() => import('./pages/CategoryPage').then(module => ({ default: module.CategoryPage })));
+const SearchPage = lazy(() => import('./pages/SearchPage').then(module => ({ default: module.SearchPage })));
+const AdminPage = lazy(() => import('./pages/AdminPage').then(module => ({ default: module.AdminPage })));
+const AuthPage = lazy(() => import('./pages/AuthPage').then(module => ({ default: module.AuthPage })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(module => ({ default: module.ProfilePage })));
+const AboutPage = lazy(() => import('./pages/AboutPage').then(module => ({ default: module.AboutPage })));
+const ContactPage = lazy(() => import('./pages/ContactPage').then(module => ({ default: module.ContactPage })));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(module => ({ default: module.PrivacyPolicyPage })));
+const TermsPage = lazy(() => import('./pages/TermsPage').then(module => ({ default: module.TermsPage })));
+const DisclaimerPage = lazy(() => import('./pages/DisclaimerPage').then(module => ({ default: module.DisclaimerPage })));
+const EditorialPolicyPage = lazy(() => import('./pages/EditorialPolicyPage').then(module => ({ default: module.EditorialPolicyPage })));
+const AdvertisePage = lazy(() => import('./pages/AdvertisePage').then(module => ({ default: module.AdvertisePage })));
+const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage').then(module => ({ default: module.CookiePolicyPage })));
+const SitemapPage = lazy(() => import('./pages/SitemapPage').then(module => ({ default: module.SitemapPage })));
+const UnsubscribePage = lazy(() => import('./pages/UnsubscribePage').then(module => ({ default: module.UnsubscribePage })));
 
 function AppRouter() {
   const { pathname } = useAppNavigation();
@@ -111,7 +113,9 @@ export default function App() {
           <BrandingBridge />
           <SeoBridge />
           <PushNotificationPrompt />
-          <AppRouter />
+          <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
+            <AppRouter />
+          </Suspense>
         </CmsProvider>
       </AuthProvider>
     </AppNavigationProvider>

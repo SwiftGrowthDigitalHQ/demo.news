@@ -172,9 +172,7 @@ export function SettingsPanel() {
           backup_retention: backupRetention,
         },
       });
-      void markAuditLog({ action: 'site_settings.updated', entity_type: 'site_settings', metadata: { site_name: siteName } }).catch(logError => {
-        console.warn('Failed to write settings audit log', logError);
-      });
+      void markAuditLog({ action: 'site_settings.updated', entity_type: 'site_settings', metadata: { site_name: siteName } }).catch(() => undefined);
       toast.success('Settings saved.');
       await load();
     } catch (error) {
