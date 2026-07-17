@@ -19,7 +19,7 @@ This project is a single-tenant newsroom CMS. Deploy one clone per customer, the
 Set these in Vercel and in local development:
 
 - `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
 
 ### Demo Seeder
 

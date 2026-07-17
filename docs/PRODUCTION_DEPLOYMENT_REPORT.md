@@ -11,7 +11,7 @@ Scope: production deployment execution attempt for the newsroom CMS after the bl
 Required variables were not present in this workspace:
 
 - `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_SITE_URL`
 
 Evidence:

@@ -30,7 +30,7 @@ Scope: checklist for taking this newsroom CMS live after the blocker-fix pass.
 Required frontend variables:
 
 - `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_SITE_URL`
 
 Optional deployment variables:

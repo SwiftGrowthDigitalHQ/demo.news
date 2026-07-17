@@ -114,7 +114,7 @@ The News CMS Admin Panel had **3 critical failures** preventing media upload and
 
 | Check | Status | Details |
 |-------|--------|---------|
-| Environment variables | ✅ PASS | `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set in `.env` |
+| Environment variables | ✅ PASS | `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` set in `.env` |
 | Client initialization | ✅ PASS | `src/lib/supabase.ts` — singleton pattern, correct config |
 | Authentication flow | ✅ PASS | `signInWithPassword`, session persistence, `onAuthStateChange` |
 | Profile loading | ❌ → FIXED | Joined `users` + `roles` — required SELECT policy on both tables |
