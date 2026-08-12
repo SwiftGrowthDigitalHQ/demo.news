@@ -11,13 +11,13 @@ import { LanguageGate } from './components/LanguageGate';
 import { SangTXHomePage } from './pages/SangTXHomePage';
 import { SangTXAuthPage } from './pages/SangTXAuthPage';
 import { getSavedLanguage } from './lib/i18n';
+import { DemoPortalV2 as DemoPortal } from './pages/DemoPortalV2';
 
 /* MARKER-MAKE-KIT-INVOKED */
 
 // ─── SaaS / marketing pages (no CmsProvider needed) ─────────────────────────
 const SangTXFeaturesPage = lazy(() => import('./pages/SangTXFeaturesPage').then(m => ({ default: m.SangTXFeaturesPage })));
 const SangTXPricingPage   = lazy(() => import('./pages/SangTXPricingPage').then(m => ({ default: m.SangTXPricingPage })));
-const SangTXDemoPage      = lazy(() => import('./pages/SangTXDemoPage').then(m => ({ default: m.SangTXDemoPage })));
 const SangTXContactPage   = lazy(() => import('./pages/SangTXContactPage').then(m => ({ default: m.SangTXContactPage })));
 const SangTXOnboardingPage = lazy(() => import('./pages/SangTXOnboardingPage').then(m => ({ default: m.SangTXOnboardingPage })));
 
@@ -40,6 +40,9 @@ const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage').then(modu
 const SitemapPage = lazy(() => import('./pages/SitemapPage').then(module => ({ default: module.SitemapPage })));
 const UnsubscribePage = lazy(() => import('./pages/UnsubscribePage').then(module => ({ default: module.UnsubscribePage })));
 
+// ─── Super Admin page ────────────────────────────────────────────────────────
+const SuperAdminPage = lazy(() => import('./pages/SuperAdminPage').then(module => ({ default: module.SuperAdminPage })));
+
 // ─── Known tenant slugs ──────────────────────────────────────────────────────
 // Add new tenants here as the platform grows.
 const TENANT_SLUGS = new Set(['buxar-news', 'patna-news', 'rohtas-news']);
@@ -47,19 +50,21 @@ const TENANT_SLUGS = new Set(['buxar-news', 'patna-news', 'rohtas-news']);
 /**
  * Resolves a pathname to its routing context.
  *
- *  saas      → SangTX marketing/auth routes at top level
- *  tenant    → news portal under /<slug>/…
- *  admin     → admin panel (tenant-scoped, no slug prefix)
- *  404       → nothing matched
+ *  saas         → SangTX marketing/auth routes at top level
+ *  tenant       → news portal under /<slug>/…
+ *  admin        → admin panel (tenant-scoped, no slug prefix)
+ *  super_admin  → super admin panel (platform-wide control)
+ *  demo         → sales demo
+ *  404          → nothing matched
  */
 function resolveRoute(pathname: string): {
-  type: 'saas' | 'tenant' | 'admin' | '404';
+  type: 'saas' | 'tenant' | 'admin' | 'super_admin' | 'demo' | '404';
   tenantSlug?: string;
   tenantPath?: string;
 } {
   // ── SaaS root & marketing pages ───────────────────────────────────────────
   const saasRoutes = new Set([
-    '/', '/features', '/pricing', '/demo', '/contact',
+    '/', '/features', '/pricing', '/contact',
     '/privacy', '/terms', '/login', '/register', '/onboarding',
     '/forgot-password', '/reset-password',
     // Legacy aliases kept for backwards-compat
@@ -69,6 +74,12 @@ function resolveRoute(pathname: string): {
   if (pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')) {
     return { type: 'saas' };
   }
+
+  // The sales demo is deliberately local-only and never mounts CmsProvider.
+  if (pathname === '/demo' || pathname.startsWith('/demo/')) return { type: 'demo' };
+
+  // ── Super Admin panel ─────────────────────────────────────────────────────
+  if (pathname.startsWith('/super-admin')) return { type: 'super_admin' };
 
   // ── Admin panel ───────────────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) return { type: 'admin' };
@@ -160,6 +171,14 @@ function AppRouter() {
   const auth = useAuth();
   const route = resolveRoute(pathname);
 
+  if (route.type === 'demo') {
+    if (pathname === '/demo/admin' || pathname.startsWith('/demo/admin/')) return <DemoPortal mode="admin" />;
+    if (pathname.startsWith('/demo/article/')) return <DemoPortal mode="article" />;
+    if (pathname.startsWith('/demo/category/')) return <DemoPortal mode="category" />;
+    if (pathname.startsWith('/demo/search')) return <DemoPortal mode="search" />;
+    return <DemoPortal mode="home" />;
+  }
+
   // ── SaaS marketing & auth routes ──────────────────────────────────────────
   if (route.type === 'saas') {
     // SangTX homepage
@@ -185,9 +204,6 @@ function AppRouter() {
     }
     if (pathname === '/pricing') {
       return <SangTXPricingPage />;
-    }
-    if (pathname === '/demo') {
-      return <SangTXDemoPage />;
     }
     if (pathname === '/contact') {
       return <SangTXContactPage />;
@@ -215,6 +231,11 @@ function AppRouter() {
       return <SangTXAuthPage mode="login" />;
     }
     return <AdminPage />;
+  }
+
+  // ── Super Admin panel ─────────────────────────────────────────────────────
+  if (route.type === 'super_admin') {
+    return <SuperAdminPage />;
   }
 
   // ── Tenant news portal ────────────────────────────────────────────────────

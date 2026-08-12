@@ -1,6 +1,20 @@
 import { getSupabaseClient } from '../../lib/supabase';
 import type { PublicArticle, PublicCategory, BreakingHeadline, SiteSettings } from './cms';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// DEMO MODE DETECTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Check if we're running in demo mode
+ * Demo routes: /demo, /demo/*, /demo/admin/*
+ */
+function isDemoMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname;
+  return path === '/demo' || path.startsWith('/demo/');
+}
+
 export type AdminArticle = PublicArticle & {
   status: 'draft' | 'scheduled' | 'review' | 'published' | 'archived';
   created_at: string;
@@ -194,6 +208,11 @@ export type CampaignRow = {
 };
 
 function client() {
+  // In demo mode, we don't use Supabase at all
+  if (isDemoMode()) {
+    throw new Error('Demo mode does not use Supabase client');
+  }
+  
   const supabase = getSupabaseClient();
   if (!supabase) {
     throw new Error('Supabase is not configured.');
@@ -270,6 +289,12 @@ function sanitizeThemeConfig(value: unknown) {
 }
 
 export async function listAdminArticles() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_ARTICLES } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_ARTICLES);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase
     .from('articles')
@@ -329,6 +354,12 @@ export async function upsertAdminArticle(payload: Partial<AdminArticle> & {
   status: AdminArticle['status'];
   author_id?: string | null;
 }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Article creation/update');
+  }
+  
   const supabase = client();
   const { id, tags = [], ...rest } = payload;
   const articlePayload = {
@@ -369,12 +400,24 @@ export async function upsertAdminArticle(payload: Partial<AdminArticle> & {
 }
 
 export async function deleteAdminArticle(id: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Article deletion');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('articles').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
 export async function setArticleStatus(id: string, status: AdminArticle['status'], publishAt?: string | null) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Article status change');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('articles').update({
     status,
@@ -384,6 +427,12 @@ export async function setArticleStatus(id: string, status: AdminArticle['status'
 }
 
 export async function listAdminCategories() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_CATEGORIES } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_CATEGORIES);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('categories').select('*').is('deleted_at', null).order('sort_order', { ascending: true });
   if (error) throw error;
@@ -391,6 +440,12 @@ export async function listAdminCategories() {
 }
 
 export async function upsertAdminCategory(payload: Partial<AdminCategory> & { name: string; slug: string }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Category creation/update');
+  }
+  
   const supabase = client();
   const body = {
     name: payload.name,
@@ -409,12 +464,24 @@ export async function upsertAdminCategory(payload: Partial<AdminCategory> & { na
 }
 
 export async function deleteAdminCategory(id: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Category deletion');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('categories').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
 export async function listAdminMedia() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_MEDIA } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_MEDIA);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('media').select('*').is('deleted_at', null).order('created_at', { ascending: false });
   if (error) throw error;
@@ -422,6 +489,12 @@ export async function listAdminMedia() {
 }
 
 export async function uploadAdminMedia(file: File, options?: { alt_text?: string; caption?: string; is_featured?: boolean }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Media upload');
+  }
+  
   const supabase = client();
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const path = `media/${crypto.randomUUID()}.${ext}`;
@@ -443,6 +516,12 @@ export async function uploadAdminMedia(file: File, options?: { alt_text?: string
 }
 
 export async function deleteAdminMedia(id: string, filePath: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Media deletion');
+  }
+  
   const supabase = client();
   const file = await supabase.storage.from('media').remove([filePath]);
   if (file.error) throw file.error;
@@ -454,6 +533,12 @@ export async function updateAdminMedia(
   id: string,
   payload: Partial<AdminMediaItem> & { alt_text?: string | null; caption?: string | null; is_featured?: boolean },
 ) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Media update');
+  }
+  
   const supabase = client();
   const { data, error } = await supabase
     .from('media')
@@ -477,6 +562,12 @@ export async function updateAdminMedia(
 }
 
 export async function listAdminReporters() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_REPORTERS } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_REPORTERS);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase
     .from('reporters')
@@ -507,6 +598,12 @@ export async function listAdminReporters() {
 }
 
 export async function upsertAdminReporter(payload: Partial<AdminReporter> & { full_name: string; slug: string }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Reporter creation/update');
+  }
+  
   const supabase = client();
   const body = {
     full_name: payload.full_name,
@@ -526,12 +623,24 @@ export async function upsertAdminReporter(payload: Partial<AdminReporter> & { fu
 }
 
 export async function deleteAdminReporter(id: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Reporter deletion');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('reporters').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
 export async function listAdminAds() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_ADS } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_ADS);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('advertisements').select('*').is('deleted_at', null).order('created_at', { ascending: false });
   if (error) throw error;
@@ -545,6 +654,12 @@ export async function upsertAdminAd(payload: Partial<AdminAd> & {
   campaign_id?: string | null;
   sponsored_article_id?: string | null;
 }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Advertisement creation/update');
+  }
+  
   const supabase = client();
   const body = {
     placement: payload.placement,
@@ -570,12 +685,24 @@ export async function upsertAdminAd(payload: Partial<AdminAd> & {
 }
 
 export async function deleteAdminAd(id: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Advertisement deletion');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('advertisements').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
 export async function listSeoSettings() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_SEO_SETTINGS } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_SEO_SETTINGS);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('seo_settings').select('*').is('deleted_at', null).order('created_at', { ascending: false });
   if (error) throw error;
@@ -586,6 +713,12 @@ export async function listSeoSettings() {
 }
 
 export async function upsertSeoSetting(payload: Partial<SeoSetting> & { page_path: string }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('SEO settings update');
+  }
+  
   const supabase = client();
   const body = {
     page_path: payload.page_path,
@@ -607,6 +740,12 @@ export async function upsertSeoSetting(payload: Partial<SeoSetting> & { page_pat
 }
 
 export async function listNotifications() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_NOTIFICATIONS } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_NOTIFICATIONS);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('notifications').select('*').is('deleted_at', null).order('created_at', { ascending: false });
   if (error) throw error;
@@ -614,6 +753,12 @@ export async function listNotifications() {
 }
 
 export async function upsertNotification(payload: Partial<NotificationRow> & { title: string; message: string }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Notification creation/update');
+  }
+  
   const supabase = client();
   const body = {
     title: payload.title,
@@ -631,12 +776,24 @@ export async function upsertNotification(payload: Partial<NotificationRow> & { t
 }
 
 export async function deleteNotification(id: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Notification deletion');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('notifications').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
 export async function listAuditLogs() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_AUDIT_LOGS } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_AUDIT_LOGS);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(250);
   if (error) throw error;
@@ -653,6 +810,11 @@ export async function trackAnalyticsEvent(payload: {
   category_id?: string | null;
   metadata?: Record<string, unknown>;
 }) {
+  // Demo mode: silently ignore analytics
+  if (isDemoMode()) {
+    return Promise.resolve();
+  }
+  
   const supabase = client();
   const { sessionId, referrer, userAgent } = getBrowserContext();
   const { error } = await supabase.rpc('track_analytics_event', {
@@ -669,6 +831,12 @@ export async function trackAnalyticsEvent(payload: {
 }
 
 export async function loadSiteSettings() {
+  // Demo mode: return static demo settings
+  if (isDemoMode()) {
+    const { DEMO_SITE_SETTINGS } = await import('./demoTenant');
+    return Promise.resolve(DEMO_SITE_SETTINGS);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('site_settings').select('*').is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (error) throw error;
@@ -686,6 +854,12 @@ export async function loadSiteSettings() {
 }
 
 export async function upsertSiteSettings(payload: Partial<SiteSettings> & { site_name: string }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Settings update');
+  }
+  
   const supabase = client();
   const { data: existing } = await supabase.from('site_settings').select('id').is('deleted_at', null).limit(1).maybeSingle();
   const body = {
@@ -723,6 +897,11 @@ export async function markAuditLog(payload: {
   metadata?: Record<string, unknown>;
   ip_address?: string | null;
 }) {
+  // Demo mode: silently ignore audit logging
+  if (isDemoMode()) {
+    return Promise.resolve();
+  }
+  
   try {
     const supabase = client();
     const { error } = await supabase.from('audit_logs').insert({
@@ -741,6 +920,12 @@ export async function markAuditLog(payload: {
 }
 
 export async function listAdminRoles() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_ROLES } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_ROLES);
+  }
+  
   const supabase = client();
   const [rolesResult, usersResult] = await Promise.all([
     supabase.from('roles').select('*').is('deleted_at', null).order('created_at', { ascending: true }),
@@ -764,6 +949,12 @@ export async function listAdminRoles() {
 }
 
 export async function upsertAdminRole(payload: Partial<AdminRole> & { name: string; slug: string }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Role creation/update');
+  }
+  
   const supabase = client();
   const body = {
     name: payload.name,
@@ -779,12 +970,24 @@ export async function upsertAdminRole(payload: Partial<AdminRole> & { name: stri
 }
 
 export async function deleteAdminRole(id: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Role deletion');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('roles').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
 export async function listAdminUsers() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_USERS } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_USERS);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase
     .from('users')
@@ -816,6 +1019,12 @@ export async function listAdminUsers() {
 }
 
 export async function upsertAdminUser(payload: Partial<AdminUser> & { full_name: string; email: string }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('User creation/update');
+  }
+  
   const supabase = client();
   const body = {
     full_name: payload.full_name,
@@ -835,12 +1044,24 @@ export async function upsertAdminUser(payload: Partial<AdminUser> & { full_name:
 }
 
 export async function deleteAdminUser(id: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('User deletion');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('users').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
 export async function listBreakingNews() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_BREAKING_NEWS } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_BREAKING_NEWS);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('breaking_news').select('*').is('deleted_at', null).order('sort_order', { ascending: true });
   if (error) throw error;
@@ -848,6 +1069,12 @@ export async function listBreakingNews() {
 }
 
 export async function upsertBreakingNews(payload: Partial<BreakingNewsRow> & { headline: string }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Breaking news creation/update');
+  }
+  
   const supabase = client();
   const body = {
     headline: payload.headline,
@@ -865,12 +1092,24 @@ export async function upsertBreakingNews(payload: Partial<BreakingNewsRow> & { h
 }
 
 export async function deleteBreakingNews(id: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Breaking news deletion');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('breaking_news').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
 export async function listSubscriptions() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_SUBSCRIPTIONS } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_SUBSCRIPTIONS);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('subscriptions').select('*').is('deleted_at', null).order('created_at', { ascending: false });
   if (error) throw error;
@@ -878,6 +1117,12 @@ export async function listSubscriptions() {
 }
 
 export async function upsertSubscription(payload: Partial<SubscriptionRow> & { email: string }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Subscription creation/update');
+  }
+  
   const supabase = client();
   const body = {
     email: normalizeEmail(payload.email),
@@ -893,12 +1138,23 @@ export async function upsertSubscription(payload: Partial<SubscriptionRow> & { e
 }
 
 export async function deleteSubscription(id: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Subscription deletion');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('subscriptions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
 export async function createNewsletterSubscription(payload: { email: string; full_name?: string | null; source?: string | null }) {
+  // Demo mode: silently ignore newsletter subscription
+  if (isDemoMode()) {
+    return Promise.resolve();
+  }
+  
   const supabase = client();
   const { sessionId, referrer, userAgent } = getBrowserContext();
   const { error } = await supabase.rpc('create_newsletter_subscription', {
@@ -913,6 +1169,12 @@ export async function createNewsletterSubscription(payload: { email: string; ful
 }
 
 export async function listCampaigns() {
+  // Demo mode: return static demo data
+  if (isDemoMode()) {
+    const { DEMO_ADMIN_CAMPAIGNS } = await import('./demoTenant');
+    return Promise.resolve(DEMO_ADMIN_CAMPAIGNS);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('campaigns').select('*').is('deleted_at', null).order('created_at', { ascending: false });
   if (error) throw error;
@@ -920,6 +1182,12 @@ export async function listCampaigns() {
 }
 
 export async function upsertCampaign(payload: Partial<CampaignRow> & { name: string; advertiser_name: string }) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Campaign creation/update');
+  }
+  
   const supabase = client();
   const body = {
     name: payload.name,
@@ -941,12 +1209,23 @@ export async function upsertCampaign(payload: Partial<CampaignRow> & { name: str
 }
 
 export async function deleteCampaign(id: string) {
+  // Demo mode: reject mutations
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Campaign deletion');
+  }
+  
   const supabase = client();
   const { error } = await supabase.from('campaigns').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
 export async function listAnalyticsEvents(limit = 100) {
+  // Demo mode: return empty analytics (demo doesn't track real analytics)
+  if (isDemoMode()) {
+    return Promise.resolve([]);
+  }
+  
   const supabase = client();
   const { data, error } = await supabase.from('analytics_events').select('*').order('created_at', { ascending: false }).limit(limit);
   if (error) throw error;

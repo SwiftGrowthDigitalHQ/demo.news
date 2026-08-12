@@ -118,7 +118,8 @@ type CmsContextValue = {
   searchArticles: (query: string) => Promise<PublicArticle[]>;
 };
 
-const CmsContext = createContext<CmsContextValue | null>(null);
+// Export CmsContext so DemoCmsProvider can use the same context
+export const CmsContext = createContext<CmsContextValue | null>(null);
 
 function formatContent(content: unknown): string[] {
   if (Array.isArray(content)) {

@@ -1,5 +1,8 @@
-import { Bell, Search, Sun, Moon, Menu, ChevronDown } from 'lucide-react';
+import { Bell, Search, Sun, Moon, Menu, ChevronDown, AlertCircle } from 'lucide-react';
 import { useCms } from '../../lib/cms';
+import { useTenant } from '../../lib/useTenant';
+import { useSubscriptionAccess } from '../../lib/useSubscriptionAccess';
+import { getStatusMessage, getStatusColor } from '../../lib/subscriptionService';
 
 interface Props {
   section: string;
@@ -31,8 +34,13 @@ const sectionTitles: Record<string, { title: string; breadcrumb: string }> = {
 export function AdminHeader({ section, darkMode, onToggleDark, onToggleNotifications, onToggleSidebar }: Props) {
   const info = sectionTitles[section] || { title: 'Dashboard', breadcrumb: 'Home' };
   const { siteSettings } = useCms();
+  const { tenant } = useTenant();
+  const access = useSubscriptionAccess(tenant?.id);
   const now = new Date();
   const dateStr = now.toLocaleDateString('hi-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Show subscription status badge if not super admin and has tenant
+  const showSubscriptionBadge = !access.isSuperAdmin && access.status && tenant;
 
   return (
     <header
@@ -73,6 +81,12 @@ export function AdminHeader({ section, darkMode, onToggleDark, onToggleNotificat
       </div>
 
       <div style={{ fontSize: 11, color: '#94a3b8' }} className="hidden lg:block dark:text-gray-400">{dateStr}</div>
+
+      {showSubscriptionBadge && (
+        <div className={`px-3 py-1.5 rounded-lg text-xs font-medium ${getStatusColor(access.status!)}`}>
+          {getStatusMessage(access.status!)}
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <button

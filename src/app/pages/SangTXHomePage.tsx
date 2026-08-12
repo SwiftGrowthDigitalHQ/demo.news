@@ -758,11 +758,11 @@ function DemoSection() {
               {t('demo.description')}
             </p>
             <div style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap' }}>
-              <a href="/buxar-news" onClick={e => { e.preventDefault(); navigate('/buxar-news'); }}
+              <a href="/demo" onClick={e => { e.preventDefault(); navigate('/demo'); }}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0f172a', color: '#fff', fontSize: 14, fontWeight: 600, padding: '12px 22px', borderRadius: 9, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                 {t('demo.exploreBtn')} <Icon d={ICONS.arrowRight} size={15} />
               </a>
-              <a href="/admin" onClick={e => { e.preventDefault(); navigate('/admin'); }}
+              <a href="/demo/admin" onClick={e => { e.preventDefault(); navigate('/demo/admin'); }}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: '#0f172a', fontSize: 14, fontWeight: 600, padding: '11px 20px', borderRadius: 9, textDecoration: 'none', border: '1.5px solid #e2e8f0', whiteSpace: 'nowrap' }}>
                 {t('demo.adminBtn')}
               </a>
