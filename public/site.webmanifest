@@ -1,7 +1,7 @@
 {
-  "name": "Buxar News",
-  "short_name": "Buxar News",
-  "description": "Latest local and regional news from Bihar.",
+  "name": "SangTX",
+  "short_name": "SangTX",
+  "description": "Build and manage your own branded news website and Android app.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

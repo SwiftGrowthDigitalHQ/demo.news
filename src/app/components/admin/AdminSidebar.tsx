@@ -34,7 +34,10 @@ const navSections = [
     label: 'MONETIZATION',
     items: [
       { id: 'ads', label: 'Advertisements', icon: Megaphone },
-      { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
+      { id: 'subscriptions', label: 'Newsletter Subscribers', icon: CreditCard },
+      { id: 'my-subscription', label: 'My Subscription', icon: CreditCard },
+      { id: 'tenant-payments', label: 'Payments', icon: CreditCard },
+      { id: 'tenants', label: 'Tenants', icon: Users },
     ]
   },
   {

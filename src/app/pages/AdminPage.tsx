@@ -11,6 +11,9 @@ import { AnalyticsDashboard } from '../components/admin/AnalyticsDashboard';
 import { MediaLibrary } from '../components/admin/MediaLibrary';
 import { SEOManagement } from '../components/admin/SEOManagement';
 import { SubscriptionSystem } from '../components/admin/SubscriptionSystem';
+import { SubscriptionDashboard } from '../components/admin/SubscriptionDashboard';
+import { TenantPaymentsPanel } from '../components/admin/TenantPaymentsPanel';
+import { TenantsPanel } from '../components/admin/TenantsPanel';
 import { UserManagement } from '../components/admin/UserManagement';
 import { SecurityPanel } from '../components/admin/SecurityPanel';
 import { SettingsPanel } from '../components/admin/SettingsPanel';
@@ -33,6 +36,9 @@ const adminSections = new Set([
   'roles',
   'ads',
   'subscriptions',
+  'my-subscription',
+  'tenant-payments',
+  'tenants',
   'seo',
   'notifications',
   'settings',
@@ -69,6 +75,12 @@ function renderAdminSection(section: string) {
       return <AdvertisementManagement />;
     case 'subscriptions':
       return <SubscriptionSystem />;
+    case 'my-subscription':
+      return <SubscriptionDashboard />;
+    case 'tenant-payments':
+      return <TenantPaymentsPanel />;
+    case 'tenants':
+      return <TenantsPanel />;
     case 'seo':
       return <SEOManagement />;
     case 'notifications':

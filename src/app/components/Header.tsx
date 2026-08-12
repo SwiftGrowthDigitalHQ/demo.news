@@ -33,8 +33,12 @@ export function Header() {
   const socialLinks = (siteSettings?.social_links ?? {}) as Record<string, string>;
 
   const brandName = siteSettings?.site_name ?? 'Buxar News';
-  const brandFirst = brandName.replace(/News.*/, '') || 'Buxar';
-  const brandSecond = brandName.includes('News') ? 'News' : '';
+  const tagline = (siteSettings?.theme_config as Record<string, unknown> | undefined)?.tagline as string | undefined ?? 'Fast. Accurate. Trusted.';
+
+  // Split brand name: last word gets red color (e.g. "Buxar News" → "Buxar " + "News")
+  const words = brandName.trim().split(' ');
+  const brandFirst = words.slice(0, -1).join(' ') + (words.length > 1 ? ' ' : '');
+  const brandLast = words.length > 1 ? words[words.length - 1] : '';
 
   const isAuthenticated = Boolean(user);
   const userName = profile?.full_name || user?.email?.split('@')[0] || 'User';
@@ -113,8 +117,8 @@ export function Header() {
             )}
             <div className="leading-tight">
               <span className="text-xl font-extrabold text-[#111827]">{brandFirst}</span>
-              <span className="text-xl font-extrabold text-red-600">{brandSecond}</span>
-              <p className="text-[9px] text-gray-500 tracking-wider -mt-0.5">Fast. Accurate. Trusted.</p>
+              <span className="text-xl font-extrabold text-red-600">{brandLast}</span>
+              <p className="text-[9px] text-gray-500 tracking-wider -mt-0.5">{tagline}</p>
             </div>
           </AppLink>
 

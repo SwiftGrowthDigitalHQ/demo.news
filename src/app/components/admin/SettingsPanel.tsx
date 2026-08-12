@@ -53,7 +53,7 @@ export function SettingsPanel() {
   const [siteName, setSiteName] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [faviconUrl, setFaviconUrl] = useState('');
-  const [tagline, setTagline] = useState('सीतामढ़ी की आवाज़ - Bihar Ki Khabar');
+  const [tagline, setTagline] = useState('Fast. Accurate. Trusted.');
   const [siteUrl, setSiteUrl] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('+91 98765 43210');

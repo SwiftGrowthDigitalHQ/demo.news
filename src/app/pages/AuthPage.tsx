@@ -31,7 +31,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
 
   const subtitle = useMemo(() => {
     switch (mode) {
-      case 'register': return 'Join Buxar News to save articles, get personalized news, and more.';
+      case 'register': return 'Create an account to save articles, get personalized news, and more.';
       case 'forgot': return 'Enter your email to receive a password reset link.';
       case 'reset': return 'Set a new password for your account.';
       default: return 'Sign in to your account to access personalized features.';

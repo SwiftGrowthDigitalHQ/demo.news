@@ -251,10 +251,13 @@ function WeatherWidget() {
     <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-1 text-xs text-gray-500 mb-1"><CloudSun className="h-3.5 w-3.5" /> Weather</div>
+          <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+            <CloudSun className="h-3.5 w-3.5" /> Weather
+            <span className="ml-1 text-[9px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded font-medium">DEMO</span>
+          </div>
           <div className="text-3xl font-bold text-gray-900">32°C</div>
-          <div className="text-xs text-gray-500 mt-0.5">New York, USA</div>
-          <div className="text-[11px] text-gray-400">Sunny • H: 33°C L: 22°C</div>
+          <div className="text-xs text-gray-500 mt-0.5">Patna, Bihar</div>
+          <div className="text-[11px] text-gray-400">Sunny • H: 34°C L: 24°C</div>
         </div>
         <div className="text-5xl">☀️</div>
       </div>

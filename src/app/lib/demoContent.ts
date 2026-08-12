@@ -43,7 +43,7 @@ export const DEMO_SITE_SETTINGS: SiteSettings = {
     instagram: 'https://instagram.com/buxarnews',
     youtube: 'https://youtube.com/@buxarnews',
   },
-  footer_text: 'Bihar\'s trusted digital news platform.',
+  footer_text: 'Bihar\'s trusted digital news platform delivering local, national, politics, crime, education, jobs, and business news.',
   theme_config: {
     primary_color: '#dc2626',
     secondary_color: '#0f172a',
