@@ -17,7 +17,7 @@ type AuthContextValue = {
   profile: AuthProfile | null;
   loading: boolean;
   ready: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null; profile: AuthProfile | null }>;
   signOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (password: string) => Promise<{ error: string | null }>;
@@ -39,12 +39,20 @@ async function loadProfile(userId: string): Promise<AuthProfile | null> {
     .maybeSingle();
 
   if (error || !data) {
+    if (import.meta.env.DEV) {
+      console.info('[auth] Role lookup completed', {
+        authUserId: userId,
+        profileFound: false,
+        roleSlug: null,
+        error: error?.message ?? null,
+      });
+    }
     return null;
   }
 
   const role = Array.isArray(data.role) ? data.role[0] : data.role;
 
-  return {
+  const profile = {
     id: data.id,
     full_name: data.full_name,
     email: data.email,
@@ -52,6 +60,16 @@ async function loadProfile(userId: string): Promise<AuthProfile | null> {
     role_slug: role?.slug ?? null,
     role_name: role?.name ?? null,
   };
+
+  if (import.meta.env.DEV) {
+    console.info('[auth] Role lookup completed', {
+      authUserId: userId,
+      profileFound: true,
+      roleSlug: profile.role_slug,
+    });
+  }
+
+  return profile;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -70,26 +88,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     let isMounted = true;
 
-    void client.auth.getSession().then(({ data: { session: currentSession } }) => {
+    const syncAuthState = async (nextSession: Session | null) => {
+      setSession(nextSession);
+      setLoading(true);
+      const nextProfile = nextSession?.user ? await loadProfile(nextSession.user.id) : null;
       if (!isMounted) return;
-      setSession(currentSession);
-      if (currentSession?.user) {
-        void loadProfile(currentSession.user.id).then(result => {
-          if (isMounted) setProfile(result);
-        });
-      }
+      setProfile(nextProfile);
       setLoading(false);
       setReady(true);
+    };
+
+    void client.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (isMounted) void syncAuthState(currentSession);
     });
 
-    const { data: listener } = client.auth.onAuthStateChange(async (_event, nextSession) => {
-      if (!isMounted) return;
-      setSession(nextSession);
-      if (nextSession?.user) {
-        setProfile(await loadProfile(nextSession.user.id));
-      } else {
-        setProfile(null);
-      }
+    const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
+      if (isMounted) void syncAuthState(nextSession);
     });
 
     return () => {
@@ -113,10 +127,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       canAccessAdmin,
       signIn: async (email: string, password: string) => {
         if (!client) {
-          return { error: 'Supabase is not configured.' };
+          return { error: 'Supabase is not configured.', profile: null };
         }
-        const { error } = await client.auth.signInWithPassword({ email, password });
-        return { error: error ? error.message : null };
+        const { data, error } = await client.auth.signInWithPassword({ email, password });
+        if (error || !data.user) {
+          return { error: error?.message ?? 'No authenticated user was returned.', profile: null };
+        }
+
+        setSession(data.session);
+        setLoading(true);
+        const resolvedProfile = await loadProfile(data.user.id);
+        setProfile(resolvedProfile);
+        setLoading(false);
+        setReady(true);
+
+        return { error: null, profile: resolvedProfile };
       },
       signOut: async () => {
         if (!client) return;

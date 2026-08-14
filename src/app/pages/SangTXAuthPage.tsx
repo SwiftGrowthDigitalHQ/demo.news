@@ -12,13 +12,10 @@ function SangTXLogo() {
     <a
       href="/"
       onClick={e => { e.preventDefault(); navigate('/'); }}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}
+      style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
       aria-label="SangTX home"
     >
-      <div style={{ width: 34, height: 34, background: '#dc2626', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: '#fff', fontSize: 15, fontWeight: 800, letterSpacing: '-0.03em' }}>S</span>
-      </div>
-      <span style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.04em' }}>SangTX</span>
+      <img src="/logo.jpg" alt="SangTX" style={{ width: 160, height: 48, objectFit: 'cover', objectPosition: 'center' }} />
     </a>
   );
 }
@@ -60,7 +57,7 @@ export function SangTXAuthPage({ mode }: { mode: AuthMode }) {
     const result = await auth.signIn(email, password);
     setLoading(false);
     if (result.error) { setError(result.error); return; }
-    navigate('/');
+    navigate(result.profile?.role_slug === 'super_admin' ? '/super-admin' : '/');
   };
 
   const handleRegister = async () => {

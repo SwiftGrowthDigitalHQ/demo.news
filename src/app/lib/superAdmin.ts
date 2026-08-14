@@ -16,7 +16,9 @@ export type TenantSubscriptionStatus =
   | 'PAYMENT_DUE'
   | 'PAYMENT_PENDING'
   | 'ACTIVE'
+  | 'PAST_DUE'
   | 'SUSPENDED'
+  | 'EXPIRED'
   | 'CANCELLED';
 
 export type SubscriptionPlan = 'monthly' | 'yearly';
@@ -181,8 +183,23 @@ export async function getAuthLevel(): Promise<AuthLevel> {
   if (!user) return 'NOT_AUTHENTICATED';
   
   const { data, error } = await supabase.rpc('get_auth_level');
-  
-  if (error || !data) return 'NOT_AUTHENTICATED';
+  if (error || !data) {
+    if (import.meta.env.DEV) {
+      console.info('[super-admin] Authorization check failed', {
+        authUserId: user.id,
+        authorizationResult: 'NOT_AUTHENTICATED',
+        error: error?.message ?? 'No authorization level returned.',
+      });
+    }
+    return 'NOT_AUTHENTICATED';
+  }
+
+  if (import.meta.env.DEV) {
+    console.info('[super-admin] Authorization check completed', {
+      authUserId: user.id,
+      authorizationResult: data,
+    });
+  }
   
   return data as AuthLevel;
 }
@@ -475,6 +492,20 @@ export async function createTenant(tenant: {
   return { success: true, tenant: data as Tenant };
 }
 
+export interface CustomerProvisioningInput {
+  ownerName: string; email: string; phone?: string; name: string; slug: string;
+  tagline?: string; description?: string; address?: string; socialLinks?: Record<string, string>;
+  language: 'en' | 'hi' | 'bho'; plan: SubscriptionPlan; androidRequested: boolean;
+}
+
+/** Calls the authenticated server-side invitation flow. No password or Auth ID is accepted from the browser. */
+export async function provisionCustomer(input: CustomerProvisioningInput): Promise<{ success: boolean; tenant?: Tenant; error?: string }> {
+  const supabase = await getSupabaseClient();
+  if (!supabase) return { success: false, error: 'Supabase not configured' };
+  const { data, error } = await supabase.functions.invoke('provision-customer', { body: input });
+  return error || data?.error ? { success: false, error: data?.error || error?.message } : { success: true, tenant: data.tenant as Tenant };
+}
+
 export async function updateTenantStatus(
   tenantId: string,
   status: TenantSubscriptionStatus,
@@ -504,6 +535,13 @@ export async function updateTenantStatus(
   });
   
   return { success: true };
+}
+
+export async function reactivateTenant(tenantId: string): Promise<{ success: boolean; restoredStatus?: string; error?: string }> {
+  const supabase = await getSupabaseClient();
+  if (!supabase) return { success: false, error: 'Supabase not configured' };
+  const { data, error } = await supabase.rpc('reactivate_tenant', { p_tenant_id: tenantId });
+  return error ? { success: false, error: error.message } : { success: true, restoredStatus: data as string };
 }
 
 export async function extendTenantTrial(
@@ -617,7 +655,7 @@ export async function getAllPayments(filters?: {
 
 export async function approvePayment(
   paymentId: string,
-  periodMonths: number
+  _periodMonths: number
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await getSupabaseClient();
   if (!supabase) return { success: false, error: 'Supabase not configured' };
@@ -625,53 +663,8 @@ export async function approvePayment(
   const admin = await getSuperAdminUser();
   if (!admin) return { success: false, error: 'Not authorized' };
   
-  // Get payment details
-  const { data: payment } = await supabase
-    .from('tenant_payments')
-    .select('*, tenants!inner(*)')
-    .eq('id', paymentId)
-    .single();
-  
-  if (!payment) return { success: false, error: 'Payment not found' };
-  
-  const now = new Date();
-  const periodEnd = new Date(now.getTime() + periodMonths * 30 * 24 * 60 * 60 * 1000);
-  
-  // Update payment
-  const { error: paymentError } = await supabase
-    .from('tenant_payments')
-    .update({
-      status: 'APPROVED',
-      reviewed_by: admin.id,
-      reviewed_at: now.toISOString(),
-      period_start: now.toISOString(),
-      period_end: periodEnd.toISOString(),
-    })
-    .eq('id', paymentId);
-  
-  if (paymentError) return { success: false, error: paymentError.message };
-  
-  // Update tenant subscription
-  const { error: tenantError } = await supabase
-    .from('tenants')
-    .update({
-      subscription_status: 'ACTIVE',
-      subscription_started_at: now.toISOString(),
-      subscription_ends_at: periodEnd.toISOString(),
-      current_period_start: now.toISOString(),
-      current_period_end: periodEnd.toISOString(),
-    })
-    .eq('id', payment.tenant_id);
-  
-  if (tenantError) return { success: false, error: tenantError.message };
-  
-  await logAuditEvent('payment_approved', 'tenant_payment', paymentId, {
-    tenant_id: payment.tenant_id,
-    amount: payment.amount,
-    period_months: periodMonths,
-  });
-  
-  return { success: true };
+  const { error } = await supabase.rpc('approve_subscription_payment', { p_payment_id: paymentId, p_reviewed_by_user_id: admin.id });
+  return error ? { success: false, error: error.message } : { success: true };
 }
 
 export async function rejectPayment(
@@ -684,33 +677,9 @@ export async function rejectPayment(
   const admin = await getSuperAdminUser();
   if (!admin) return { success: false, error: 'Not authorized' };
   
-  const { data: payment } = await supabase
-    .from('tenant_payments')
-    .select('tenant_id, amount')
-    .eq('id', paymentId)
-    .single();
-  
-  if (!payment) return { success: false, error: 'Payment not found' };
-  
-  const { error } = await supabase
-    .from('tenant_payments')
-    .update({
-      status: 'REJECTED',
-      rejection_reason: reason,
-      reviewed_by: admin.id,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq('id', paymentId);
-  
-  if (error) return { success: false, error: error.message };
-  
-  await logAuditEvent('payment_rejected', 'tenant_payment', paymentId, {
-    tenant_id: payment.tenant_id,
-    amount: payment.amount,
-    reason,
-  });
-  
-  return { success: true };
+  if (!reason.trim()) return { success: false, error: 'A rejection reason is required' };
+  const { error } = await supabase.rpc('reject_payment', { p_payment_id: paymentId, p_reason: reason.trim(), p_reviewed_by_user_id: admin.id });
+  return error ? { success: false, error: error.message } : { success: true };
 }
 
 // ─── PAYMENT CONFIG ──────────────────────────────────────────────────────────
