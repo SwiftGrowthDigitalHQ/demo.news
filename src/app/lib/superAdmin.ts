@@ -9,6 +9,11 @@ import { getSupabaseClient } from '../../lib/supabase';
 
 export type AuthLevel = 'NOT_AUTHENTICATED' | 'CUSTOMER' | 'CUSTOMER_ADMIN' | 'SUPER_ADMIN';
 
+export type AuthLevelResult =
+  | { kind: 'authorization_result'; level: AuthLevel }
+  | { kind: 'rpc_error'; message: string }
+  | { kind: 'no_result'; message: string };
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
 export type TenantSubscriptionStatus =
@@ -175,23 +180,34 @@ export interface AuditLog {
  * Get current user's authorization level
  * Uses database function for server-side enforcement
  */
-export async function getAuthLevel(): Promise<AuthLevel> {
+export async function getAuthLevel(): Promise<AuthLevelResult> {
   const supabase = await getSupabaseClient();
-  if (!supabase) return 'NOT_AUTHENTICATED';
+  if (!supabase) {
+    return { kind: 'no_result', message: 'Supabase is not configured.' };
+  }
   
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return 'NOT_AUTHENTICATED';
+  if (!user) return { kind: 'authorization_result', level: 'NOT_AUTHENTICATED' };
   
   const { data, error } = await supabase.rpc('get_auth_level');
-  if (error || !data) {
+  if (error) {
     if (import.meta.env.DEV) {
       console.info('[super-admin] Authorization check failed', {
         authUserId: user.id,
-        authorizationResult: 'NOT_AUTHENTICATED',
-        error: error?.message ?? 'No authorization level returned.',
+        error: error.message,
       });
     }
-    return 'NOT_AUTHENTICATED';
+    return { kind: 'rpc_error', message: error.message };
+  }
+
+  if (typeof data !== 'string' || !['NOT_AUTHENTICATED', 'CUSTOMER', 'CUSTOMER_ADMIN', 'SUPER_ADMIN'].includes(data)) {
+    if (import.meta.env.DEV) {
+      console.info('[super-admin] Authorization check returned no usable result', {
+        authUserId: user.id,
+        authorizationResult: data ?? null,
+      });
+    }
+    return { kind: 'no_result', message: 'The authorization service returned an invalid result.' };
   }
 
   if (import.meta.env.DEV) {
@@ -201,7 +217,7 @@ export async function getAuthLevel(): Promise<AuthLevel> {
     });
   }
   
-  return data as AuthLevel;
+  return { kind: 'authorization_result', level: data as AuthLevel };
 }
 
 /**

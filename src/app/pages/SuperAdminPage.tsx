@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { isSuperAdmin, getAuthLevel, type AuthLevel } from '../lib/superAdmin';
+import { getAuthLevel, type AuthLevelResult } from '../lib/superAdmin';
 import { useAppNavigation } from '../lib/navigation';
 import { SuperAdminDashboard } from '../components/superadmin/SuperAdminDashboard';
 import { CustomerManagement } from '../components/superadmin/CustomerManagement';
@@ -10,18 +10,23 @@ import { AuditLogsPanel } from '../components/superadmin/AuditLogsPanel';
 type SuperAdminView = 'dashboard' | 'customers' | 'payments' | 'settings' | 'audit';
 
 export function SuperAdminPage() {
-  const { navigate } = useAppNavigation();
-  const [authLevel, setAuthLevel] = useState<AuthLevel | null>(null);
-  const [currentView, setCurrentView] = useState<SuperAdminView>('dashboard');
+  const { navigate, pathname } = useAppNavigation();
+  const [authorization, setAuthorization] = useState<AuthLevelResult | null>(null);
+  const [currentView, setCurrentView] = useState<SuperAdminView>(() => pathname.startsWith('/super-admin/customers') ? 'customers' : 'dashboard');
+
+  const selectView = (view: SuperAdminView) => {
+    setCurrentView(view);
+    navigate(view === 'dashboard' ? '/super-admin' : `/super-admin/${view}`);
+  };
 
   useEffect(() => {
     async function checkAuth() {
       const level = await getAuthLevel();
-      setAuthLevel(level);
+      setAuthorization(level);
       
-      if (level !== 'SUPER_ADMIN') {
+      if (level.kind === 'authorization_result' && level.level !== 'SUPER_ADMIN') {
         // Redirect to login after a short delay for non-authenticated users
-        if (level === 'NOT_AUTHENTICATED') {
+        if (level.level === 'NOT_AUTHENTICATED') {
           setTimeout(() => navigate('/login'), 2000);
         }
       }
@@ -29,7 +34,7 @@ export function SuperAdminPage() {
     checkAuth();
   }, [navigate]);
 
-  if (authLevel === null) {
+  if (authorization === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
@@ -40,7 +45,22 @@ export function SuperAdminPage() {
     );
   }
 
-  if (authLevel !== 'SUPER_ADMIN') {
+  if (authorization.kind !== 'authorization_result') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center max-w-md px-6">
+          <h1 className="text-2xl font-bold text-slate-900 mb-3">Authorization Check Unavailable</h1>
+          <p className="text-slate-600">
+            {import.meta.env.DEV
+              ? authorization.message
+              : 'The server authorization check could not be completed. Please try again.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (authorization.level !== 'SUPER_ADMIN') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center max-w-md px-6">
@@ -54,12 +74,12 @@ export function SuperAdminPage() {
             You do not have permission to access the Super Admin Control Center.
           </p>
           <p className="text-sm text-slate-500 mb-6">
-            {authLevel === 'NOT_AUTHENTICATED' && 'Please login to continue.'}
-            {authLevel === 'CUSTOMER' && 'This area is restricted to platform administrators only.'}
-            {authLevel === 'CUSTOMER_ADMIN' && 'Customer admins cannot access the platform control center.'}
+            {authorization.level === 'NOT_AUTHENTICATED' && 'Please login to continue.'}
+            {authorization.level === 'CUSTOMER' && 'This area is restricted to platform administrators only.'}
+            {authorization.level === 'CUSTOMER_ADMIN' && 'Customer admins cannot access the platform control center.'}
           </p>
           <div className="flex gap-3 justify-center">
-            {authLevel === 'NOT_AUTHENTICATED' ? (
+            {authorization.level === 'NOT_AUTHENTICATED' ? (
               <button
                 onClick={() => navigate('/login')}
                 className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
@@ -112,31 +132,31 @@ export function SuperAdminPage() {
         <nav className="flex gap-1 px-6 pb-2">
           <NavButton
             active={currentView === 'dashboard'}
-            onClick={() => setCurrentView('dashboard')}
+            onClick={() => selectView('dashboard')}
             icon="📊"
             label="Dashboard"
           />
           <NavButton
             active={currentView === 'customers'}
-            onClick={() => setCurrentView('customers')}
+            onClick={() => selectView('customers')}
             icon="👥"
             label="Customers"
           />
           <NavButton
             active={currentView === 'payments'}
-            onClick={() => setCurrentView('payments')}
+            onClick={() => selectView('payments')}
             icon="💳"
             label="Payments"
           />
           <NavButton
             active={currentView === 'settings'}
-            onClick={() => setCurrentView('settings')}
+            onClick={() => selectView('settings')}
             icon="⚙️"
             label="Settings"
           />
           <NavButton
             active={currentView === 'audit'}
-            onClick={() => setCurrentView('audit')}
+            onClick={() => selectView('audit')}
             icon="📋"
             label="Audit Logs"
           />
@@ -146,7 +166,7 @@ export function SuperAdminPage() {
       {/* Content */}
       <main className="p-6">
         {currentView === 'dashboard' && <SuperAdminDashboard />}
-        {currentView === 'customers' && <CustomerManagement />}
+        {currentView === 'customers' && <CustomerManagement initialTenantId={pathname.match(/^\/super-admin\/customers\/([^/]+)$/)?.[1]} />}
         {currentView === 'payments' && <PaymentApprovalPanel />}
         {currentView === 'settings' && <PlatformSettingsPanel />}
         {currentView === 'audit' && <AuditLogsPanel />}

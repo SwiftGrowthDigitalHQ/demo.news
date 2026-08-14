@@ -36,6 +36,7 @@ async function loadProfile(userId: string): Promise<AuthProfile | null> {
     .from('users')
     .select('id, full_name, email, status, role:roles(slug, name)')
     .eq('auth_user_id', userId)
+    .is('deleted_at', null)
     .maybeSingle();
 
   if (error || !data) {
