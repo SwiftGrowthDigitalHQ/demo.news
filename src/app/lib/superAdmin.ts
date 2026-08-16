@@ -264,138 +264,246 @@ export async function getSuperAdminUser() {
 
 // ─── PLATFORM METRICS ────────────────────────────────────────────────────────
 
-export async function getPlatformMetrics(): Promise<PlatformMetrics | null> {
+export interface PlatformMetricsError {
+  error: true;
+  message: string;
+  technical_details?: string;
+}
+
+export type PlatformMetricsResult = PlatformMetrics | PlatformMetricsError;
+
+export async function getPlatformMetrics(): Promise<PlatformMetricsResult> {
   const supabase = await getSupabaseClient();
-  if (!supabase) return null;
-  
-  // Get tenant counts by status
-  const { data: tenants } = await supabase
-    .from('tenants')
-    .select('subscription_status, subscription_plan, subscription_ends_at, android_app_status, created_at')
-    .is('deleted_at', null);
-  
-  if (!tenants) return null;
-  
-  const now = new Date();
-  const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  
-  let total_customers = tenants.length;
-  let active_customers = 0;
-  let trial_customers = 0;
-  let suspended_customers = 0;
-  let cancelled_customers = 0;
-  let payment_due_customers = 0;
-  let payment_pending_customers = 0;
-  let expiring_soon = 0;
-  let overdue = 0;
-  let android_app_requests = 0;
-  let android_apps_active = 0;
-  let new_customers_this_month = 0;
-  
-  tenants.forEach(t => {
-    // Status counts
-    if (t.subscription_status === 'ACTIVE') active_customers++;
-    else if (t.subscription_status === 'TRIAL') trial_customers++;
-    else if (t.subscription_status === 'SUSPENDED') suspended_customers++;
-    else if (t.subscription_status === 'CANCELLED') cancelled_customers++;
-    else if (t.subscription_status === 'PAYMENT_DUE') payment_due_customers++;
-    else if (t.subscription_status === 'PAYMENT_PENDING') payment_pending_customers++;
-    
-    // Expiring soon
-    if (t.subscription_ends_at) {
-      const endsAt = new Date(t.subscription_ends_at);
-      if (endsAt >= now && endsAt <= sevenDaysFromNow) {
-        expiring_soon++;
-      }
-      if (endsAt < now && t.subscription_status !== 'SUSPENDED' && t.subscription_status !== 'CANCELLED') {
-        overdue++;
-      }
-    }
-    
-    // Android apps
-    if (t.android_app_status === 'REQUESTED' || t.android_app_status === 'IN_PROGRESS') {
-      android_app_requests++;
-    }
-    if (t.android_app_status === 'ACTIVE') {
-      android_apps_active++;
-    }
-    
-    // New customers this month
-    if (new Date(t.created_at) >= startOfMonth) {
-      new_customers_this_month++;
-    }
-  });
-  
-  // Get payment data for revenue
-  const { data: payments } = await supabase
-    .from('tenant_payments')
-    .select('amount, status, period_start')
-    .eq('status', 'APPROVED');
-  
-  let monthly_revenue = 0;
-  let yearly_revenue = 0;
-  let total_revenue = 0;
-  
-  if (payments) {
-    payments.forEach(p => {
-      total_revenue += p.amount;
-      // Approximate monthly vs yearly based on amount (monthly ₹499, yearly ₹5599)
-      if (p.amount >= 5000) {
-        yearly_revenue += p.amount;
-      } else {
-        monthly_revenue += p.amount;
-      }
-    });
+  if (!supabase) {
+    return {
+      error: true,
+      message: 'Database connection not available',
+      technical_details: 'Supabase client is not configured'
+    };
   }
   
-  // Churn calculation (cancelled this month)
-  const { count: churned_this_month } = await supabase
-    .from('tenants')
-    .select('id', { count: 'exact', head: true })
-    .eq('subscription_status', 'CANCELLED')
-    .gte('updated_at', startOfMonth.toISOString());
-  
-  return {
-    total_customers,
-    active_customers,
-    trial_customers,
-    suspended_customers,
-    cancelled_customers,
-    payment_due_customers,
-    payment_pending_customers,
-    monthly_revenue,
-    yearly_revenue,
-    total_revenue,
-    new_customers_this_month,
-    churned_this_month: churned_this_month || 0,
-    expiring_soon,
-    overdue,
-    android_app_requests,
-    android_apps_active,
-  };
+  try {
+    // Get tenant counts by status
+    const { data: tenants, error: tenantsError } = await supabase
+      .from('tenants')
+      .select('subscription_status, subscription_plan, subscription_ends_at, android_app_status, created_at')
+      .is('deleted_at', null);
+    
+    if (tenantsError) {
+      console.error('[super-admin] Error fetching tenants:', tenantsError);
+      return {
+        error: true,
+        message: 'Unable to load customer data',
+        technical_details: tenantsError.message
+      };
+    }
+    
+    // Empty database is valid
+    if (!tenants || tenants.length === 0) {
+      return {
+        total_customers: 0,
+        active_customers: 0,
+        trial_customers: 0,
+        suspended_customers: 0,
+        cancelled_customers: 0,
+        payment_due_customers: 0,
+        payment_pending_customers: 0,
+        monthly_revenue: 0,
+        yearly_revenue: 0,
+        total_revenue: 0,
+        new_customers_this_month: 0,
+        churned_this_month: 0,
+        expiring_soon: 0,
+        overdue: 0,
+        android_app_requests: 0,
+        android_apps_active: 0,
+      };
+    }
+    
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    let total_customers = tenants.length;
+    let active_customers = 0;
+    let trial_customers = 0;
+    let suspended_customers = 0;
+    let cancelled_customers = 0;
+    let payment_due_customers = 0;
+    let payment_pending_customers = 0;
+    let expiring_soon = 0;
+    let overdue = 0;
+    let android_app_requests = 0;
+    let android_apps_active = 0;
+    let new_customers_this_month = 0;
+    
+    tenants.forEach(t => {
+      // Status counts
+      if (t.subscription_status === 'ACTIVE') active_customers++;
+      else if (t.subscription_status === 'TRIAL') trial_customers++;
+      else if (t.subscription_status === 'SUSPENDED') suspended_customers++;
+      else if (t.subscription_status === 'CANCELLED') cancelled_customers++;
+      else if (t.subscription_status === 'PAYMENT_DUE') payment_due_customers++;
+      else if (t.subscription_status === 'PAYMENT_PENDING') payment_pending_customers++;
+      
+      // Expiring soon
+      if (t.subscription_ends_at) {
+        const endsAt = new Date(t.subscription_ends_at);
+        if (endsAt >= now && endsAt <= sevenDaysFromNow) {
+          expiring_soon++;
+        }
+        if (endsAt < now && t.subscription_status !== 'SUSPENDED' && t.subscription_status !== 'CANCELLED') {
+          overdue++;
+        }
+      }
+      
+      // Android apps
+      if (t.android_app_status === 'REQUESTED' || t.android_app_status === 'IN_PROGRESS') {
+        android_app_requests++;
+      }
+      if (t.android_app_status === 'ACTIVE') {
+        android_apps_active++;
+      }
+      
+      // New customers this month
+      if (t.created_at && new Date(t.created_at) >= startOfMonth) {
+        new_customers_this_month++;
+      }
+    });
+    
+    // Get payment data for revenue
+    const { data: payments, error: paymentsError } = await supabase
+      .from('tenant_payments')
+      .select('amount, status, plan')
+      .eq('status', 'APPROVED');
+    
+    // Payment errors are non-critical - continue with zero revenue
+    if (paymentsError) {
+      console.warn('[super-admin] Error fetching payments:', paymentsError);
+    }
+    
+    let monthly_revenue = 0;
+    let yearly_revenue = 0;
+    let total_revenue = 0;
+    
+    if (payments) {
+      payments.forEach(p => {
+        const amount = Number(p.amount) || 0;
+        total_revenue += amount;
+        
+        // Use plan field to categorize revenue
+        if (p.plan === 'yearly') {
+          yearly_revenue += amount;
+        } else if (p.plan === 'monthly') {
+          monthly_revenue += amount;
+        } else {
+          // Fallback to amount-based detection for legacy data
+          if (amount >= 5000) {
+            yearly_revenue += amount;
+          } else {
+            monthly_revenue += amount;
+          }
+        }
+      });
+    }
+    
+    // Churn calculation (cancelled this month)
+    const { count: churned_this_month, error: churnError } = await supabase
+      .from('tenants')
+      .select('id', { count: 'exact', head: true })
+      .eq('subscription_status', 'CANCELLED')
+      .gte('updated_at', startOfMonth.toISOString());
+    
+    // Churn error is non-critical
+    if (churnError) {
+      console.warn('[super-admin] Error calculating churn:', churnError);
+    }
+    
+    return {
+      total_customers,
+      active_customers,
+      trial_customers,
+      suspended_customers,
+      cancelled_customers,
+      payment_due_customers,
+      payment_pending_customers,
+      monthly_revenue,
+      yearly_revenue,
+      total_revenue,
+      new_customers_this_month,
+      churned_this_month: churned_this_month || 0,
+      expiring_soon,
+      overdue,
+      android_app_requests,
+      android_apps_active,
+    };
+  } catch (err) {
+    console.error('[super-admin] Unexpected error in getPlatformMetrics:', err);
+    return {
+      error: true,
+      message: 'Unexpected error loading dashboard',
+      technical_details: err instanceof Error ? err.message : String(err)
+    };
+  }
 }
 
 // ─── TENANT MANAGEMENT ───────────────────────────────────────────────────────
+
+export interface TenantsPage {
+  data: Tenant[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+interface TenantOwnerProfile {
+  email: string | null;
+  full_name: string | null;
+}
+
+async function getTenantOwnerProfiles(supabase: any, ownerAuthUserIds: Array<string | null>): Promise<Map<string, TenantOwnerProfile>> {
+  const ids = [...new Set(ownerAuthUserIds.filter((id): id is string => !!id))];
+  if (ids.length === 0) return new Map<string, TenantOwnerProfile>();
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('auth_user_id, email, full_name')
+    .in('auth_user_id', ids)
+    .is('deleted_at', null);
+
+  if (error || !data) {
+    console.warn('[super-admin] Unable to load tenant owner profiles:', error);
+    return new Map<string, TenantOwnerProfile>();
+  }
+
+  return new Map<string, TenantOwnerProfile>(
+    data.map((user: { auth_user_id: string | null; email: string | null; full_name: string | null }) => [
+      String(user.auth_user_id),
+      { email: user.email ?? null, full_name: user.full_name ?? null },
+    ])
+  );
+}
 
 export async function getAllTenants(filters?: {
   status?: TenantSubscriptionStatus;
   search?: string;
   sortBy?: 'created_at' | 'name' | 'subscription_ends_at';
   sortOrder?: 'asc' | 'desc';
-}): Promise<Tenant[]> {
+  page?: number;
+  pageSize?: number;
+}): Promise<TenantsPage> {
   const supabase = await getSupabaseClient();
-  if (!supabase) return [];
+  if (!supabase) return { data: [], total: 0, page: 1, pageSize: 25, totalPages: 0 };
+  
+  const page = filters?.page || 1;
+  const pageSize = filters?.pageSize || 25;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
   
   let query = supabase
     .from('tenants')
-    .select(`
-      *,
-      users!tenants_owner_auth_user_id_fkey(
-        email,
-        full_name
-      )
-    `)
+    .select('*', { count: 'exact' })
     .is('deleted_at', null);
   
   if (filters?.status) {
@@ -410,16 +518,37 @@ export async function getAllTenants(filters?: {
   const sortOrder = filters?.sortOrder || 'desc';
   query = query.order(sortBy, { ascending: sortOrder === 'asc' });
   
-  const { data, error } = await query;
+  // Add secondary sort by ID for deterministic ordering
+  if (sortBy !== 'created_at') {
+    query = query.order('created_at', { ascending: sortOrder === 'asc' });
+  }
+  query = query.order('id', { ascending: true });
   
-  if (error || !data) return [];
+  // Apply pagination
+  query = query.range(from, to);
   
-  // Map joined user data
-  return data.map((t: any) => ({
-    ...t,
-    owner_email: t.users?.email || null,
-    owner_name: t.users?.full_name || null,
-  }));
+  const { data, error, count } = await query;
+  
+  if (error || !data) {
+    console.error('[super-admin] Error fetching tenants:', error);
+    return { data: [], total: 0, page, pageSize, totalPages: 0 };
+  }
+  
+  const total = count || 0;
+  const totalPages = Math.ceil(total / pageSize);
+  const ownerProfiles = await getTenantOwnerProfiles(supabase, data.map((tenant: any) => tenant.owner_auth_user_id));
+  
+  const tenants = data.map((t: any) => {
+    const ownerProfile = t.owner_auth_user_id ? ownerProfiles.get(t.owner_auth_user_id) : null;
+
+    return {
+      ...t,
+      owner_email: ownerProfile?.email ?? t.contact_email ?? null,
+      owner_name: ownerProfile?.full_name ?? null,
+    };
+  });
+  
+  return { data: tenants, total, page, pageSize, totalPages };
 }
 
 export async function getTenantById(id: string): Promise<Tenant | null> {
@@ -428,25 +557,23 @@ export async function getTenantById(id: string): Promise<Tenant | null> {
   
   const { data, error } = await supabase
     .from('tenants')
-    .select(`
-      *,
-      users!tenants_owner_auth_user_id_fkey(
-        email,
-        full_name
-      )
-    `)
+    .select('*')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle();
   
   if (error || !data) return null;
   
+  const ownerProfile = data.owner_auth_user_id
+    ? (await getTenantOwnerProfiles(supabase, [data.owner_auth_user_id])).get(data.owner_auth_user_id) ?? null
+    : null;
+  
   const result: any = data;
   
   return {
     ...result,
-    owner_email: result.users?.email || null,
-    owner_name: result.users?.full_name || null,
+    owner_email: ownerProfile?.email ?? result.contact_email ?? null,
+    owner_name: ownerProfile?.full_name ?? null,
   };
 }
 
