@@ -304,7 +304,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!client) {
           return { error: 'Supabase is not configured.' };
         }
-        const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
+        // Guard against localhost VITE_SITE_URL being baked into the bundle.
+        const rawSiteUrl = import.meta.env.VITE_SITE_URL as string | undefined;
+        const siteUrl = (rawSiteUrl && !rawSiteUrl.includes('localhost'))
+          ? rawSiteUrl
+          : window.location.origin;
         const { error } = await client.auth.resetPasswordForEmail(email, {
           redirectTo: `${siteUrl}/reset-password`,
         });
