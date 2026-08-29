@@ -1,0 +1,10 @@
+{
+  "name": "SangTX",
+  "short_name": "SangTX",
+  "description": "Build and manage your own branded news website and Android app.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

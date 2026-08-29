@@ -1,0 +1,138 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.vscode/
+.tmp-*
+coverage/
+*.log
+supabase/.temp/
+
+# Accidental temp/lock files from file system
+.fuse_hidden*
+
+# IDE-local config (Kiro / AI workspace)
+.kiro/
+AGENTS.md
+SOUL.md
+TOOLS.md
+IDENTITY.md
+USER.md
+HEARTBEAT.md
+BOOTSTRAP.md
+memory/
+
+# Backup files generated during development
+*.backup
+*.patch
+src/app/App.tsx.backup
+src/app/lib/admin.ts.backup
+src/app/lib/cms.tsx.backup
+src/app/lib/cms_tenant_aware.tsx.patch
+
+# Generated diff artifacts (accidental from previous sessions)
+"-files --others --exclude-standard"
+
+# Root-level diagnostic/report .md files (not application documentation)
+ADMIN_*.md
+AI_BRAIN_*.md
+ANALYTICS_*.md
+APPLICATION_LAYER_*.md
+APPLY_*.md
+ASSIGN_*.md
+BROWSER_TEST_*.md
+COMPLETE_*.md
+CONFIGURE_*.md
+CUSTOMER_LOGIN_*.md
+CUSTOM_DOMAINS_*.md
+DEPLOY*.md
+EDGE_FUNCTION_*.md
+EMAIL_VERIFICATION_*.md
+FACEBOOK_*.md
+FINAL_*.md
+FIX_*.md
+FOOTER_MANAGEMENT_*.md
+FRONTEND_FIX_*.md
+GA4_*.md
+GOOGLE_*.md
+GSC_*.md
+HOTFIX_*.md
+IMAGE_*.md
+IMPLEMENTATION_COMPLETE.txt
+INSPECT_*.md
+INSTALL_*.md
+LOGO_*.md
+META_*.md
+MIGRATION_STATUS*.md
+MULTI_TENANT_*.md
+MULTITENANT_*.md
+PAYMENT_*.md
+PHASE*.md
+PHASE_*.md
+PLUGIN_*.md
+PRODUCTION_*.md
+README_MULTI_TENANT_*.md
+ROLE_*.md
+RUN_PLUGIN_*.md
+RUNTIME_*.md
+SECURITY_*.md
+SEO_MANAGER_*.md
+SUBSCRIPTION_*.md
+SUPABASE_CLI_*.md
+TENANT_*.md
+TEST_AUTH_*.md
+URGENT_*.md
+VIEW_TRACKING_*.md
+YOUTUBE_*.md
+
+# Root-level diagnostic SQL (not migrations)
+APPLY_SECURITY_FIXES_MANUAL.sql
+ASSIGN_ADMIN_ROLE.sql
+CHECK_DATABASE_STATE.sql
+DIAGNOSE_SUBSCRIPTION_BUG.sql
+DIAGNOSTIC_CORRECTED.sql
+EXECUTE_THIS_MIGRATION.sql
+FIX_SUBSCRIPTION_DATA.sql
+GA4_TEST_DIAGNOSTICS.sql
+INSPECT_PRODUCTION_FUNCTIONS.sql
+PAYMENT_SECURITY_VERIFICATION.sql
+VERIFY_GDRIVE_DATABASE_OBJECTS.sql
+VERIFY_GOOGLE_DRIVE_INTEGRATION.sql
+VERIFY_MIGRATION.sql
+verify_public_tenant_security.sql
+verify_rls_security.sql
+audit_rls_policies.sql
+check_current_rls.sql
+add_tenant_columns.sql
+
+# Root-level text artifacts
+DEPLOYMENT_BLOCKERS.txt
+EXECUTE_MIGRATIONS.txt
+IMPLEMENTATION_COMPLETE.txt
+PHASE_2_FILES_SUMMARY.txt
+PHASE_2_STATUS.txt
+PHASE_2_STATUS_SUMMARY.txt
+
+# Local test/debug scripts at root level (not application code)
+test-anonymous-tenant-access.mjs
+test-tenant-resolution.html
+check-tenants.mjs
+fix-tenant-rls.mjs
+apply-tenant-migration.mjs
+inspect-tenants-schema.mjs
+create-fake-news-tenant.mjs
+apply_custom_domains_migration.js
+check_memberships_schema.cjs
+
+# docs/ directory (local notes, not app source)
+docs/
+
+# supabase verification scripts
+supabase/verification/
+
+# Shell scripts with local credentials
+SET_FACEBOOK_SECRETS.sh
+
+# dev-only utility scripts (not application source, may reference secrets)
+scripts/

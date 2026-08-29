@@ -1,0 +1,55 @@
+# Supabase Edge Functions Configuration
+
+# Google Drive OAuth Callback
+# This function receives external OAuth redirects from Google and does NOT have
+# a Supabase JWT. JWT verification must be disabled for this endpoint only.
+# Security is maintained through OAuth state validation and CSRF protection.
+[functions.google-drive-oauth-callback]
+verify_jwt = false
+
+# YouTube OAuth Callback
+# This function receives external OAuth redirects from Google and does NOT have
+# a Supabase JWT. JWT verification must be disabled for this endpoint only.
+# Security is maintained through OAuth state validation, tenant verification,
+# and CSRF protection. Tokens are encrypted before database storage.
+[functions.youtube-oauth-callback]
+verify_jwt = false
+
+# ads.txt Endpoint
+# This function serves the public ads.txt file for advertising verification.
+# It must be publicly accessible without authentication as per ads.txt specification.
+# Security is maintained through tenant isolation (RLS) and service-role key usage.
+# No sensitive data is exposed - only the publisher ID intended for public ads.txt.
+[functions.ads-txt]
+verify_jwt = false
+# GA4 OAuth Callback
+# This function receives external OAuth redirects from Google and does NOT have
+# a Supabase JWT. JWT verification must be disabled for this endpoint only.
+# Security is maintained through OAuth state validation, tenant verification,
+# and CSRF protection. Tokens are encrypted before database storage.
+[functions.ga4-oauth-callback]
+verify_jwt = false
+
+# GSC OAuth Callback
+# This function receives external OAuth redirects from Google and does NOT have
+# a Supabase JWT. JWT verification must be disabled for this endpoint only.
+# Security is maintained through OAuth state validation, tenant verification,
+# and CSRF protection. Tokens are encrypted before database storage.
+[functions.gsc-oauth-callback]
+verify_jwt = false
+
+# Facebook OAuth Callback
+# This function receives external OAuth redirects from Facebook/Meta and does NOT have
+# a Supabase JWT. JWT verification must be disabled for this endpoint only.
+# Security is maintained through OAuth state validation, tenant verification,
+# and CSRF protection. Tokens are encrypted before database storage.
+[functions.facebook-oauth-callback]
+verify_jwt = false
+
+# Media Proxy
+# This function serves Google Drive images using server-side authentication.
+# It must be publicly accessible (no JWT verification) to allow image display
+# on public article pages. Security is maintained by validating file references
+# in the database before serving.
+[functions.media-proxy]
+verify_jwt = false

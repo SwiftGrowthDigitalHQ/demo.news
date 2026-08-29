@@ -1,0 +1,619 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SANGTX PREMIUM MOTION & DEPTH SYSTEM
+   
+   High-end UI/UX enhancements for professional SaaS experience.
+   Integrates with Framer Motion for cohesive interaction language.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   1. DEPTH & LAYERING SYSTEM
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Shadow depths — creates visual hierarchy */
+  --shadow-depth-1: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-depth-2: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-depth-3: 0 8px 24px rgba(0, 0, 0, 0.15);
+  --shadow-depth-4: 0 12px 32px rgba(0, 0, 0, 0.18);
+  --shadow-depth-5: 0 16px 48px rgba(0, 0, 0, 0.22);
+  --shadow-depth-premium: 0 20px 60px rgba(15, 23, 42, 0.25);
+  
+  /* Accent depth — red glow for premium moments */
+  --shadow-accent-light: 0 0px 16px rgba(220, 38, 38, 0.08);
+  --shadow-accent-medium: 0 4px 24px rgba(220, 38, 38, 0.12);
+  --shadow-accent-strong: 0 8px 32px rgba(220, 38, 38, 0.18);
+  
+  /* Glass/surface layers */
+  --glass-light: rgba(255, 255, 255, 0.75);
+  --glass-dark: rgba(15, 23, 42, 0.85);
+  --backdrop-blur-light: blur(10px);
+  --backdrop-blur-strong: blur(16px);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   2. PREMIUM CARDS & SURFACES
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-premium-card {
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  background: #fff;
+  transition: all 0.32s cubic-bezier(0.25, 1, 0.5, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sangtx-premium-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0) 0%, rgba(220, 38, 38, 0.02) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.sangtx-premium-card:hover::before {
+  opacity: 1;
+}
+
+.sangtx-premium-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-depth-4), var(--shadow-accent-light);
+  border-color: rgba(220, 38, 38, 0.08);
+}
+
+/* Elevated variant */
+.sangtx-premium-card-elevated {
+  box-shadow: var(--shadow-depth-2);
+}
+
+.sangtx-premium-card-elevated:hover {
+  box-shadow: var(--shadow-depth-5), var(--shadow-accent-light);
+}
+
+/* Dark variant */
+.sangtx-premium-card-dark {
+  background: #0f172a;
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.sangtx-premium-card-dark::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0) 0%, rgba(220, 38, 38, 0.04) 100%);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3. HERO ATMOSPHERE & BACKGROUNDS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-hero-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sangtx-atmosphere-glow-1 {
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 60%;
+  height: 80%;
+  background: radial-gradient(ellipse at center, 
+    rgba(220, 38, 38, 0.08) 0%, 
+    rgba(220, 38, 38, 0.03) 30%, 
+    transparent 70%
+  );
+  filter: blur(40px);
+  animation: float-glow 12s ease-in-out infinite;
+}
+
+.sangtx-atmosphere-glow-2 {
+  position: absolute;
+  bottom: -15%;
+  left: -5%;
+  width: 50%;
+  height: 70%;
+  background: radial-gradient(ellipse at center, 
+    rgba(15, 23, 42, 0.05) 0%, 
+    transparent 65%
+  );
+  filter: blur(50px);
+  animation: float-glow 15s ease-in-out infinite reverse;
+}
+
+@keyframes float-glow {
+  0%, 100% { opacity: 0.7; transform: translateY(0px); }
+  50% { opacity: 1; transform: translateY(-10px); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. PREMIUM BUTTONS & CTAs
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-button-premium {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 28px;
+  border: none;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #dc2626;
+  color: #fff;
+  min-height: 44px;
+  white-space: nowrap;
+  box-shadow: var(--shadow-depth-2);
+}
+
+.sangtx-button-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sangtx-button-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(220, 38, 38, 0.35);
+  background: #b91c1c;
+}
+
+.sangtx-button-premium:hover::before {
+  opacity: 1;
+}
+
+.sangtx-button-premium:active {
+  transform: scale(0.97);
+}
+
+/* Secondary button */
+.sangtx-button-secondary {
+  background: transparent;
+  color: #0f172a;
+  border: 1.5px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.sangtx-button-secondary:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: #fef2f2;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-accent-light);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   5. SECTION ENTRANCES & SCROLL REVEALS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-section-fade-enter {
+  animation: section-fade-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes section-fade-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.sangtx-feature-card {
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  background: #fff;
+  transition: all 0.32s cubic-bezier(0.25, 1, 0.5, 1);
+  position: relative;
+}
+
+.sangtx-feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #dc2626 50%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sangtx-feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-depth-3), var(--shadow-accent-light);
+  border-color: rgba(220, 38, 38, 0.1);
+}
+
+.sangtx-feature-card:hover::before {
+  opacity: 1;
+}
+
+.sangtx-feature-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef2f2;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  transition: all 0.32s cubic-bezier(0.25, 1, 0.5, 1);
+  color: #dc2626;
+}
+
+.sangtx-feature-card:hover .sangtx-feature-icon {
+  transform: rotate(-4deg) scale(1.1);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  box-shadow: var(--shadow-accent-medium);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   6. PRICING TIER CARDS — Premium highlight effect
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-pricing-card {
+  padding: 32px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  background: #fff;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sangtx-pricing-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.5) 0%, 
+    rgba(220, 38, 38, 0.02) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.sangtx-pricing-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-depth-4), var(--shadow-accent-medium);
+}
+
+.sangtx-pricing-card:hover::before {
+  opacity: 1;
+}
+
+/* Highlighted tier */
+.sangtx-pricing-recommended {
+  border-color: #dc2626;
+  box-shadow: var(--shadow-depth-3), var(--shadow-accent-light);
+  transform: scale(1.02);
+  z-index: 10;
+}
+
+.sangtx-pricing-recommended::after {
+  content: 'RECOMMENDED';
+  position: absolute;
+  top: -2px;
+  left: 20px;
+  background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 12px;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   7. PREMIUM DIVIDERS & SEPARATORS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-divider-gradient {
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #dc2626 50%, 
+    transparent 100%
+  );
+  margin: 64px 0;
+}
+
+.sangtx-divider-gradient.animate {
+  animation: divider-pulse 3s ease-in-out infinite;
+}
+
+@keyframes divider-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   8. FOOTER ENHANCEMENTS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-footer-column {
+  opacity: 0;
+  animation: footer-column-appear 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.sangtx-footer-column:nth-child(1) { animation-delay: 0s; }
+.sangtx-footer-column:nth-child(2) { animation-delay: 0.1s; }
+.sangtx-footer-column:nth-child(3) { animation-delay: 0.2s; }
+.sangtx-footer-column:nth-child(4) { animation-delay: 0.3s; }
+
+@keyframes footer-column-appear {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sangtx-footer-link {
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  position: relative;
+}
+
+.sangtx-footer-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #dc2626;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.sangtx-footer-link:hover::after {
+  transform: scaleX(1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   9. 3D DEPTH AWARENESS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-perspective-container {
+  perspective: 1200px;
+  perspective-origin: center;
+}
+
+.sangtx-3d-layer-1 {
+  transform: translateZ(0px);
+}
+
+.sangtx-3d-layer-2 {
+  transform: translateZ(20px);
+}
+
+.sangtx-3d-layer-3 {
+  transform: translateZ(40px);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   10. TEXT REFINEMENTS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-headline {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.sangtx-subheading {
+  color: #64748b;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.7;
+}
+
+/* Premium accent text */
+.sangtx-text-accent {
+  color: #dc2626;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   11. BADGE PREMIUM STYLING
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.06);
+}
+
+.sangtx-badge-premium:hover {
+  background: #fee2e2;
+  box-shadow: var(--shadow-accent-light);
+  transform: translateY(-2px);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   12. RESPONSIVE ADJUSTMENTS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /* Reduce animation complexity on tablets */
+  .sangtx-premium-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-depth-3);
+  }
+
+  .sangtx-feature-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .sangtx-pricing-recommended {
+    transform: scale(1.01);
+  }
+
+  .sangtx-button-premium {
+    padding: 11px 22px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Minimal motion on mobile */
+  .sangtx-premium-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-depth-2);
+  }
+
+  .sangtx-feature-card:hover,
+  .sangtx-pricing-card:hover {
+    transform: none;
+  }
+
+  .sangtx-pricing-recommended {
+    transform: scale(1);
+  }
+
+  .sangtx-atmosphere-glow-1,
+  .sangtx-atmosphere-glow-2 {
+    animation: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   13. ACCESSIBILITY — Reduced motion support
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .sangtx-premium-card:hover,
+  .sangtx-button-premium:hover,
+  .sangtx-feature-card:hover {
+    transform: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   14. PERFORMANCE OPTIMIZATIONS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.sangtx-will-change-transform {
+  will-change: transform;
+}
+
+.sangtx-gpu-accelerated {
+  transform: translate3d(0, 0, 0);
+  will-change: transform, opacity;
+}
+
+/* Remove will-change after interaction */
+.sangtx-gpu-accelerated.reduce {
+  will-change: auto;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   15. PLUGIN MANAGEMENT ANIMATIONS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Drawer slide-in animation */
+@keyframes drawer-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-slide-in {
+  animation: drawer-slide-in 0.3s ease-out;
+}
+
+/* Plugin card animations */
+.plugin-card {
+  padding: 20px;
+  border-radius: 12px;
+  border-width: 1px;
+  border-style: solid;
+  animation: slide-up 0.4s ease-out backwards;
+  transition: all 0.2s ease-out;
+}
+
+.plugin-card:hover {
+  border-color: var(--foreground);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.plugin-icon-container {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border-width: 1px;
+  border-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease-out;
+}
+
+.plugin-card:hover .plugin-icon-container {
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plugin-card,
+  .plugin-icon-container {
+    transition: none;
+  }
+  
+  .plugin-card:hover {
+    transform: none;
+  }
+  
+  .drawer-slide-in {
+    animation: none;
+  }
+}
