@@ -2284,10 +2284,10 @@ export async function getTopArticles(limit = 10, dateRange?: { start: Date; end:
   const tenantId = await getCurrentUserTenantId();
   const supabase = client();
 
-  // Get article views from article_views table
+  // Step 1: Fetch article_views for the tenant/date range
   let viewsQuery = supabase
     .from('article_views')
-    .select('article_id, session_id, viewed_at, articles(id, title, slug, published_at, tenant_id)')
+    .select('article_id, session_id, viewed_at')
     .eq('tenant_id', tenantId);
 
   if (dateRange) {
@@ -2299,16 +2299,33 @@ export async function getTopArticles(limit = 10, dateRange?: { start: Date; end:
   const { data: views, error } = await viewsQuery;
   if (error) throw error;
 
+  if (!views || views.length === 0) {
+    return [];
+  }
+
+  // Step 2: Fetch corresponding articles
+  const articleIds = [...new Set(views.map(v => v.article_id))];
+  const { data: articles, error: articlesError } = await supabase
+    .from('articles')
+    .select('id, title, slug, published_at, tenant_id')
+    .in('id', articleIds)
+    .eq('tenant_id', tenantId);
+
+  if (articlesError) throw articlesError;
+
+  // Create lookup map for articles
+  const articlesMap = new Map(articles?.map(a => [a.id, a]) || []);
+
   // Aggregate by article
   const articleStats = new Map<string, {
-    article: any;
+    article: { id: string; title: string; slug: string; published_at: string | null };
     views: number;
     uniqueVisitors: Set<string>;
     totalTime: number;
   }>();
 
   views?.forEach(view => {
-    const article = (view as any).articles;
+    const article = articlesMap.get(view.article_id);
     if (!article) return;
 
     if (!articleStats.has(article.id)) {
