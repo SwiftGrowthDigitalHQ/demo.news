@@ -1,9 +1,15 @@
-import { Bell, Search, Sun, Moon, Menu, ChevronDown, Building2 } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, Search, Sun, Moon, Menu, ChevronDown, Building2, X } from 'lucide-react';
 import { useCms } from '../../lib/cms';
 import { useTenant } from '../../lib/useTenant';
 import { useSubscriptionAccess } from '../../lib/useSubscriptionAccess';
 import { getStatusMessage, getStatusColor } from '../../lib/subscriptionService';
 import { resolveAssetUrl } from '../../lib/assetResolver';
+import { useIsMobile } from '../ui/use-mobile';
+import { Sheet, SheetContent } from '../ui/sheet';
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
 
 interface Props {
   section: string;
@@ -46,6 +52,9 @@ const sectionTitles: Record<string, { title: string; breadcrumb: string }> = {
 };
 
 export function AdminHeader({ section, darkMode, onToggleDark, onToggleNotifications, onToggleSidebar }: Props) {
+  const isMobile = useIsMobile();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const info = sectionTitles[section] || { title: 'Dashboard', breadcrumb: 'Home' };
   const { siteSettings } = useCms();
   const { tenant } = useTenant();
@@ -70,34 +79,35 @@ export function AdminHeader({ section, darkMode, onToggleDark, onToggleNotificat
 
   return (
     <header
-      className="flex items-center gap-4 px-6 border-b dark:bg-gray-800 dark:border-gray-700"
+      className="flex items-center gap-3 px-4 border-b dark:bg-gray-800 dark:border-gray-700"
       style={{
-        height: 60,
+        height: 56,
         background: darkMode ? undefined : '#ffffff',
         borderColor: darkMode ? undefined : 'rgba(15,23,42,0.08)',
         flexShrink: 0,
         position: 'sticky',
         top: 0,
-        zIndex: 20,
+        zIndex: 30,
       }}
     >
+      {/* Mobile Menu Button */}
       <button
         onClick={onToggleSidebar}
         className="flex items-center justify-center rounded-lg dark:text-gray-300 dark:border-gray-600"
-        style={{ width: 36, height: 36, color: darkMode ? undefined : '#64748b', border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)' }}
+        style={{ width: 40, height: 40, color: darkMode ? undefined : '#64748b', border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)' }}
+        aria-label="Open navigation menu"
       >
-        <Menu size={18} />
+        <Menu size={20} />
       </button>
 
-      <div className="flex-1">
-        <h1 className="dark:text-white" style={{ fontSize: 16, fontWeight: 600, color: darkMode ? undefined : '#0f172a', lineHeight: 1.2 }}>{info.title}</h1>
-        <p className="dark:text-gray-400" style={{ fontSize: 11, color: darkMode ? undefined : '#94a3b8' }}>{info.breadcrumb}</p>
+      {/* Page Title */}
+      <div className="flex-1 min-w-0">
+        <h1 className="dark:text-white truncate" style={{ fontSize: 16, fontWeight: 600, color: darkMode ? undefined : '#0f172a', lineHeight: 1.2 }}>{info.title}</h1>
+        <p className="dark:text-gray-400 truncate" style={{ fontSize: 11, color: darkMode ? undefined : '#94a3b8' }}>{info.breadcrumb}</p>
       </div>
 
-      <div
-        className="hidden md:flex items-center gap-2 rounded-lg px-3 dark:bg-gray-700 dark:border-gray-600"
-        style={{ background: darkMode ? undefined : '#f8fafc', border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)', height: 36 }}
-      >
+      {/* Desktop Search - Hidden on Mobile */}
+      <div className="hidden md:flex items-center gap-2 rounded-lg px-3 dark:bg-gray-700 dark:border-gray-600" style={{ background: darkMode ? undefined : '#f8fafc', border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)', height: 36 }}>
         <Search size={14} style={{ color: '#94a3b8' }} />
         <input
           placeholder="Search articles, journalists..."
@@ -106,92 +116,153 @@ export function AdminHeader({ section, darkMode, onToggleDark, onToggleNotificat
         />
       </div>
 
-      <div style={{ fontSize: 11, color: '#94a3b8' }} className="hidden lg:block dark:text-gray-400">{dateStr}</div>
+      {/* Mobile Search Button */}
+      <button
+        onClick={() => setSearchOpen(true)}
+        className="md:hidden flex items-center justify-center rounded-lg dark:text-gray-300 dark:border-gray-600"
+        style={{ width: 40, height: 40, color: darkMode ? undefined : '#64748b', border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)' }}
+        aria-label="Open search"
+      >
+        <Search size={18} />
+      </button>
 
+      {/* Date - Hidden on Mobile */}
+      <div className="hidden lg:block" style={{ fontSize: 11, color: '#94a3b8' }}>{dateStr}</div>
+
+      {/* Subscription Badge - Hidden on Small Mobile */}
       {showSubscriptionBadge && (
-        <div className={`px-3 py-1.5 rounded-lg text-xs font-medium ${getStatusColor(access.status!)}`}>
+        <div className={`hidden sm:flex px-3 py-1.5 rounded-lg text-xs font-medium ${getStatusColor(access.status!)}`}>
           {getStatusMessage(access.status!)}
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
+        {/* Dark Mode Toggle */}
         <button
           onClick={onToggleDark}
           className="flex items-center justify-center rounded-lg dark:text-yellow-400 dark:border-gray-600"
-          style={{ width: 36, height: 36, color: darkMode ? undefined : '#64748b', border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)' }}
+          style={{ width: 40, height: 40, color: darkMode ? undefined : '#64748b', border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)' }}
+          aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
+        {/* Notifications */}
         <button
           onClick={onToggleNotifications}
           className="relative flex items-center justify-center rounded-lg dark:text-gray-300 dark:border-gray-600"
-          style={{ width: 36, height: 36, color: darkMode ? undefined : '#64748b', border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)' }}
+          style={{ width: 40, height: 40, color: darkMode ? undefined : '#64748b', border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)' }}
+          aria-label="Notifications"
         >
-          <Bell size={16} />
+          <Bell size={18} />
           <span
             className="absolute flex items-center justify-center rounded-full"
             style={{ top: 6, right: 6, width: 8, height: 8, background: '#dc2626', fontSize: 9, color: '#fff' }}
           />
         </button>
 
-        <button className="flex items-center gap-2 rounded-lg px-2 dark:border-gray-600 dark:text-white" style={{ height: 36, border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)' }}>
-          {tenantLogoUrl ? (
-            // Tenant Logo
-            <div
-              className="rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
-              style={{ 
-                width: 26, 
-                height: 26,
-                background: '#f8fafc',
-                border: '1px solid rgba(15,23,42,0.1)',
-              }}
-            >
-              <img
-                src={tenantLogoUrl}
-                alt={contextName}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                }}
-                onError={(e) => {
-                  // Fallback to initials if image fails to load
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.style.background = brandColor;
-                    const fallback = document.createElement('div');
-                    fallback.innerHTML = contextName.substring(0, 1).toUpperCase();
-                    fallback.style.color = '#fff';
-                    fallback.style.fontSize = '11px';
-                    fallback.style.fontWeight = '700';
-                    parent.appendChild(fallback);
-                  }
-                }}
-              />
-            </div>
-          ) : (
-            // Fallback to initials (for Super Admin or no logo)
-            <div
-              className="rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ 
-                width: 26, 
-                height: 26, 
-                background: access.isSuperAdmin ? '#7c3aed' : brandColor, 
-                color: '#fff', 
-                fontSize: 11, 
-                fontWeight: 700 
-              }}
-            >
-              {access.isSuperAdmin ? <Building2 size={14} color="#fff" /> : contextName.substring(0, 1).toUpperCase()}
-            </div>
-          )}
-          <span className="dark:text-gray-200" style={{ fontSize: 13, color: darkMode ? undefined : '#0f172a', fontWeight: 500 }}>{contextName}</span>
-          <ChevronDown size={13} style={{ color: '#94a3b8' }} />
-        </button>
+        {/* Profile / Tenant Selector */}
+        <div className="relative">
+          <button
+            onClick={() => setProfileOpen(true)}
+            className="flex items-center gap-2 rounded-lg px-3 dark:border-gray-600 dark:text-white"
+            style={{ height: 40, border: darkMode ? undefined : '1px solid rgba(15,23,42,0.08)' }}
+            aria-label="Profile menu"
+            aria-expanded={profileOpen}
+          >
+            {tenantLogoUrl ? (
+              <div
+                className="rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                style={{ width: 28, height: 28, background: '#f8fafc', border: '1px solid rgba(15,23,42,0.1)' }}
+              >
+                <img
+                  src={tenantLogoUrl}
+                  alt={contextName}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.style.background = brandColor;
+                      const fallback = document.createElement('div');
+                      fallback.innerHTML = contextName.substring(0, 1).toUpperCase();
+                      fallback.style.color = '#fff';
+                      fallback.style.fontSize = '12px';
+                      fallback.style.fontWeight = '700';
+                      parent.appendChild(fallback);
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div
+                className="rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ width: 28, height: 28, background: access.isSuperAdmin ? '#7c3aed' : brandColor, color: '#fff', fontSize: 12, fontWeight: 700 }}
+              >
+                {access.isSuperAdmin ? <Building2 size={14} color="#fff" /> : contextName.substring(0, 1).toUpperCase()}
+              </div>
+            )}
+            <span className="hidden sm:block dark:text-gray-200 truncate" style={{ fontSize: 13, color: darkMode ? undefined : '#0f172a', fontWeight: 500, maxWidth: 120 }}>{contextName}</span>
+            <ChevronDown size={13} style={{ color: '#94a3b8' }} />
+          </button>
+
+          {/* Profile Dropdown */}
+          <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+            <DialogTrigger asChild>
+              <span />
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-sm" side="bottom" align="end">
+              <div className="p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  {tenantLogoUrl ? (
+                    <img src={tenantLogoUrl} alt={contextName} className="rounded-lg" style={{ width: 40, height: 40, objectFit: 'cover' }} />
+                  ) : (
+                    <div className="rounded-lg flex items-center justify-center" style={{ width: 40, height: 40, background: access.isSuperAdmin ? '#7c3aed' : brandColor }}>
+                      {access.isSuperAdmin ? <Building2 size={20} color="#fff" /> : contextName.substring(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-white truncate">{contextName}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{access.isSuperAdmin ? 'Super Admin' : 'Tenant Admin'}</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-800">
+                    <Building2 size={18} style={{ color: '#64748b' }} />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Tenant Settings</span>
+                  </button>
+                  <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-800 text-red-600" onClick={onToggleNotifications}>
+                    <Bell size={18} />
+                    <span className="text-sm">Notifications</span>
+                  </button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      {/* Mobile Search Sheet */}
+      <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
+        <SheetContent side="top" className="p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-lg font-semibold">Search</h2>
+            <Button variant="ghost" size="icon" onClick={() => setSearchOpen(false)} aria-label="Close search">
+              <X size={20} />
+            </Button>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search articles, journalists..."
+              className="pl-10 h-12 text-base"
+              autoFocus
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-4 text-center">Searches across articles, categories, and journalists</p>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 }

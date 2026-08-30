@@ -10,6 +10,8 @@ import {
   Star,
   Trash2,
   XCircle,
+  Filter,
+  X,
 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -18,6 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../ui/sheet';
 import {
   AdminArticle,
   AdminUser,
@@ -29,6 +32,7 @@ import {
   setArticleStatus,
   upsertAdminArticle,
 } from '../../lib/admin';
+import { useIsMobile } from '../ui/use-mobile';
 
 const statusConfig = {
   published: { label: 'Published', color: '#16a34a', bg: '#f0fdf4', icon: CheckCircle },
@@ -112,7 +116,139 @@ function formatDate(value: string | null) {
   return parsed.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function ArticleCard({ article, onEdit, onPublish, onDelete, statusConfig }: { 
+  article: AdminArticle; 
+  onEdit: () => void;
+  onPublish: () => void;
+  onDelete: () => void;
+  statusConfig: typeof statusConfig;
+}) {
+  const config = statusConfig[article.status] ?? statusConfig.draft;
+  const StatusIcon = config.icon;
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4" style={{ borderColor: 'rgba(15,23,42,0.08)' }}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', lineHeight: 1.3 }} className="line-clamp-2">
+            {article.title}
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            <span style={{ fontSize: 10, background: '#fef2f2', color: '#dc2626', padding: '2px 8px', borderRadius: 99, fontWeight: 500 }}>
+              {article.category_name}
+            </span>
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>{article.views_count.toLocaleString('en-IN')} views</span>
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>{formatDate(article.updated_at)}</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {article.featured && <Badge className="gap-1 bg-amber-500 text-white"><Star size={9} /> Featured</Badge>}
+            {article.breaking && <Badge className="gap-1 bg-red-600 text-white"><Radio size={9} /> Breaking</Badge>}
+            {article.trending && <Badge variant="secondary" className="text-xs">Trending</Badge>}
+          </div>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <span
+            className="flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
+            style={{ background: config.bg, color: config.color }}
+          >
+            <StatusIcon size={9} />
+            {config.label}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 mt-3 pt-3 border-t" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
+        <span className="text-xs text-gray-500">{article.author_name}</span>
+        <div className="flex-1" />
+        <button onClick={onEdit} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Edit article">
+          <Edit2 size={16} style={{ color: '#7c3aed' }} />
+        </button>
+        <button onClick={onPublish} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Publish article">
+          <CheckCircle size={16} style={{ color: '#16a34a' }} />
+        </button>
+        <button onClick={onDelete} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Delete article">
+          <Trash2 size={16} style={{ color: '#dc2626' }} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ArticleTableRow({ article, onEdit, onPublish, onDelete, statusConfig, selected, onSelect }: { 
+  article: AdminArticle; 
+  onEdit: () => void;
+  onPublish: () => void;
+  onDelete: () => void;
+  statusConfig: typeof statusConfig;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const config = statusConfig[article.status] ?? statusConfig.draft;
+  const StatusIcon = config.icon;
+  return (
+    <tr
+      style={{
+        borderTop: '1px solid rgba(15,23,42,0.05)',
+        background: selected ? '#fef2f2' : 'transparent',
+      }}
+    >
+      <td style={{ padding: '12px 16px' }}>
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onSelect}
+        />
+      </td>
+      <td style={{ padding: '12px 16px', maxWidth: 300 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: '#0f172a', lineHeight: 1.3 }} className="line-clamp-2">
+          {article.title}
+        </div>
+        <div className="mt-1 flex flex-wrap gap-2">
+          {article.featured && <Badge className="gap-1 bg-amber-500 text-white"><Star size={10} /> Featured</Badge>}
+          {article.breaking && <Badge className="gap-1 bg-red-600 text-white"><Radio size={10} /> Breaking</Badge>}
+          {article.trending && <Badge variant="secondary">Trending</Badge>}
+        </div>
+      </td>
+      <td style={{ padding: '12px 16px' }}>
+        <span style={{ fontSize: 11, background: '#fef2f2', color: '#dc2626', padding: '2px 8px', borderRadius: 99, fontWeight: 500 }}>
+          {article.category_name}
+        </span>
+      </td>
+      <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748b', whiteSpace: 'nowrap' }}>
+        {article.author_name}
+      </td>
+      <td style={{ padding: '12px 16px' }}>
+        <span
+          className="flex w-fit items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
+          style={{ background: config.bg, color: config.color }}
+        >
+          <StatusIcon size={10} />
+          {config.label}
+        </span>
+      </td>
+      <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748b', whiteSpace: 'nowrap' }}>
+        {article.views_count.toLocaleString('en-IN')}
+      </td>
+      <td style={{ padding: '12px 16px', fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap' }}>
+        {formatDate(article.updated_at)}
+      </td>
+      <td style={{ padding: '12px 16px' }}>
+        <div className="flex items-center gap-2">
+          <button onClick={onEdit} style={{ color: '#7c3aed', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+            <Edit2 size={15} />
+          </button>
+          <button onClick={onPublish} style={{ color: '#16a34a', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+            <CheckCircle size={15} />
+          </button>
+          <button onClick={onDelete} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+            <Trash2 size={15} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export function NewsManagement() {
+  const isMobile = useIsMobile();
   const [articles, setArticles] = useState<AdminArticle[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -126,6 +262,7 @@ export function NewsManagement() {
   const [selected, setSelected] = useState<string[]>([]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editor, setEditor] = useState<ArticleFormState>(emptyForm);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -151,7 +288,7 @@ export function NewsManagement() {
   }, []);
 
   const filtered = useMemo(() => {
-    setNewsPage(0); // Reset page on filter change
+    setNewsPage(0);
     return articles.filter(article => {
       const matchSearch =
         article.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -273,10 +410,12 @@ export function NewsManagement() {
 
   const categoryTabs = ['All', ...categories.map(category => category.name)];
 
+  const paginatedArticles = filtered.slice(newsPage * 10, (newsPage + 1) * 10);
+
   if (loading) {
     return (
-      <div className="flex flex-col gap-6 p-6">
-        <div className="grid gap-4 md:grid-cols-4">
+      <div className="p-4 sm:p-6">
+        <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
           {Array.from({ length: 4 }).map((_, index) => (
             <Card key={index}>
               <CardContent className="pt-6">
@@ -286,7 +425,7 @@ export function NewsManagement() {
             </Card>
           ))}
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-500">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-500 mt-4">
           Loading articles...
         </div>
       </div>
@@ -295,39 +434,42 @@ export function NewsManagement() {
 
   if (error) {
     return (
-      <div className="flex flex-col gap-6 p-6">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-          {error}
-        </div>
-        <Button className="w-fit bg-red-600 hover:bg-red-700" onClick={() => void load()}>
-          Retry
-        </Button>
+      <div className="flex flex-col gap-4 p-4 sm:p-6">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <Button className="w-fit bg-red-600 hover:bg-red-700" onClick={() => void load()}>Retry</Button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="grid gap-4 md:grid-cols-4">
+    <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6">
+      {/* Stats Cards */}
+      <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)' }}>
         {stats.map(item => (
           <Card key={item.label}>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-gray-900" style={{ color: item.color }}>{item.value}</div>
-              <div className="text-sm text-gray-500">{item.label}</div>
+            <CardContent className="pt-4 sm:pt-6">
+              <div className="text-xl sm:text-2xl font-bold text-gray-900" style={{ color: item.color }}>{item.value}</div>
+              <div className="text-xs sm:text-sm text-gray-500 mt-1">{item.label}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white">
-        <div className="flex flex-col gap-4 border-b border-gray-200 p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-1 items-center gap-3">
-            <div className="relative flex-1 lg:max-w-md">
+      {/* Toolbar */}
+      <div className="rounded-2xl border border-gray-200 bg-white" style={{ borderColor: 'rgba(15,23,42,0.08)' }}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 border-b" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
+          <div className="flex flex-1 items-center gap-2 sm:gap-3">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search articles..." className="pl-10" />
+              <Input
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                placeholder="Search articles..."
+                className="pl-10 h-10 sm:h-9"
+              />
             </div>
             <Select value={activeStatus} onValueChange={setActiveStatus}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-full sm:w-[160px] h-10 sm:h-9">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -340,21 +482,23 @@ export function NewsManagement() {
               </SelectContent>
             </Select>
           </div>
-          <Button className="bg-red-600 hover:bg-red-700" onClick={openCreate}>
+          <Button className="bg-red-600 hover:bg-red-700 w-full sm:w-auto" onClick={openCreate} style={{ minHeight: 44 }}>
             <Plus className="h-4 w-4" />
-            New Article
+            <span className="hidden sm:inline">New Article</span>
           </Button>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto border-b border-gray-200 px-4 py-3">
+        {/* Category Tabs */}
+        <div className="flex gap-2 overflow-x-auto border-b px-4 py-2" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
           {categoryTabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveCat(tab)}
-              className="whitespace-nowrap rounded-full px-4 py-1.5 text-sm"
+              className="whitespace-nowrap rounded-full px-4 py-2 text-sm"
               style={{
                 background: activeCat === tab ? '#dc2626' : '#f8fafc',
                 color: activeCat === tab ? '#fff' : '#64748b',
+                minHeight: 40,
               }}
             >
               {tab}
@@ -362,127 +506,158 @@ export function NewsManagement() {
           ))}
         </div>
 
-        <div className="overflow-x-auto">
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left' }}>
-                  <input
-                    type="checkbox"
-                    checked={selected.length === filtered.length && filtered.length > 0}
-                    onChange={() => setSelected(selected.length === filtered.length ? [] : filtered.map(article => article.id))}
+        {/* Filters Button (Mobile) */}
+        {isMobile && (
+          <button
+            onClick={() => setFiltersOpen(true)}
+            className="flex items-center justify-between px-4 py-3 text-sm text-gray-600"
+          >
+            <span className="flex items-center gap-2">
+              <Filter size={16} />
+              Filters
+            </span>
+            {(activeCat !== 'All' || activeStatus !== 'All') && (
+              <button
+                onClick={() => { setActiveCat('All'); setActiveStatus('All'); }}
+                className="text-xs text-red-600"
+              >
+                Clear
+              </button>
+            )}
+          </button>
+        )}
+
+        {/* Article List */}
+        {isMobile ? (
+          // Mobile: Card List
+          <div className="p-4 space-y-3">
+            {filtered.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">No articles match the current filters.</div>
+            ) : (
+              <>
+                {paginatedArticles.map(article => (
+                  <ArticleCard
+                    key={article.id}
+                    article={article}
+                    onEdit={() => openEdit(article)}
+                    onPublish={() => changeStatus(article, 'published')}
+                    onDelete={() => removeArticle(article)}
+                    statusConfig={statusConfig}
                   />
-                </th>
-                {['Title', 'Category', 'Author', 'Status', 'Views', 'Updated', 'Actions'].map(label => (
-                  <th key={label} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#64748b', letterSpacing: '0.05em' }}>
-                    {label.toUpperCase()}
-                  </th>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={8} style={{ padding: '24px 16px', textAlign: 'center', color: '#64748b' }}>
-                    No articles match the current filters.
-                  </td>
+                {filtered.length > 10 && (
+                  <MobilePagination
+                    total={filtered.length}
+                    page={newsPage}
+                    perPage={10}
+                    onPageChange={setNewsPage}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        ) : (
+          // Desktop: Table
+          <div className="overflow-x-auto">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc' }}>
+                  <th style={{ padding: '10px 16px', textAlign: 'left' }}>
+                    <input
+                      type="checkbox"
+                      checked={selected.length === filtered.length && filtered.length > 0}
+                      onChange={() => setSelected(selected.length === filtered.length ? [] : filtered.map(article => article.id))}
+                    />
+                  </th>
+                  {['Title', 'Category', 'Author', 'Status', 'Views', 'Updated', 'Actions'].map(label => (
+                    <th key={label} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#64748b', letterSpacing: '0.05em' }}>
+                      {label.toUpperCase()}
+                    </th>
+                  ))}
                 </tr>
-              ) : (
-                filtered.slice(newsPage * 10, (newsPage + 1) * 10).map(article => {
-                  const config = statusConfig[article.status] ?? statusConfig.draft;
-                  const StatusIcon = config.icon;
-                  return (
-                    <tr
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ padding: '24px 16px', textAlign: 'center', color: '#64748b' }}>
+                      No articles match the current filters.
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedArticles.map(article => (
+                    <ArticleTableRow
                       key={article.id}
-                      style={{
-                        borderTop: '1px solid rgba(15,23,42,0.05)',
-                        background: selected.includes(article.id) ? '#fef2f2' : 'transparent',
-                      }}
-                    >
-                      <td style={{ padding: '12px 16px' }}>
-                        <input
-                          type="checkbox"
-                          checked={selected.includes(article.id)}
-                          onChange={() => setSelected(current => current.includes(article.id) ? current.filter(id => id !== article.id) : [...current, article.id])}
-                        />
-                      </td>
-                      <td style={{ padding: '12px 16px', maxWidth: 300 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: '#0f172a', lineHeight: 1.3 }} className="line-clamp-2">
-                          {article.title}
-                        </div>
-                        <div className="mt-1 flex flex-wrap gap-2">
-                          {article.featured && <Badge className="gap-1 bg-amber-500 text-white"><Star size={10} /> Featured</Badge>}
-                          {article.breaking && <Badge className="gap-1 bg-red-600 text-white"><Radio size={10} /> Breaking</Badge>}
-                          {article.trending && <Badge variant="secondary">Trending</Badge>}
-                        </div>
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{ fontSize: 11, background: '#fef2f2', color: '#dc2626', padding: '2px 8px', borderRadius: 99, fontWeight: 500 }}>
-                          {article.category_name}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748b', whiteSpace: 'nowrap' }}>
-                        {article.author_name}
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span
-                          className="flex w-fit items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
-                          style={{ background: config.bg, color: config.color }}
-                        >
-                          <StatusIcon size={10} />
-                          {config.label}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748b', whiteSpace: 'nowrap' }}>
-                        {article.views_count.toLocaleString('en-IN')}
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap' }}>
-                        {formatDate(article.updated_at)}
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => openEdit(article)} style={{ color: '#7c3aed', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-                            <Edit2 size={15} />
-                          </button>
-                          <button onClick={() => void changeStatus(article, 'published')} style={{ color: '#16a34a', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-                            <CheckCircle size={15} />
-                          </button>
-                          <button onClick={() => void removeArticle(article)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-          {/* Pagination */}
-          {filtered.length > 10 && (() => {
-            const totalPages = Math.ceil(filtered.length / 10);
-            return (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-                <span className="text-xs text-gray-500">Showing {newsPage * 10 + 1}–{Math.min((newsPage + 1) * 10, filtered.length)} of {filtered.length}</span>
-                <div className="flex items-center gap-1.5">
-                  <button type="button" onClick={() => setNewsPage(p => Math.max(0, p - 1))} disabled={newsPage === 0}
-                    className="px-2.5 py-1 rounded border border-gray-200 text-xs font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">← Prev</button>
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    const pn = totalPages <= 5 ? i : Math.min(Math.max(newsPage - 2, 0), totalPages - 5) + i;
-                    return (
-                      <button key={pn} type="button" onClick={() => setNewsPage(pn)}
-                        className={`w-7 h-7 rounded text-[10px] font-bold transition-colors ${pn === newsPage ? 'bg-red-600 text-white' : 'border border-gray-200 text-gray-600 hover:bg-red-50'}`}>{pn + 1}</button>
-                    );
-                  })}
-                  <button type="button" onClick={() => setNewsPage(p => Math.min(totalPages - 1, p + 1))} disabled={newsPage === totalPages - 1}
-                    className="px-2.5 py-1 rounded border border-gray-200 text-xs font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next →</button>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
+                      article={article}
+                      onEdit={() => openEdit(article)}
+                      onPublish={() => changeStatus(article, 'published')}
+                      onDelete={() => removeArticle(article)}
+                      statusConfig={statusConfig}
+                      selected={selected.includes(article.id)}
+                      onSelect={() => setSelected(current => current.includes(article.id) ? current.filter(id => id !== article.id) : [...current, article.id])}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+            {filtered.length > 10 && (
+              <DesktopPagination
+                total={filtered.length}
+                page={newsPage}
+                perPage={10}
+                onPageChange={setNewsPage}
+              />
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Mobile Filters Sheet */}
+      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Filters</SheetTitle>
+            <SheetDescription>Filter articles by category and status</SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <div className="flex flex-wrap gap-2">
+                {categoryTabs.map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => { setActiveCat(tab); setFiltersOpen(false); }}
+                    className="rounded-full px-4 py-2 text-sm"
+                    style={{
+                      background: activeCat === tab ? '#dc2626' : '#f8fafc',
+                      color: activeCat === tab ? '#fff' : '#64748b',
+                    }}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <Select value={activeStatus} onValueChange={setActiveStatus}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Status</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="review">Review</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Article Editor Dialog */}
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
@@ -490,11 +665,25 @@ export function NewsManagement() {
             <DialogDescription>Save article content directly to Supabase.</DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-2 md:grid-cols-2">
-            <Input value={editor.title} onChange={event => setEditor(current => ({ ...current, title: event.target.value, slug: current.slug || event.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') }))} placeholder="Headline" />
-            <Input value={editor.slug} onChange={event => setEditor(current => ({ ...current, slug: event.target.value }))} placeholder="Slug" />
+          <div className="grid gap-4 py-2" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
+            <Input
+              value={editor.title}
+              onChange={event => setEditor(current => ({
+                ...current,
+                title: event.target.value,
+                slug: current.slug || event.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+              }))}
+              placeholder="Headline"
+              className="h-10 sm:h-9"
+            />
+            <Input
+              value={editor.slug}
+              onChange={event => setEditor(current => ({ ...current, slug: event.target.value }))}
+              placeholder="Slug"
+              className="h-10 sm:h-9"
+            />
             <Select value={editor.category_id} onValueChange={value => setEditor(current => ({ ...current, category_id: value }))}>
-              <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectTrigger className="h-10 sm:h-9"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 {categories.map(category => (
                   <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
@@ -502,7 +691,7 @@ export function NewsManagement() {
               </SelectContent>
             </Select>
             <Select value={editor.author_id} onValueChange={value => setEditor(current => ({ ...current, author_id: value }))}>
-              <SelectTrigger><SelectValue placeholder="Author" /></SelectTrigger>
+              <SelectTrigger className="h-10 sm:h-9"><SelectValue placeholder="Author" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="">No author</SelectItem>
                 {users.map(user => (
@@ -511,7 +700,7 @@ export function NewsManagement() {
               </SelectContent>
             </Select>
             <Select value={editor.status} onValueChange={value => setEditor(current => ({ ...current, status: value as AdminArticle['status'] }))}>
-              <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectTrigger className="h-10 sm:h-9"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="review">Review</SelectItem>
@@ -521,27 +710,27 @@ export function NewsManagement() {
               </SelectContent>
             </Select>
             <Select value={editor.media_type} onValueChange={value => setEditor(current => ({ ...current, media_type: value }))}>
-              <SelectTrigger><SelectValue placeholder="Media type" /></SelectTrigger>
+              <SelectTrigger className="h-10 sm:h-9"><SelectValue placeholder="Media type" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="article">Article</SelectItem>
                 <SelectItem value="video">Video</SelectItem>
                 <SelectItem value="gallery">Gallery</SelectItem>
               </SelectContent>
             </Select>
-            <Input value={editor.featured_image} onChange={event => setEditor(current => ({ ...current, featured_image: event.target.value }))} placeholder="Image URL (direct .jpg/.png link OR upload to Media Library)" />
-            <Input value={editor.video_url} onChange={event => setEditor(current => ({ ...current, video_url: event.target.value }))} placeholder="YouTube Video URL (e.g. https://youtu.be/xxxxx)" />
-            <Input value={editor.seo_title} onChange={event => setEditor(current => ({ ...current, seo_title: event.target.value }))} placeholder="SEO title" />
-            <Input value={editor.seo_description} onChange={event => setEditor(current => ({ ...current, seo_description: event.target.value }))} placeholder="SEO description" />
-            <Input value={editor.read_time} onChange={event => setEditor(current => ({ ...current, read_time: event.target.value }))} placeholder="Read time, e.g. 4 min read" />
-            <Input value={editor.publish_at} onChange={event => setEditor(current => ({ ...current, publish_at: event.target.value }))} placeholder="Publish date/time" />
+            <Input value={editor.featured_image} onChange={event => setEditor(current => ({ ...current, featured_image: event.target.value }))} placeholder="Image URL (direct .jpg/.png link OR upload to Media Library)" className="h-10 sm:h-9" />
+            <Input value={editor.video_url} onChange={event => setEditor(current => ({ ...current, video_url: event.target.value }))} placeholder="YouTube Video URL (e.g. https://youtu.be/xxxxx)" className="h-10 sm:h-9" />
+            <Input value={editor.seo_title} onChange={event => setEditor(current => ({ ...current, seo_title: event.target.value }))} placeholder="SEO title" className="h-10 sm:h-9" />
+            <Input value={editor.seo_description} onChange={event => setEditor(current => ({ ...current, seo_description: event.target.value }))} placeholder="SEO description" className="h-10 sm:h-9" />
+            <Input value={editor.read_time} onChange={event => setEditor(current => ({ ...current, read_time: event.target.value }))} placeholder="Read time, e.g. 4 min read" className="h-10 sm:h-9" />
+            <Input value={editor.publish_at} onChange={event => setEditor(current => ({ ...current, publish_at: event.target.value }))} placeholder="Publish date/time" type="datetime-local" className="h-10 sm:h-9" />
           </div>
 
-          <div className="grid gap-4">
-            <Textarea value={editor.excerpt} onChange={event => setEditor(current => ({ ...current, excerpt: event.target.value }))} placeholder="Article excerpt" className="min-h-24" />
-            <Textarea value={editor.content} onChange={event => setEditor(current => ({ ...current, content: event.target.value }))} placeholder="Write article body here. Each paragraph on a new line.&#10;&#10;Paragraph 1 content goes here...&#10;&#10;Paragraph 2 content goes here...&#10;&#10;Paragraph 3 content goes here..." className="min-h-48" />
-            <Textarea value={editor.tags} onChange={event => setEditor(current => ({ ...current, tags: event.target.value }))} placeholder="Tags separated by commas" className="min-h-24" />
+          <div className="grid gap-4 py-2">
+            <Textarea value={editor.excerpt} onChange={event => setEditor(current => ({ ...current, excerpt: event.target.value }))} placeholder="Article excerpt" className="min-h-[100px]" />
+            <Textarea value={editor.content} onChange={event => setEditor(current => ({ ...current, content: event.target.value }))} placeholder="Write article body here. Each paragraph on a new line." className="min-h-[200px]" />
+            <Textarea value={editor.tags} onChange={event => setEditor(current => ({ ...current, tags: event.target.value }))} placeholder="Tags separated by commas" className="min-h-[100px]" />
 
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-3" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
               {[
                 { key: 'featured', label: 'Featured' },
                 { key: 'trending', label: 'Trending' },
@@ -551,7 +740,7 @@ export function NewsManagement() {
                   key={item.key}
                   onClick={() => setEditor(current => ({ ...current, [item.key]: !current[item.key as keyof ArticleFormState] }))}
                   className="rounded-xl border px-4 py-3 text-left"
-                  style={{ background: editor[item.key as keyof ArticleFormState] ? '#fef2f2' : '#fff', borderColor: 'rgba(15,23,42,0.08)' }}
+                  style={{ background: editor[item.key as keyof ArticleFormState] ? '#fef2f2' : '#fff', borderColor: 'rgba(15,23,42,0.08)', minHeight: 48 }}
                 >
                   <div className="text-sm font-medium text-gray-900">{item.label}</div>
                   <div className="text-xs text-gray-500">Toggle on or off for this article.</div>
@@ -568,6 +757,57 @@ export function NewsManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function MobilePagination({ total, page, perPage, onPageChange }: { total: number; page: number; perPage: number; onPageChange: (page: number) => void }) {
+  const totalPages = Math.ceil(total / perPage);
+  if (total <= perPage) return null;
+
+  const getVisiblePages = () => {
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i);
+    const startPage = Math.max(0, Math.min(page - 2, totalPages - 5));
+    return Array.from({ length: 5 }, (_, i) => startPage + i);
+  };
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-t" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
+      <span className="text-xs text-gray-500">Page {page + 1} of {totalPages}</span>
+      <div className="flex items-center gap-1.5">
+        <button type="button" onClick={() => onPageChange(Math.max(0, page - 1))} disabled={page === 0} className="px-3 py-1.5 rounded border border-gray-200 text-xs font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors min-h-[40px] min-w-[40px]">←</button>
+        {getVisiblePages().map(pn => (
+          <button key={pn} type="button" onClick={() => onPageChange(pn)} className={`w-9 h-9 rounded text-xs font-bold transition-colors ${pn === page ? 'bg-red-600 text-white shadow-sm' : 'border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600'}`}>{pn + 1}</button>
+        ))}
+        <button type="button" onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))} disabled={page === totalPages - 1} className="px-3 py-1.5 rounded border border-gray-200 text-xs font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors min-h-[40px] min-w-[40px]">→</button>
+      </div>
+    </div>
+  );
+}
+
+function DesktopPagination({ total, page, perPage, onPageChange }: { total: number; page: number; perPage: number; onPageChange: (page: number) => void }) {
+  const totalPages = Math.ceil(total / perPage);
+  if (total <= perPage) return null;
+
+  const start = page * perPage + 1;
+  const end = Math.min((page + 1) * perPage, total);
+
+  const getVisiblePages = () => {
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i);
+    const startPage = Math.max(0, Math.min(page - 2, totalPages - 5));
+    return Array.from({ length: 5 }, (_, i) => startPage + i);
+  };
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+      <span className="text-xs text-gray-500">Showing {start}–{end} of {total}</span>
+      <div className="flex items-center gap-1.5">
+        <button type="button" onClick={() => onPageChange(Math.max(0, page - 1))} disabled={page === 0} className="px-2.5 py-1 rounded border border-gray-200 text-xs font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">← Prev</button>
+        {getVisiblePages().map(pn => (
+          <button key={pn} type="button" onClick={() => onPageChange(pn)} className={`w-7 h-7 rounded text-[10px] font-bold transition-colors ${pn === page ? 'bg-red-600 text-white' : 'border border-gray-200 text-gray-600 hover:bg-red-50'}`}>{pn + 1}</button>
+        ))}
+        <button type="button" onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))} disabled={page === totalPages - 1} className="px-2.5 py-1 rounded border border-gray-200 text-xs font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next →</button>
+      </div>
     </div>
   );
 }

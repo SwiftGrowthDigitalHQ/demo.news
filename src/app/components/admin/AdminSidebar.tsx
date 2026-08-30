@@ -11,6 +11,7 @@ import {
   groupNavItemsByCategory 
 } from '../../lib/navConfig';
 import { resolveAssetUrl } from '../../lib/assetResolver';
+import { useIsMobile } from '../ui/use-mobile';
 
 interface Props {
   activeSection: string;
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, onLogout }: Props) {
+  const isMobile = useIsMobile();
   const { profile } = useAuth();
   const { tenant } = useTenant();
   
@@ -53,12 +55,15 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
   // User avatar from profile
   const userAvatarUrl = profile?.avatar_url ? resolveAssetUrl(profile.avatar_url) : null;
   
+  const sidebarWidth = collapsed ? 64 : 240;
+  const mobileDrawerWidth = 280;
+  
   return (
     <aside
       className="flex flex-col h-full overflow-hidden"
       style={{
         background: 'var(--admin-sidebar)',
-        width: collapsed ? 64 : 240,
+        width: isMobile ? mobileDrawerWidth : sidebarWidth,
         transition: 'width 0.2s ease',
         minHeight: '100vh',
       }}
@@ -67,7 +72,7 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
       <div
         className="flex items-center gap-3 px-4 border-b"
         style={{
-          height: 60,
+          height: isMobile ? 56 : 60,
           borderColor: 'var(--admin-sidebar-border)',
           flexShrink: 0,
         }}
@@ -92,7 +97,6 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
                 objectFit: 'contain',
               }}
               onError={(e) => {
-                // Fallback to icon if image fails to load
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
                 const parent = target.parentElement;
@@ -122,7 +126,7 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
             <div 
               style={{ 
                 color: '#f1f5f9', 
-                fontSize: 14, 
+                fontSize: isMobile ? 15 : 14, 
                 fontWeight: 700, 
                 lineHeight: 1.2, 
                 letterSpacing: '-0.01em',
@@ -133,12 +137,17 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
             >
               {brandName}
             </div>
-            <div style={{ color: 'var(--admin-sidebar-muted)', fontSize: 11 }}>{roleDisplayName}</div>
+            <div style={{ color: 'var(--admin-sidebar-muted)', fontSize: isMobile ? 12 : 11 }}>{roleDisplayName}</div>
           </div>
         )}
         {!collapsed && onClose && (
-          <button onClick={onClose} className="lg:hidden" style={{ color: 'var(--admin-sidebar-muted)' }}>
-            <X size={16} />
+          <button 
+            onClick={onClose} 
+            className="lg:hidden flex items-center justify-center rounded-lg p-1"
+            style={{ color: 'var(--admin-sidebar-muted)', minWidth: 40, minHeight: 40 }}
+            aria-label="Close sidebar"
+          >
+            <X size={20} />
           </button>
         )}
       </div>
@@ -150,7 +159,7 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
             {!collapsed && (
               <div
                 className="px-4 mb-1"
-                style={{ color: 'var(--admin-sidebar-muted)', fontSize: 10, fontWeight: 600, letterSpacing: '0.08em' }}
+                style={{ color: 'var(--admin-sidebar-muted)', fontSize: isMobile ? 11 : 10, fontWeight: 600, letterSpacing: '0.08em' }}
               >
                 {section.label}
               </div>
@@ -161,18 +170,22 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
               return (
                 <button
                   key={item.id}
-                  onClick={() => onNavigate(item.id)}
+                  onClick={() => {
+                    onNavigate(item.id);
+                    if (isMobile && onClose) onClose();
+                  }}
                   className="w-full flex items-center gap-3 relative"
                   style={{
-                    padding: collapsed ? '10px 16px' : '9px 16px',
+                    padding: collapsed ? '12px 16px' : '11px 16px',
                     background: isActive ? 'var(--admin-sidebar-accent)' : 'transparent',
                     color: isActive ? '#f1f5f9' : 'var(--admin-sidebar-muted)',
-                    fontSize: 13,
+                    fontSize: isMobile ? 14 : 13,
                     fontWeight: isActive ? 500 : 400,
                     justifyContent: collapsed ? 'center' : 'flex-start',
                     transition: 'all 0.15s ease',
                     cursor: 'pointer',
                     border: 'none',
+                    minHeight: isMobile ? 48 : undefined,
                   }}
                   title={collapsed ? item.label : undefined}
                 >
@@ -184,11 +197,11 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
                       }}
                     />
                   )}
-                  <Icon size={16} style={{ flexShrink: 0 }} />
+                  <Icon size={isMobile ? 18 : 16} style={{ flexShrink: 0 }} />
                   {!collapsed && (
                     <>
                       <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
-                      {isActive && <ChevronRight size={14} />}
+                      {isActive && <ChevronRight size={isMobile ? 16 : 14} />}
                     </>
                   )}
                 </button>
@@ -204,32 +217,29 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
         style={{ borderColor: 'var(--admin-sidebar-border)', flexShrink: 0 }}
       >
         {userAvatarUrl ? (
-          // User's profile picture
           <img
             src={userAvatarUrl}
             alt={profile?.full_name ?? roleDisplayName}
             className="rounded-full flex-shrink-0"
             style={{ 
-              width: 32, 
-              height: 32,
+              width: isMobile ? 40 : 32, 
+              height: isMobile ? 40 : 32,
               objectFit: 'cover',
             }}
             onError={(e) => {
-              // Fallback to initials if image fails
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
             }}
           />
         ) : (
-          // Fallback to initials
           <div
             className="rounded-full flex items-center justify-center flex-shrink-0"
             style={{ 
-              width: 32, 
-              height: 32, 
+              width: isMobile ? 40 : 32, 
+              height: isMobile ? 40 : 32, 
               background: brandColor, 
               color: '#fff', 
-              fontSize: 13, 
+              fontSize: isMobile ? 14 : 13, 
               fontWeight: 700 
             }}
           >
@@ -239,10 +249,10 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
         {!collapsed && (
           <>
             <div className="flex-1 min-w-0">
-              <div style={{ color: '#e2e8f0', fontSize: 12, fontWeight: 500 }}>{roleDisplayName}</div>
+              <div style={{ color: '#e2e8f0', fontSize: isMobile ? 13 : 12, fontWeight: 500 }}>{roleDisplayName}</div>
               <div style={{ 
                 color: 'var(--admin-sidebar-muted)', 
-                fontSize: 11, 
+                fontSize: isMobile ? 12 : 11, 
                 overflow: 'hidden', 
                 textOverflow: 'ellipsis', 
                 whiteSpace: 'nowrap' 
@@ -252,10 +262,11 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
             </div>
             <button 
               onClick={onLogout} 
-              style={{ color: 'var(--admin-sidebar-muted)' }}
+              style={{ color: 'var(--admin-sidebar-muted)', minWidth: 40, minHeight: 40 }}
               title="Logout"
+              className="flex items-center justify-center rounded-lg p-1"
             >
-              <LogOut size={15} />
+              <LogOut size={isMobile ? 18 : 15} />
             </button>
           </>
         )}
