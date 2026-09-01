@@ -665,6 +665,12 @@ export async function updateTenantStatus(
   const supabase = await getSupabaseClient();
   if (!supabase) return { success: false, error: 'Supabase not configured' };
   
+  console.log('[updateTenantStatus] Calling update_tenant_status_rpc with:', {
+    p_tenant_id: tenantId,
+    p_new_status: status,
+    p_reason: reason ?? null
+  });
+  
   // Use the SECURITY DEFINER RPC instead of a direct .update() so that:
   //  1. The DB re-verifies is_super_admin() before making the change
   //  2. An immutable audit log row is written inside the transaction
@@ -675,7 +681,12 @@ export async function updateTenantStatus(
     p_reason:     reason ?? null,
   });
   
-  if (error) return { success: false, error: error.message };
+  if (error) {
+    console.error('[updateTenantStatus] RPC error:', error);
+    return { success: false, error: error.message };
+  }
+  
+  console.log('[updateTenantStatus] Success');
   return { success: true };
 }
 
@@ -693,6 +704,11 @@ export async function extendTenantTrial(
   const supabase = await getSupabaseClient();
   if (!supabase) return { success: false, error: 'Supabase not configured' };
 
+  console.log('[extendTenantTrial] Calling extend_tenant_trial_rpc with:', {
+    p_tenant_id: tenantId,
+    p_additional_days: additionalDays
+  });
+
   // Use the SECURITY DEFINER RPC so that:
   //  1. is_super_admin() is verified at the DB level
   //  2. New trial_ends_at is calculated server-side — client cannot supply a date
@@ -702,7 +718,12 @@ export async function extendTenantTrial(
     p_additional_days: additionalDays,
   });
 
-  if (error) return { success: false, error: error.message };
+  if (error) {
+    console.error('[extendTenantTrial] RPC error:', error);
+    return { success: false, error: error.message };
+  }
+  
+  console.log('[extendTenantTrial] Success');
   return { success: true };
 }
 
@@ -894,8 +915,23 @@ export async function approvePayment(
   const admin = await getSuperAdminUser();
   if (!admin) return { success: false, error: 'Not authorized' };
   
-  const { error } = await supabase.rpc('approve_subscription_payment', { p_payment_id: paymentId, p_reviewed_by_user_id: admin.id });
-  return error ? { success: false, error: error.message } : { success: true };
+  console.log('[approvePayment] Calling approve_subscription_payment RPC with:', {
+    p_payment_id: paymentId,
+    p_reviewed_by_user_id: admin.id
+  });
+  
+  const { error } = await supabase.rpc('approve_subscription_payment', { 
+    p_payment_id: paymentId, 
+    p_reviewed_by_user_id: admin.id 
+  });
+  
+  if (error) {
+    console.error('[approvePayment] RPC error:', error);
+    return { success: false, error: error.message };
+  }
+  
+  console.log('[approvePayment] Success');
+  return { success: true };
 }
 
 export async function rejectPayment(
@@ -909,8 +945,26 @@ export async function rejectPayment(
   if (!admin) return { success: false, error: 'Not authorized' };
   
   if (!reason.trim()) return { success: false, error: 'A rejection reason is required' };
-  const { error } = await supabase.rpc('reject_payment', { p_payment_id: paymentId, p_reason: reason.trim(), p_reviewed_by_user_id: admin.id });
-  return error ? { success: false, error: error.message } : { success: true };
+  
+  console.log('[rejectPayment] Calling reject_payment RPC with:', {
+    p_payment_id: paymentId,
+    p_rejection_reason: reason.trim(),
+    p_reviewed_by_user_id: admin.id
+  });
+  
+  const { error } = await supabase.rpc('reject_payment', { 
+    p_payment_id: paymentId, 
+    p_rejection_reason: reason.trim(),  // ✅ FIXED: was p_reason, now p_rejection_reason
+    p_reviewed_by_user_id: admin.id 
+  });
+  
+  if (error) {
+    console.error('[rejectPayment] RPC error:', error);
+    return { success: false, error: error.message };
+  }
+  
+  console.log('[rejectPayment] Success');
+  return { success: true };
 }
 
 // ─── PAYMENT CONFIG ──────────────────────────────────────────────────────────
