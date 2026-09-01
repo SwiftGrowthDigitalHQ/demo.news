@@ -2,7 +2,7 @@
  * GA4 OAuth Integration Client Library
  * 
  * Handles OAuth flow initiation, connection status, sync, and disconnect operations.
- * Follows the same pattern as YouTube integration for consistency.
+ * Also provides methods to fetch real analytics data from GA4.
  * 
  * SECURITY:
  * - Never exposes OAuth tokens to frontend
@@ -38,6 +38,46 @@ export interface GA4SyncResult {
   property_name: string;
   measurement_id: string;
   synced_at: string;
+}
+
+export interface GA4OverviewMetrics {
+  summary: {
+    totalUsers: number;
+    totalSessions: number;
+    totalPageViews: number;
+    avgSessionDuration: number;
+    bounceRate: string;
+  };
+  timeline: Array<{
+    date: string;
+    users: number;
+    sessions: number;
+    pageViews: number;
+  }>;
+}
+
+export interface GA4RealtimeMetrics {
+  activeUsers: number;
+  pages: Array<{
+    pageName: string;
+    users: number;
+    views: number;
+  }>;
+}
+
+export interface GA4TopPage {
+  path: string;
+  title: string;
+  pageViews: number;
+  users: number;
+  avgDuration: string;
+}
+
+export interface GA4TrafficSource {
+  source: string;
+  medium: string;
+  sessions: number;
+  users: number;
 }
 
 /**
@@ -329,4 +369,193 @@ export async function getMeasurementId(): Promise<string | null> {
     console.error('[GA4] Failed to get measurement ID:', error);
     return null;
   }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ANALYTICS DATA API - Real Metrics Fetching
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Fetch GA4 overview metrics
+ * Returns users, sessions, pageviews, duration, bounce rate with timeline
+ */
+export async function fetchGA4OverviewMetrics(
+  dateRange: 'today' | '7days' | '30days' | '90days' = '7days'
+): Promise<GA4OverviewMetrics> {
+  const supabase = await getSupabaseClient();
+  
+  if (!supabase) {
+    throw new Error('Supabase not configured');
+  }
+  
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Not authenticated');
+  }
+  
+  const response = await fetch(
+    `${getEnv('VITE_SUPABASE_URL')}/functions/v1/ga4-fetch-metrics`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        metric_type: 'overview',
+        date_range: dateRange,
+      }),
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to fetch GA4 metrics');
+  }
+  
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch GA4 metrics');
+  }
+  
+  return result.data;
+}
+
+/**
+ * Fetch GA4 realtime metrics
+ * Returns active users and current pages being viewed
+ */
+export async function fetchGA4RealtimeMetrics(): Promise<GA4RealtimeMetrics> {
+  const supabase = await getSupabaseClient();
+  
+  if (!supabase) {
+    throw new Error('Supabase not configured');
+  }
+  
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Not authenticated');
+  }
+  
+  const response = await fetch(
+    `${getEnv('VITE_SUPABASE_URL')}/functions/v1/ga4-fetch-metrics`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        metric_type: 'realtime',
+      }),
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to fetch realtime metrics');
+  }
+  
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch realtime metrics');
+  }
+  
+  return result.data;
+}
+
+/**
+ * Fetch GA4 top pages metrics
+ * Returns most viewed pages with engagement data
+ */
+export async function fetchGA4TopPages(
+  dateRange: 'today' | '7days' | '30days' | '90days' = '7days'
+): Promise<GA4TopPage[]> {
+  const supabase = await getSupabaseClient();
+  
+  if (!supabase) {
+    throw new Error('Supabase not configured');
+  }
+  
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Not authenticated');
+  }
+  
+  const response = await fetch(
+    `${getEnv('VITE_SUPABASE_URL')}/functions/v1/ga4-fetch-metrics`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        metric_type: 'pages',
+        date_range: dateRange,
+      }),
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to fetch top pages');
+  }
+  
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch top pages');
+  }
+  
+  return result.data;
+}
+
+/**
+ * Fetch GA4 traffic sources metrics
+ * Returns where users are coming from (source/medium breakdown)
+ */
+export async function fetchGA4TrafficSources(
+  dateRange: 'today' | '7days' | '30days' | '90days' = '7days'
+): Promise<GA4TrafficSource[]> {
+  const supabase = await getSupabaseClient();
+  
+  if (!supabase) {
+    throw new Error('Supabase not configured');
+  }
+  
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Not authenticated');
+  }
+  
+  const response = await fetch(
+    `${getEnv('VITE_SUPABASE_URL')}/functions/v1/ga4-fetch-metrics`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        metric_type: 'sources',
+        date_range: dateRange,
+      }),
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to fetch traffic sources');
+  }
+  
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch traffic sources');
+  }
+  
+  return result.data;
 }

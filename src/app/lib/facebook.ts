@@ -222,7 +222,9 @@ export async function disconnectFacebook(): Promise<void> {
 
 export async function publishToFacebook(
   articleId: string,
-  includeImage: boolean = true
+  message: string,
+  link?: string,
+  published: boolean = true
 ): Promise<FacebookPublishResult> {
   const supabase = await getSupabaseClient();
   
@@ -236,7 +238,7 @@ export async function publishToFacebook(
   }
   
   const response = await fetch(
-    `${getEnv('VITE_SUPABASE_URL')}/functions/v1/facebook-publish`,
+    `${getEnv('VITE_SUPABASE_URL')}/functions/v1/facebook-publish-post`,
     {
       method: 'POST',
       headers: {
@@ -245,17 +247,26 @@ export async function publishToFacebook(
       },
       body: JSON.stringify({
         article_id: articleId,
-        include_image: includeImage,
+        message,
+        link,
+        published,
       }),
     }
   );
   
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.details || error.error || 'Failed to publish to Facebook');
+    throw new Error(error.error || 'Failed to publish to Facebook');
   }
   
-  return await response.json();
+  const result = await response.json();
+  return {
+    success: result.success,
+    post_id: result.post_id,
+    post_url: result.post_url,
+    page_name: '', // Will be filled from connection data
+    published_at: new Date().toISOString(),
+  };
 }
 
 export async function getFacebookPublishHistory(

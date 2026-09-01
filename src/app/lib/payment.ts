@@ -64,6 +64,10 @@ export type TenantRow = {
   subscription_ends_at: string | null;
   owner_auth_user_id: string | null;
   created_at: string;
+  // Plan-change tracking (added in migration 20260831000100)
+  requested_plan: PlanId | null;
+  plan_change_status: 'none' | 'pending' | 'approved' | 'rejected';
+  plan_change_submitted_at: string | null;
 };
 
 export type PaymentRow = {
@@ -369,6 +373,19 @@ export async function adminSetTenantStatus(payload: {
     p_reason:     payload.notes ?? null,
   });
   if (error) throw new Error(error.message);
+}
+
+// ── Customer: mark a plan-change request as pending ──────────────────────────
+// Called immediately after submit_payment_rpc() succeeds for a plan switch.
+// Records the intent in the tenants table so the dashboard can show the
+// "plan change pending" state without re-querying tenant_payments.
+export async function markPlanChangePending(tenantId: string, newPlan: PlanId): Promise<void> {
+  const supabase = client();
+  const { error } = await supabase.rpc('mark_plan_change_pending', {
+    p_tenant_id: tenantId,
+    p_new_plan:  newPlan,
+  });
+  if (error) throw new Error(error.message || 'Failed to record plan change request.');
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────

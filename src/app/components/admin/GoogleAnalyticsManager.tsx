@@ -14,7 +14,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, Save, RefreshCw, CheckCircle2, XCircle, Info, BarChart3, Settings as SettingsIcon } from 'lucide-react';
+import { Loader2, Save, RefreshCw, CheckCircle2, XCircle, Info, BarChart3, Settings as SettingsIcon, TrendingUp, Users, Eye, Clock } from 'lucide-react';
 import { getSupabaseClient } from '../../../lib/supabase';
 import { useAuth } from '../../lib/auth';
 import {
@@ -24,7 +24,15 @@ import {
   disconnectGA4,
   checkGA4OAuthCallback,
   getGA4ErrorMessage,
+  fetchGA4OverviewMetrics,
+  fetchGA4RealtimeMetrics,
+  fetchGA4TopPages,
+  fetchGA4TrafficSources,
   type GA4ConnectionStatus,
+  type GA4OverviewMetrics,
+  type GA4RealtimeMetrics,
+  type GA4TopPage,
+  type GA4TrafficSource,
 } from '../../lib/ga4';
 
 interface TrackingConfig {
@@ -59,6 +67,15 @@ export function GoogleAnalyticsManager() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [pluginEnabled, setPluginEnabled] = useState(false);
+  
+  // Analytics Data
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [dateRange, setDateRange] = useState<'today' | '7days' | '30days' | '90days'>('7days');
+  const [overviewMetrics, setOverviewMetrics] = useState<GA4OverviewMetrics | null>(null);
+  const [realtimeMetrics, setRealtimeMetrics] = useState<GA4RealtimeMetrics | null>(null);
+  const [topPages, setTopPages] = useState<GA4TopPage[]>([]);
+  const [trafficSources, setTrafficSources] = useState<GA4TrafficSource[]>([]);
+  const [loadingMetrics, setLoadingMetrics] = useState(false);
 
   // Load connection status and configuration
   const loadData = useCallback(async () => {
@@ -259,6 +276,40 @@ export function GoogleAnalyticsManager() {
     }));
   };
 
+  // Load analytics metrics
+  const loadMetrics = async () => {
+    if (!connectionStatus?.connected) return;
+    
+    setLoadingMetrics(true);
+    
+    try {
+      // Fetch all metrics in parallel
+      const [overview, realtime, pages, sources] = await Promise.all([
+        fetchGA4OverviewMetrics(dateRange),
+        fetchGA4RealtimeMetrics(),
+        fetchGA4TopPages(dateRange),
+        fetchGA4TrafficSources(dateRange),
+      ]);
+      
+      setOverviewMetrics(overview);
+      setRealtimeMetrics(realtime);
+      setTopPages(pages);
+      setTrafficSources(sources);
+    } catch (error: any) {
+      console.error('[GA4 Manager] Failed to load metrics:', error);
+      setMessage({ type: 'error', text: `Failed to load analytics: ${error.message}` });
+    } finally {
+      setLoadingMetrics(false);
+    }
+  };
+
+  // Load metrics when connection status changes or date range changes
+  useEffect(() => {
+    if (showAnalytics && connectionStatus?.connected) {
+      loadMetrics();
+    }
+  }, [showAnalytics, connectionStatus?.connected, dateRange]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -418,6 +469,205 @@ export function GoogleAnalyticsManager() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Analytics Dashboard (only when connected) */}
+      {isConnected && connection && (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          {/* Dashboard Header */}
+          <div className="border-b border-gray-200 px-6 py-4 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowAnalytics(!showAnalytics)}
+                  className="flex items-center gap-2 text-lg font-semibold text-gray-900 hover:text-indigo-600 transition-colors"
+                >
+                  <TrendingUp className="h-5 w-5" />
+                  Analytics Dashboard
+                  <span className={`text-xs transition-transform ${showAnalytics ? 'rotate-180' : ''}`}>▼</span>
+                </button>
+              </div>
+              
+              {showAnalytics && (
+                <div className="flex items-center gap-3">
+                  {/* Date Range Selector */}
+                  <select
+                    value={dateRange}
+                    onChange={(e) => setDateRange(e.target.value as any)}
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="today">Today</option>
+                    <option value="7days">Last 7 Days</option>
+                    <option value="30days">Last 30 Days</option>
+                    <option value="90days">Last 90 Days</option>
+                  </select>
+                  
+                  <button
+                    onClick={loadMetrics}
+                    disabled={loadingMetrics}
+                    className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50"
+                    title="Refresh metrics"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${loadingMetrics ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Dashboard Content */}
+          {showAnalytics && (
+            <div className="p-6 space-y-6">
+              {loadingMetrics ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                </div>
+              ) : (
+                <>
+                  {/* Overview Stats */}
+                  {overviewMetrics && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Total Users */}
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-blue-700">Total Users</span>
+                          <Users className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="text-2xl font-bold text-blue-900">
+                          {overviewMetrics.summary.totalUsers.toLocaleString()}
+                        </div>
+                      </div>
+
+                      {/* Total Sessions */}
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-purple-700">Total Sessions</span>
+                          <BarChart3 className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <div className="text-2xl font-bold text-purple-900">
+                          {overviewMetrics.summary.totalSessions.toLocaleString()}
+                        </div>
+                      </div>
+
+                      {/* Total Page Views */}
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-green-700">Page Views</span>
+                          <Eye className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div className="text-2xl font-bold text-green-900">
+                          {overviewMetrics.summary.totalPageViews.toLocaleString()}
+                        </div>
+                      </div>
+
+                      {/* Avg Session Duration */}
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-orange-700">Avg Duration</span>
+                          <Clock className="h-4 w-4 text-orange-600" />
+                        </div>
+                        <div className="text-2xl font-bold text-orange-900">
+                          {Math.floor(overviewMetrics.summary.avgSessionDuration / 60)}m {Math.floor(overviewMetrics.summary.avgSessionDuration % 60)}s
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Realtime Stats */}
+                  {realtimeMetrics && (
+                    <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-lg p-4 border border-red-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-semibold text-red-700">Realtime</span>
+                      </div>
+                      <div className="text-3xl font-bold text-red-900 mb-1">
+                        {realtimeMetrics.activeUsers}
+                      </div>
+                      <div className="text-sm text-red-700">Active users right now</div>
+                      
+                      {realtimeMetrics.pages.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-red-200">
+                          <div className="text-xs font-medium text-red-700 mb-2">Currently Viewing:</div>
+                          <div className="space-y-1">
+                            {realtimeMetrics.pages.slice(0, 3).map((page, idx) => (
+                              <div key={idx} className="text-xs text-red-800 truncate">
+                                {page.pageName} ({page.users} users)
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Top Pages */}
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <Eye className="h-4 w-4" />
+                        Top Pages
+                      </h3>
+                      
+                      {topPages.length > 0 ? (
+                        <div className="space-y-3">
+                          {topPages.slice(0, 5).map((page, idx) => (
+                            <div key={idx} className="flex items-start justify-between gap-4 pb-3 border-b last:border-0">
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-gray-900 truncate">
+                                  {page.title || page.path}
+                                </div>
+                                <div className="text-xs text-gray-500 truncate">{page.path}</div>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <div className="text-sm font-semibold text-gray-900">
+                                  {page.pageViews.toLocaleString()}
+                                </div>
+                                <div className="text-xs text-gray-500">views</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 text-center py-4">No page data available</p>
+                      )}
+                    </div>
+
+                    {/* Traffic Sources */}
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Traffic Sources
+                      </h3>
+                      
+                      {trafficSources.length > 0 ? (
+                        <div className="space-y-3">
+                          {trafficSources.slice(0, 5).map((source, idx) => (
+                            <div key={idx} className="flex items-center justify-between gap-4 pb-3 border-b last:border-0">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {source.source}
+                                </div>
+                                <div className="text-xs text-gray-500">{source.medium}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-semibold text-gray-900">
+                                  {source.sessions.toLocaleString()}
+                                </div>
+                                <div className="text-xs text-gray-500">sessions</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 text-center py-4">No traffic data available</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Configuration */}

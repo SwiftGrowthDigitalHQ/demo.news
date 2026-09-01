@@ -1,22 +1,37 @@
 /**
  * Custom hook to load tenant SEO defaults
  * Used by public pages to apply SEO Manager configuration
+ * 
+ * NOW WITH ACTIVATION CHECK: Only loads if seo-manager plugin is enabled
  */
 
 import { useState, useEffect } from 'react';
 import { getPublicTenantSEODefaults, type TenantSEODefaults } from './admin';
 import { useTenant } from './useTenant';
+import { useActivePlugins } from './useActivePlugins';
 
 export function useSEODefaults() {
   const { tenant } = useTenant();
+  const { isPluginActive, loading: pluginsLoading } = useActivePlugins();
   const [seoDefaults, setSeoDefaults] = useState<TenantSEODefaults | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Capture tenantId at effect run time to avoid stale closure in async load()
+    // Wait for plugins to load first
+    if (pluginsLoading) {
+      return;
+    }
+
     const tenantId = tenant?.id;
 
     if (!tenantId) {
+      setSeoDefaults(null);
+      setLoading(false);
+      return;
+    }
+
+    // ✅ NEW: Check if seo-manager plugin is active
+    if (!isPluginActive('seo-manager')) {
       setSeoDefaults(null);
       setLoading(false);
       return;
@@ -40,7 +55,7 @@ export function useSEODefaults() {
 
     // Cleanup: if tenant changes before the request finishes, discard the result
     return () => { cancelled = true; };
-  }, [tenant?.id]);
+  }, [tenant?.id, isPluginActive, pluginsLoading]);
 
   return { seoDefaults, loading };
 }

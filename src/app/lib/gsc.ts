@@ -245,3 +245,165 @@ export function getGSCErrorMessage(errorCode: string): string {
   
   return errorMessages[errorCode] || 'An error occurred. Please try again.';
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Real-time Metrics Fetching from Search Console API
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface GSCPerformanceMetrics {
+  summary: {
+    clicks: number
+    impressions: number
+    ctr: number
+    position: number
+  }
+  queries: Array<{
+    query: string
+    clicks: number
+    impressions: number
+    ctr: number
+    position: number
+  }>
+  pages: Array<{
+    page: string
+    clicks: number
+    impressions: number
+    ctr: number
+    position: number
+  }>
+  timeline: Array<{
+    date: string
+    clicks: number
+    impressions: number
+    ctr: number
+    position: number
+  }>
+}
+
+/**
+ * Fetch real-time GSC metrics from Search Console API
+ */
+export async function fetchGSCMetrics(
+  dateRange: 'last7days' | 'last28days' | 'last90days' = 'last28days'
+): Promise<GSCPerformanceMetrics> {
+  const supabase = await getSupabaseClient()
+  
+  if (!supabase) {
+    throw new Error('Supabase not configured')
+  }
+  
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    throw new Error('Not authenticated')
+  }
+
+  // Fetch queries, pages, and timeline in parallel
+  const [queriesResponse, pagesResponse, timelineResponse] = await Promise.all([
+    fetch(
+      `${getEnv('VITE_SUPABASE_URL')}/functions/v1/gsc-fetch-metrics`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date_range: dateRange,
+          dimension: 'query',
+        }),
+      }
+    ),
+    fetch(
+      `${getEnv('VITE_SUPABASE_URL')}/functions/v1/gsc-fetch-metrics`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date_range: dateRange,
+          dimension: 'page',
+        }),
+      }
+    ),
+    fetch(
+      `${getEnv('VITE_SUPABASE_URL')}/functions/v1/gsc-fetch-metrics`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date_range: dateRange,
+          dimension: 'date',
+        }),
+      }
+    ),
+  ])
+
+  if (!queriesResponse.ok) {
+    const error = await queriesResponse.json()
+    throw new Error(error.error || 'Failed to fetch GSC queries')
+  }
+
+  if (!pagesResponse.ok) {
+    const error = await pagesResponse.json()
+    throw new Error(error.error || 'Failed to fetch GSC pages')
+  }
+
+  if (!timelineResponse.ok) {
+    const error = await timelineResponse.json()
+    throw new Error(error.error || 'Failed to fetch GSC timeline')
+  }
+
+  const queriesData = await queriesResponse.json()
+  const pagesData = await pagesResponse.json()
+  const timelineData = await timelineResponse.json()
+
+  // Calculate summary from queries
+  let totalClicks = 0
+  let totalImpressions = 0
+  let totalCtr = 0
+  let totalPosition = 0
+  let count = 0
+
+  for (const row of queriesData.data.rows || []) {
+    totalClicks += row.clicks || 0
+    totalImpressions += row.impressions || 0
+    totalCtr += row.ctr || 0
+    totalPosition += row.position || 0
+    count++
+  }
+
+  return {
+    summary: {
+      clicks: totalClicks,
+      impressions: totalImpressions,
+      ctr: count > 0 ? totalCtr / count : 0,
+      position: count > 0 ? totalPosition / count : 0,
+    },
+    queries: (queriesData.data.rows || []).map((row: any) => ({
+      query: row.keys?.[0] || '',
+      clicks: row.clicks || 0,
+      impressions: row.impressions || 0,
+      ctr: row.ctr || 0,
+      position: row.position || 0,
+    })),
+    pages: (pagesData.data.rows || []).map((row: any) => ({
+      page: row.keys?.[0] || '',
+      clicks: row.clicks || 0,
+      impressions: row.impressions || 0,
+      ctr: row.ctr || 0,
+      position: row.position || 0,
+    })),
+    timeline: (timelineData.data.rows || []).map((row: any) => ({
+      date: row.keys?.[0] || '',
+      clicks: row.clicks || 0,
+      impressions: row.impressions || 0,
+      ctr: row.ctr || 0,
+      position: row.position || 0,
+    })),
+  }
+}

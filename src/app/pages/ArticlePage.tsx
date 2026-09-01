@@ -4,6 +4,7 @@ import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { SmartAd } from '../components/SmartAd';
+import { GoogleAdSense } from '../components/GoogleAdSense';
 import { AppLink, getArticleUrl } from '../lib/navigation';
 import { useCms } from '../lib/cms';
 import { Badge } from '../components/ui/badge';
@@ -232,14 +233,26 @@ export function ArticlePage({ slug }: { slug: string }) {
                 <p className="text-gray-500 italic text-sm">Article content will appear here. Edit the article in Admin panel to add body text.</p>
               ) : (
                 <div className="prose-article space-y-4" style={{ fontSize: 'var(--article-font-size, 16px)' }}>
-                  {article.content.map((paragraph, index) => (
-                    <p key={index} className="text-gray-700 leading-[1.8]">{paragraph}</p>
-                  ))}
+                  {article.content.map((paragraph, index) => {
+                    const isMiddle = Math.floor(article.content.length / 2);
+                    return (
+                      <div key={index}>
+                        <p className="text-gray-700 leading-[1.8]">{paragraph}</p>
+                        {/* In-article AdSense after middle paragraph */}
+                        {index === isMiddle && (
+                          <GoogleAdSense placement="in_article" format="in-article" className="my-6" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Inline Ad */}
+            {/* After Article AdSense */}
+            <GoogleAdSense placement="after_article" format="display" className="mb-4" />
+
+            {/* Fallback: Inline Ad (if AdSense not active) */}
             <SmartAd placement="article_middle" className="mb-4" />
 
             {/* Share This Story (horizontal) */}
@@ -315,7 +328,10 @@ export function ArticlePage({ slug }: { slug: string }) {
           {/* ═══ RIGHT SIDEBAR ═══ */}
           <aside className="hidden xl:block self-start">
             <div className="sticky top-[72px] space-y-4 pb-6">
-              {/* Sidebar Ad */}
+              {/* Sidebar AdSense */}
+              <GoogleAdSense placement="sidebar" format="display" className="mb-4" />
+              
+              {/* Fallback: Sidebar Ad (if AdSense not active) */}
               <SmartAd placement="article_sidebar" />
 
               {/* Trending News */}

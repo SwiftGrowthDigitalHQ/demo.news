@@ -14,6 +14,7 @@ import {
 import useEmblaCarousel from 'embla-carousel-react';
 import { useCallback } from 'react';
 import { SmartAd } from '../components/SmartAd';
+import { GoogleAdSense } from '../components/GoogleAdSense';
 import { getArticleThumbnail } from '../lib/articleImage';
 import { TrendingTopics } from '../components/homepage/TrendingTopics';
 import { PageMetadata, resolveSEOTitle, resolveSEODescription, resolveSEOImage, normalizeCanonicalUrl, generateRobotsContent, generateWebSiteStructuredData, generateOrganizationStructuredData } from '../lib/seoMetadata';
@@ -1067,6 +1068,9 @@ export function HomePage() {
       />
       
       <Header />
+      
+      {/* Google AdSense - Header */}
+      <GoogleAdSense placement="header" className="mx-auto max-w-[1400px] mt-2" />
 
       {/* Header Banner Ad */}
       <SmartAd placement="homepage_top_banner" className="mx-auto max-w-[1400px] mt-2 mb-1" />
@@ -1145,6 +1149,9 @@ export function HomePage() {
           {/* ════ RIGHT SIDEBAR ════ */}
           <aside className="hidden xl:block self-start">
             <div className="sticky top-[72px] space-y-4 pb-6">
+              {/* Google AdSense - Sidebar */}
+              <GoogleAdSense placement="sidebar" className="mb-4" />
+              
               <SmartAd placement="sidebar_top" />
               <SmartAd placement="sidebar_top_2" showLabel={true} />
               <AdvertiseHereBox />

@@ -25,8 +25,10 @@ import {
   disconnectGSC,
   checkGSCOAuthCallback,
   getGSCErrorMessage,
+  fetchGSCMetrics,
   type GSCConnectionStatus,
   type GSCSyncResult,
+  type GSCPerformanceMetrics,
 } from '../../lib/gsc';
 
 interface PerformanceData {
@@ -86,6 +88,7 @@ export function GoogleSearchConsoleManager() {
   const [topQueries, setTopQueries] = useState<QueryData[]>([]);
   const [topPages, setTopPages] = useState<PageData[]>([]);
   const [selectedDateRange, setSelectedDateRange] = useState('last28days');
+  const [loadingMetrics, setLoadingMetrics] = useState(false);
 
   // Load connection status and configuration
   const loadData = useCallback(async () => {
@@ -140,68 +143,37 @@ export function GoogleSearchConsoleManager() {
 
   // Load performance data
   const loadPerformanceData = async (dateRange: string) => {
+    setLoadingMetrics(true);
+    
     try {
-      const supabase = getSupabaseClient();
-      if (!supabase || !auth.profile?.owned_tenant_id) return;
-
-      const tenantId = auth.profile.owned_tenant_id;
-
-      // Get latest performance data from database
-      const { data: perfData, error: perfError } = await supabase
-        .from('gsc_performance_data')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .order('date', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (perfError) {
-        console.error('[GSC Manager] Error loading performance data:', perfError);
-        return;
-      }
-
-      if (perfData) {
-        setPerformanceData({
-          clicks: perfData.clicks,
-          impressions: perfData.impressions,
-          ctr: perfData.ctr,
-          position: perfData.position,
-          date_range: {
-            start: perfData.date,
-            end: perfData.date,
-          },
-        });
-      }
-
-      // Get top queries
-      const { data: queriesData, error: queriesError } = await supabase
-        .from('gsc_top_queries')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .order('clicks', { ascending: false })
-        .limit(config.queries_limit);
-
-      if (queriesError) {
-        console.error('[GSC Manager] Error loading queries:', queriesError);
-      } else if (queriesData) {
-        setTopQueries(queriesData);
-      }
-
-      // Get top pages
-      const { data: pagesData, error: pagesError } = await supabase
-        .from('gsc_top_pages')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .order('clicks', { ascending: false })
-        .limit(config.pages_limit);
-
-      if (pagesError) {
-        console.error('[GSC Manager] Error loading pages:', pagesError);
-      } else if (pagesData) {
-        setTopPages(pagesData);
-      }
+      // Call real GSC API through Edge Function
+      const metrics = await fetchGSCMetrics(
+        dateRange === 'last7days' ? 'last7days' :
+        dateRange === 'last28days' ? 'last28days' :
+        'last90days'
+      );
+      
+      // Update performance data
+      setPerformanceData({
+        clicks: metrics.summary.clicks,
+        impressions: metrics.summary.impressions,
+        ctr: metrics.summary.ctr,
+        position: metrics.summary.position,
+        date_range: {
+          start: metrics.timeline[0]?.date || '',
+          end: metrics.timeline[metrics.timeline.length - 1]?.date || '',
+        },
+      });
+      
+      // Update top queries and pages
+      setTopQueries(metrics.queries.slice(0, config.queries_limit));
+      setTopPages(metrics.pages.slice(0, config.pages_limit));
+      
     } catch (error: any) {
       console.error('[GSC Manager] Error loading performance data:', error);
+      setMessage({ type: 'error', text: `Failed to load metrics: ${error.message}` });
+    } finally {
+      setLoadingMetrics(false);
     }
   };
 

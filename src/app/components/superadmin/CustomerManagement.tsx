@@ -204,6 +204,9 @@ export function CustomerManagement() {
                 <td style={tdStyle}>
                   <div style={{ fontSize: 13 }}>{tenant.owner_name || '—'}</div>
                   <div style={{ fontSize: 11, color: '#94a3b8' }}>{tenant.owner_email || '—'}</div>
+                  {tenant.contact_phone && (
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>📱 {tenant.contact_phone}</div>
+                  )}
                 </td>
                 <td style={tdStyle}>
                   <span style={getStatusStyle(tenant.subscription_status)}>
@@ -352,6 +355,9 @@ function TenantDetailsModal({
             <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>Owner</div>
             <div style={{ fontSize: 14 }}>{tenant.owner_name || '—'}</div>
             <div style={{ fontSize: 12, color: '#94a3b8' }}>{tenant.owner_email || '—'}</div>
+            {tenant.contact_phone && (
+              <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>📱 {tenant.contact_phone}</div>
+            )}
           </div>
         </div>
 

@@ -7,6 +7,10 @@
   "installCommand": "npm install",
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/sitemap-proxy"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -8,6 +8,7 @@ import { BrandingBridge } from './components/BrandingBridge';
 import { SeoBridge } from './components/SeoBridge';
 import { PushNotificationPrompt } from './components/PushNotificationPrompt';
 import { LanguageGate } from './components/LanguageGate';
+import { GoogleAnalytics } from './components/GoogleAnalytics';
 import { SangTXHomePage } from './pages/SangTXHomePage';
 import { SangTXAuthPage } from './pages/SangTXAuthPage';
 import { getSavedLanguage } from './lib/i18n';
@@ -486,6 +487,7 @@ function LanguageGatedApp() {
 
   return (
     <AuthProvider>
+      <GoogleAnalytics />
       <Toaster />
       <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
         <AppRouter />
