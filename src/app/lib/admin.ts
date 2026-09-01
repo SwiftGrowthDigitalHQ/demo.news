@@ -2135,14 +2135,22 @@ export async function getAnalyticsOverview(dateRange?: { start: Date; end: Date 
   const pagesPerSession = totalSessions > 0 ? Number((totalPages / totalSessions).toFixed(2)) : 0;
 
   // Get published articles count
-  const articlesQuery = supabase
+  let articlesQuery = supabase
     .from('articles')
     .select('id', { count: 'exact', head: true })
-    .eq('tenant_id', tenantId)
     .eq('status', 'published')
     .is('deleted_at', null);
 
-  const { count: publishedArticles } = await articlesQuery;
+  // Only filter by tenant_id if user has a tenant (handles legacy data with NULL tenant_id)
+  if (tenantId) {
+    articlesQuery = articlesQuery.eq('tenant_id', tenantId);
+  }
+
+  const { count: publishedArticles, error: articlesError } = await articlesQuery;
+  if (articlesError) {
+    console.error('[Analytics] Error fetching articles count:', articlesError);
+    // Don't throw - return 0 instead to show empty state
+  }
 
   return {
     totalPageViews,
@@ -2305,20 +2313,29 @@ export async function getTopArticles(limit = 10, dateRange?: { start: Date; end:
 
   // Step 2: Fetch corresponding articles
   const articleIds = [...new Set(views.map(v => v.article_id))];
-  const { data: articles, error: articlesError } = await supabase
+  
+  let articlesQuery = supabase
     .from('articles')
-    .select('id, title, slug, published_at, tenant_id')
-    .in('id', articleIds)
-    .eq('tenant_id', tenantId);
+    .select('id, title, slug, publish_at')
+    .in('id', articleIds);
 
-  if (articlesError) throw articlesError;
+  // Only filter by tenant_id if user has a tenant (handles legacy data with NULL tenant_id)
+  if (tenantId) {
+    articlesQuery = articlesQuery.eq('tenant_id', tenantId);
+  }
+
+  const { data: articles, error: articlesError } = await articlesQuery;
+  if (articlesError) {
+    console.error('[Analytics] Error fetching articles for top articles:', articlesError);
+    throw articlesError;
+  }
 
   // Create lookup map for articles
   const articlesMap = new Map(articles?.map(a => [a.id, a]) || []);
 
   // Aggregate by article
   const articleStats = new Map<string, {
-    article: { id: string; title: string; slug: string; published_at: string | null };
+    article: { id: string; title: string; slug: string; publish_at: string | null };
     views: number;
     uniqueVisitors: Set<string>;
     totalTime: number;
@@ -2355,7 +2372,7 @@ export async function getTopArticles(limit = 10, dateRange?: { start: Date; end:
       views: stats.views,
       uniqueVisitors: stats.uniqueVisitors.size,
       avgReadingTime: stats.views > 0 ? Math.round(stats.totalTime / stats.views) : 0,
-      publishedAt: stats.article.published_at,
+      publishedAt: stats.article.publish_at,
       trend: 0 // TODO: Calculate vs previous period
     }))
     .sort((a, b) => b.views - a.views)

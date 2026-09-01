@@ -208,20 +208,9 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     category: 'INTEGRATIONS',
     tenantOnly: true,
   },
-  {
-    id: 'facebook-publisher',
-    label: 'Facebook Publisher',
-    icon: FileText,
-    category: 'INTEGRATIONS',
-    tenantOnly: true,
-  },
-  {
-    id: 'youtube-integration',
-    label: 'YouTube Integration',
-    icon: FileText,
-    category: 'INTEGRATIONS',
-    tenantOnly: true,
-  },
+  // NOTE: Facebook Publisher and YouTube Integration are now accessible
+  // through the Plugins section/plugin management UI only.
+  // Routes, components, and functionality remain intact.
 
   // ─────────────────────────────────────────────────────────────────────────
   // WEBSITE SETTINGS - Tenant Only (their website configuration)

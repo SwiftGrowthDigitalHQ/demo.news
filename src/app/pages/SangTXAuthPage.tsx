@@ -14,7 +14,7 @@ function SangTXLogo() {
       style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
       aria-label="SangTX home"
     >
-      <img src="/logo.jpg" alt="SangTX" style={{ width: 160, height: 48, objectFit: 'cover', objectPosition: 'center' }} />
+      <img src="/SangTXlogo.png" alt="SangTX" style={{ height: 48, objectFit: 'contain' }} />
     </a>
   );
 }

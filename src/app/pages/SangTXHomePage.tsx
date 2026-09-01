@@ -314,14 +314,11 @@ function SiteHeader() {
             whileHover={shouldReduce ? undefined : { scale: 1.02 }}
             transition={SPR.snappy}
           >
-            <motion.div
-              style={{ width: 32, height: 32, background: '#dc2626', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-              whileHover={shouldReduce ? undefined : { scale: 1.05, rotate: -2 }}
-              transition={SPR.gentle}
-            >
-              <span style={{ color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '-0.03em' }}>S</span>
-            </motion.div>
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.04em' }}>SangTX</span>
+            <img 
+              src="/SangTXlogo.png" 
+              alt="SangTX" 
+              style={{ height: 56, objectFit: 'contain' }}
+            />
           </motion.a>
 
           {/* Desktop nav */}
@@ -1774,10 +1771,11 @@ function SiteFooter() {
               whileHover={shouldReduce ? undefined : { scale: 1.01 }}
               transition={SPR.snappy}
             >
-              <div style={{ width: 30, height: 30, background: '#dc2626', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: '#fff', fontSize: 13, fontWeight: 800 }}>S</span>
-              </div>
-              <span style={{ fontSize: 17, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.04em' }}>SangTX</span>
+              <img 
+                src="/SangTXlogo.png" 
+                alt="SangTX" 
+                style={{ height: 44, objectFit: 'contain' }}
+              />
             </motion.div>
             <p style={{ fontSize: 13, color: '#64748b', lineHeight: isDevanagari ? 1.8 : 1.7, maxWidth: 260 }}>
               {t('footer.description')}

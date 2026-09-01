@@ -12,10 +12,11 @@ function SangTXHeader() {
       <div style={{ maxWidth: 1200, margin: '0 auto', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <a href="/" onClick={e => { e.preventDefault(); navigate('/'); }}
           style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }} aria-label="SangTX home">
-          <div style={{ width: 32, height: 32, background: '#dc2626', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 14, fontWeight: 800 }}>S</span>
-          </div>
-          <span style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.04em' }}>SangTX</span>
+          <img 
+            src="/SangTXlogo.png" 
+            alt="SangTX" 
+            style={{ height: 50, objectFit: 'contain' }}
+          />
         </a>
         <div style={{ display: 'flex', gap: 12 }}>
           <a href="/login" onClick={e => { e.preventDefault(); navigate('/login'); }}

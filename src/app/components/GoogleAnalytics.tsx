@@ -2,17 +2,22 @@
  * Google Analytics (GA4) Component
  * 
  * Automatically injects gtag.js and tracks pageviews when:
- * 1. google-analytics plugin is enabled in tenant_plugins
- * 2. A valid GA4 connection exists in ga4_connections table
+ * 1. google-analytics plugin is enabled and configured in tenant_plugins
+ * 2. A valid measurement ID exists in plugin configuration
  * 
  * This component should be rendered once at the App root level.
+ * 
+ * Configuration format in tenant_plugins.configuration:
+ * {
+ *   "domain": "example.com",
+ *   "measurement_id": "G-XXXXXXXXXX"
+ * }
  */
 
 import { useEffect, useState, useRef } from 'react';
 import { useTenant } from '../lib/useTenant';
-import { useActivePlugins } from '../lib/useActivePlugins';
-import { getSupabaseClient } from '../../lib/supabase';
 import { useAppNavigation } from '../lib/navigation';
+import { getGA4Config } from '../../services/ga4Service';
 
 declare global {
   interface Window {
@@ -23,14 +28,13 @@ declare global {
 
 export function GoogleAnalytics() {
   const { tenant } = useTenant();
-  const { isPluginActive } = useActivePlugins();
   const { pathname } = useAppNavigation();
   const [measurementId, setMeasurementId] = useState<string | null>(null);
   const scriptLoadedRef = useRef(false);
 
-  // Load measurement ID from ga4_connections table
+  // Load measurement ID from tenant_plugins configuration
   useEffect(() => {
-    if (!tenant?.id || !isPluginActive('google-analytics')) {
+    if (!tenant?.id) {
       setMeasurementId(null);
       return;
     }
@@ -39,26 +43,23 @@ export function GoogleAnalytics() {
 
     async function loadMeasurementId() {
       try {
-        const supabase = getSupabaseClient();
-        if (!supabase) return;
+        const result = await getGA4Config(tenant.id);
 
-        const { data, error } = await supabase
-          .from('ga4_connections')
-          .select('measurement_id')
-          .eq('tenant_id', tenant.id)
-          .eq('status', 'active')
-          .maybeSingle();
-
-        if (error) {
-          console.error('[GA4] Failed to load measurement ID:', error);
+        if (!result.success) {
+          console.error('[GA4] Failed to load configuration:', result.error);
           return;
         }
 
-        if (!cancelled && data?.measurement_id) {
-          setMeasurementId(data.measurement_id);
+        // Only set measurement ID if tracking is active
+        if (!cancelled && result.data?.tracking_active && result.data?.measurement_id) {
+          console.log('[GA4] Configuration loaded - Tracking active:', result.data.measurement_id);
+          setMeasurementId(result.data.measurement_id);
+        } else if (!cancelled) {
+          console.log('[GA4] Tracking not active or not configured');
+          setMeasurementId(null);
         }
       } catch (err) {
-        console.error('[GA4] Error loading measurement ID:', err);
+        console.error('[GA4] Error loading configuration:', err);
       }
     }
 
@@ -67,7 +68,7 @@ export function GoogleAnalytics() {
     return () => {
       cancelled = true;
     };
-  }, [tenant?.id, isPluginActive]);
+  }, [tenant?.id]);
 
   // Inject gtag.js script when measurement ID is available
   useEffect(() => {
