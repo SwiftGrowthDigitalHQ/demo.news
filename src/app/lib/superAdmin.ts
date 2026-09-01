@@ -752,6 +752,96 @@ export async function getAllPayments(filters?: {
   const supabase = await getSupabaseClient();
   if (!supabase) return [];
   
+  console.log('[getAllPayments] Filter:', filters);
+  
+  // ARCHITECTURE: subscription_status on tenants table is the source of truth
+  // SUBMITTED status maps to tenants with subscription_status = 'PAYMENT_PENDING'
+  // This matches how Dashboard counts payment_pending_customers
+  
+  if (filters?.status === 'SUBMITTED') {
+    // ARCHITECTURE: For SUBMITTED (pending) payments, we need to:
+    // 1. Find tenants with subscription_status = 'PAYMENT_PENDING'
+    // 2. Join with tenant_payments to get actual payment details (UTR, amount, etc.)
+    // 3. If no payment record exists, use tenant data as fallback
+    
+    const { data: tenants, error: tenantsError } = await supabase
+      .from('tenants')
+      .select('id, name, slug, subscription_plan, subscription_status, created_at')
+      .eq('subscription_status', 'PAYMENT_PENDING')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+    
+    if (tenantsError) {
+      console.error('[getAllPayments] Error querying PAYMENT_PENDING tenants:', tenantsError);
+      return [];
+    }
+    
+    console.log('[getAllPayments] Found PAYMENT_PENDING tenants:', tenants?.length || 0);
+    
+    if (!tenants || tenants.length === 0) {
+      return [];
+    }
+    
+    // For each PAYMENT_PENDING tenant, check if they have an actual payment record
+    const results: TenantPayment[] = [];
+    
+    for (const tenant of tenants) {
+      // Try to get the actual payment record for this tenant
+      const { data: paymentRecords } = await supabase
+        .from('tenant_payments')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .eq('status', 'SUBMITTED')
+        .order('submitted_at', { ascending: false })
+        .limit(1);
+      
+      const paymentRecord = paymentRecords?.[0];
+      
+      if (paymentRecord) {
+        // Use actual payment record data (includes UTR, actual amount, etc.)
+        console.log(`[getAllPayments] Found payment record for tenant ${tenant.slug} with UTR: ${paymentRecord.utr || 'NULL'}`);
+        results.push({
+          id: paymentRecord.id,
+          tenant_id: tenant.id,
+          tenant_name: tenant.name,
+          tenant_slug: tenant.slug,
+          amount: paymentRecord.amount,
+          plan: paymentRecord.plan,
+          status: 'SUBMITTED' as const,
+          utr: paymentRecord.utr,
+          notes: paymentRecord.notes,
+          submitted_at: paymentRecord.submitted_at,
+          reviewed_at: null,
+          reviewed_by_name: null,
+          rejection_reason: null,
+          upi_id_used: paymentRecord.upi_id_used,
+          payment_date: paymentRecord.payment_date,
+        });
+      } else {
+        // Fallback: Use tenant data (legacy PAYMENT_PENDING without payment record)
+        console.log(`[getAllPayments] No payment record for tenant ${tenant.slug}, using tenant data as fallback`);
+        results.push({
+          id: tenant.id,
+          tenant_id: tenant.id,
+          tenant_name: tenant.name,
+          tenant_slug: tenant.slug,
+          amount: tenant.subscription_plan === 'yearly' ? 5599 : 499,
+          plan: tenant.subscription_plan || 'monthly',
+          status: 'SUBMITTED' as const,
+          utr: null,
+          notes: null,
+          submitted_at: tenant.created_at,
+          reviewed_at: null,
+          reviewed_by_name: null,
+          rejection_reason: null,
+        });
+      }
+    }
+    
+    return results;
+  }
+  
+  // For APPROVED/REJECTED or ALL, query tenant_payments table (actual payment records)
   let query = supabase
     .from('tenant_payments')
     .select(`
@@ -774,7 +864,17 @@ export async function getAllPayments(filters?: {
   
   const { data, error } = await query;
   
-  if (error || !data) return [];
+  if (error) {
+    console.error('[getAllPayments] Error querying tenant_payments:', error);
+    return [];
+  }
+  
+  if (!data || data.length === 0) {
+    console.log('[getAllPayments] No payment records found in tenant_payments');
+    return [];
+  }
+  
+  console.log('[getAllPayments] Found payment records:', data.length);
   
   return data.map((p: any) => ({
     ...p,
@@ -882,20 +982,34 @@ export async function logAuditEvent(
   }
 }
 
+export interface AuditLogsPage {
+  data: AuditLog[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export async function getAuditLogs(filters?: {
   entityType?: string;
   entityId?: string;
-  limit?: number;
-}): Promise<AuditLog[]> {
+  page?: number;
+  pageSize?: number;
+}): Promise<AuditLogsPage> {
   const supabase = await getSupabaseClient();
-  if (!supabase) return [];
+  if (!supabase) return { data: [], total: 0, page: 1, pageSize: 25, totalPages: 0 };
+  
+  const page = filters?.page || 1;
+  const pageSize = filters?.pageSize || 25;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
   
   let query = supabase
     .from('audit_logs')
     .select(`
       *,
       users(full_name)
-    `)
+    `, { count: 'exact' })
     .order('created_at', { ascending: false });
   
   if (filters?.entityType) {
@@ -906,20 +1020,25 @@ export async function getAuditLogs(filters?: {
     query = query.eq('entity_id', filters.entityId);
   }
   
-  if (filters?.limit) {
-    query = query.limit(filters.limit);
-  } else {
-    query = query.limit(100);
+  // Apply pagination
+  query = query.range(from, to);
+  
+  const { data, error, count } = await query;
+  
+  if (error || !data) {
+    console.error('[getAuditLogs] Error:', error);
+    return { data: [], total: 0, page, pageSize, totalPages: 0 };
   }
   
-  const { data, error } = await query;
+  const total = count || 0;
+  const totalPages = Math.ceil(total / pageSize);
   
-  if (error || !data) return [];
-  
-  return data.map((log: any) => ({
+  const logs = data.map((log: any) => ({
     ...log,
     actor_name: log.users?.full_name || null,
   }));
+  
+  return { data: logs, total, page, pageSize, totalPages };
 }
 
 // ─── TENANT CONTENT OVERVIEW ────────────────────────────────────────────────

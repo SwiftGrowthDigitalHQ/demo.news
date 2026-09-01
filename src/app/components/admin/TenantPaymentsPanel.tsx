@@ -113,9 +113,26 @@ export function TenantPaymentsPanel() {
 
   const load = async () => {
     setLoading(true);
+    console.log('[TenantPaymentsPanel] Loading payments...');
     try {
-      setPayments(await listAllPayments());
+      const result = await listAllPayments();
+      console.log('[TenantPaymentsPanel] Loaded payments:', result.length);
+      if (result.length === 0) {
+        console.warn('[TenantPaymentsPanel] No payments found. Possible causes:');
+        console.warn('  1. No customers have submitted payments yet');
+        console.warn('  2. RLS policy blocking access (verify super_admin role)');
+        console.warn('  3. Orphaned PAYMENT_PENDING tenants without payment records');
+        console.warn('  → Check PAYMENT_BUG_ANALYSIS.md for troubleshooting');
+      } else {
+        console.log('[TenantPaymentsPanel] Payment status breakdown:',{
+          submitted: result.filter(p => p.status === 'SUBMITTED').length,
+          approved: result.filter(p => p.status === 'APPROVED').length,
+          rejected: result.filter(p => p.status === 'REJECTED').length,
+        });
+      }
+      setPayments(result);
     } catch (e) {
+      console.error('[TenantPaymentsPanel] Failed to load payments:', e);
       toast.error(e instanceof Error ? e.message : 'Failed to load payments.');
     } finally {
       setLoading(false);

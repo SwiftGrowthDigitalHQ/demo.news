@@ -283,6 +283,9 @@ export async function listAllPayments(
   statusFilter?: PaymentStatus | 'ALL',
 ): Promise<PaymentRow[]> {
   const supabase = client();
+  
+  console.log('[listAllPayments] Starting query with filter:', statusFilter);
+  
   let q = supabase
     .from('tenant_payments')
     .select(`
@@ -296,7 +299,21 @@ export async function listAllPayments(
   }
 
   const { data, error } = await q;
-  if (error) throw error;
+  
+  if (error) {
+    console.error('[listAllPayments] Query failed:', error);
+    throw error;
+  }
+
+  console.log('[listAllPayments] Query succeeded. Rows returned:', data?.length ?? 0);
+  
+  if (!data || data.length === 0) {
+    console.warn('[listAllPayments] No payment records found. This may indicate:');
+    console.warn('  1. No payments have been submitted yet');
+    console.warn('  2. RLS policy is blocking access (check is_super_admin())');
+    console.warn('  3. Tenants have PAYMENT_PENDING status but no payment records (orphaned state)');
+    console.warn('  → Run PAYMENT_DEBUG_DIAGNOSTIC.sql to investigate');
+  }
 
   return (data ?? []).map((row: Record<string, unknown>) => {
     const tenant = row.tenant as Record<string, unknown> | null;
