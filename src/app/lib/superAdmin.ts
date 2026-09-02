@@ -262,58 +262,72 @@ export async function getSuperAdminUser() {
   
   console.log('[getSuperAdminUser] Auth user ID:', user.id, 'Email:', user.email);
   
-  // First, try to get user with role using inner join
-  const { data, error } = await supabase
+  // Step 1: Get user record (simple query without join)
+  const { data: userData, error: userError } = await supabase
     .from('users')
-    .select('id, full_name, email, avatar_url, role_id, roles!inner(id, slug, name)')
+    .select('id, full_name, email, avatar_url, role_id')
     .eq('auth_user_id', user.id)
-    .eq('deleted_at', null)
+    .is('deleted_at', null)
     .maybeSingle();
   
-  if (error) {
-    console.error('[getSuperAdminUser] Query error:', error);
+  if (userError) {
+    console.error('[getSuperAdminUser] Query error:', userError);
     return null;
   }
   
-  if (!data) {
-    console.error('[getSuperAdminUser] No user record found with roles!inner');
-    
-    // Try without inner join to see if user exists but has no role
-    const { data: userWithoutRole, error: error2 } = await supabase
-      .from('users')
-      .select('id, full_name, email, avatar_url, role_id')
-      .eq('auth_user_id', user.id)
-      .eq('deleted_at', null)
-      .maybeSingle();
-    
-    if (error2) {
-      console.error('[getSuperAdminUser] Fallback query error:', error2);
-    } else if (userWithoutRole) {
-      console.error('[getSuperAdminUser] User exists but role_id is:', userWithoutRole.role_id);
-      console.error('[getSuperAdminUser] User may have NULL role_id or role record doesn\'t exist');
-    } else {
-      console.error('[getSuperAdminUser] User record does not exist for auth_user_id:', user.id);
-    }
-    
+  if (!userData) {
+    console.error('[getSuperAdminUser] No user record found for auth_user_id:', user.id);
     return null;
   }
   
   console.log('[getSuperAdminUser] User record found:', {
-    user_id: data.id,
-    email: data.email,
-    role_id: data.role_id,
-    role: (data as any).roles?.slug
+    user_id: userData.id,
+    email: userData.email,
+    role_id: userData.role_id
   });
   
-  // Check if user has super_admin role
-  const userRole = (data as any).roles?.slug;
-  if (userRole !== 'super_admin') {
-    console.error('[getSuperAdminUser] User has role:', userRole, 'but needs super_admin');
+  // Step 2: Check if user has a role_id
+  if (!userData.role_id) {
+    console.error('[getSuperAdminUser] User has NULL role_id');
+    return null;
+  }
+  
+  // Step 3: Get the role details
+  const { data: roleData, error: roleError } = await supabase
+    .from('roles')
+    .select('id, slug, name')
+    .eq('id', userData.role_id)
+    .maybeSingle();
+  
+  if (roleError) {
+    console.error('[getSuperAdminUser] Role query error:', roleError);
+    return null;
+  }
+  
+  if (!roleData) {
+    console.error('[getSuperAdminUser] Role not found for role_id:', userData.role_id);
+    return null;
+  }
+  
+  console.log('[getSuperAdminUser] Role found:', {
+    role_id: roleData.id,
+    slug: roleData.slug,
+    name: roleData.name
+  });
+  
+  // Step 4: Check if user has super_admin role
+  if (roleData.slug !== 'super_admin') {
+    console.error('[getSuperAdminUser] User has role:', roleData.slug, 'but needs super_admin');
     return null;
   }
   
   console.log('[getSuperAdminUser] ✅ User is Super Admin');
-  return data;
+  
+  // Return user data with roles attached (for compatibility)
+  return {
+    ...userData,
+    roles: roleData
+  };
 }
 
 // ─── PLATFORM METRICS ────────────────────────────────────────────────────────
