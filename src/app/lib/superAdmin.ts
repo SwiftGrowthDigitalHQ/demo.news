@@ -665,11 +665,20 @@ export async function updateTenantStatus(
   const supabase = await getSupabaseClient();
   if (!supabase) return { success: false, error: 'Supabase not configured' };
   
-  console.log('[updateTenantStatus] Calling update_tenant_status_rpc with:', {
-    p_tenant_id: tenantId,
-    p_new_status: status,
-    p_reason: reason ?? null
+  const admin = await getSuperAdminUser();
+  if (!admin) {
+    console.error('[updateTenantStatus] Authorization failed - not a Super Admin');
+    return { success: false, error: 'Not authorized' };
+  }
+  
+  console.log('[updateTenantStatus] Authorized as Super Admin:', {
+    user_id: admin.id,
+    email: admin.email,
+    tenant_id: tenantId,
+    new_status: status
   });
+  
+  console.log('[updateTenantStatus] Calling update_tenant_status_rpc');
   
   // Use the SECURITY DEFINER RPC instead of a direct .update() so that:
   //  1. The DB re-verifies is_super_admin() before making the change
@@ -682,7 +691,12 @@ export async function updateTenantStatus(
   });
   
   if (error) {
-    console.error('[updateTenantStatus] RPC error:', error);
+    console.error('[updateTenantStatus] RPC error:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint
+    });
     return { success: false, error: error.message };
   }
   
@@ -704,10 +718,20 @@ export async function extendTenantTrial(
   const supabase = await getSupabaseClient();
   if (!supabase) return { success: false, error: 'Supabase not configured' };
 
-  console.log('[extendTenantTrial] Calling extend_tenant_trial_rpc with:', {
-    p_tenant_id: tenantId,
-    p_additional_days: additionalDays
+  const admin = await getSuperAdminUser();
+  if (!admin) {
+    console.error('[extendTenantTrial] Authorization failed - not a Super Admin');
+    return { success: false, error: 'Not authorized' };
+  }
+
+  console.log('[extendTenantTrial] Authorized as Super Admin:', {
+    user_id: admin.id,
+    email: admin.email,
+    tenant_id: tenantId,
+    additional_days: additionalDays
   });
+
+  console.log('[extendTenantTrial] Calling extend_tenant_trial_rpc');
 
   // Use the SECURITY DEFINER RPC so that:
   //  1. is_super_admin() is verified at the DB level
@@ -719,7 +743,12 @@ export async function extendTenantTrial(
   });
 
   if (error) {
-    console.error('[extendTenantTrial] RPC error:', error);
+    console.error('[extendTenantTrial] RPC error:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint
+    });
     return { success: false, error: error.message };
   }
   
@@ -913,12 +942,18 @@ export async function approvePayment(
   if (!supabase) return { success: false, error: 'Supabase not configured' };
   
   const admin = await getSuperAdminUser();
-  if (!admin) return { success: false, error: 'Not authorized' };
+  if (!admin) {
+    console.error('[approvePayment] Authorization failed - not a Super Admin');
+    return { success: false, error: 'Not authorized' };
+  }
   
-  console.log('[approvePayment] Calling approve_subscription_payment RPC with:', {
-    p_payment_id: paymentId,
-    p_reviewed_by_user_id: admin.id
+  console.log('[approvePayment] Authorized as Super Admin:', {
+    user_id: admin.id,
+    email: admin.email,
+    payment_id: paymentId
   });
+  
+  console.log('[approvePayment] Calling approve_subscription_payment RPC');
   
   const { error } = await supabase.rpc('approve_subscription_payment', { 
     p_payment_id: paymentId, 
@@ -926,7 +961,12 @@ export async function approvePayment(
   });
   
   if (error) {
-    console.error('[approvePayment] RPC error:', error);
+    console.error('[approvePayment] RPC error:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint
+    });
     return { success: false, error: error.message };
   }
   
@@ -942,15 +982,20 @@ export async function rejectPayment(
   if (!supabase) return { success: false, error: 'Supabase not configured' };
   
   const admin = await getSuperAdminUser();
-  if (!admin) return { success: false, error: 'Not authorized' };
+  if (!admin) {
+    console.error('[rejectPayment] Authorization failed - not a Super Admin');
+    return { success: false, error: 'Not authorized' };
+  }
   
   if (!reason.trim()) return { success: false, error: 'A rejection reason is required' };
   
-  console.log('[rejectPayment] Calling reject_payment RPC with:', {
-    p_payment_id: paymentId,
-    p_rejection_reason: reason.trim(),
-    p_reviewed_by_user_id: admin.id
+  console.log('[rejectPayment] Authorized as Super Admin:', {
+    user_id: admin.id,
+    email: admin.email,
+    payment_id: paymentId
   });
+  
+  console.log('[rejectPayment] Calling reject_payment RPC');
   
   const { error } = await supabase.rpc('reject_payment', { 
     p_payment_id: paymentId, 
@@ -959,7 +1004,12 @@ export async function rejectPayment(
   });
   
   if (error) {
-    console.error('[rejectPayment] RPC error:', error);
+    console.error('[rejectPayment] RPC error:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint
+    });
     return { success: false, error: error.message };
   }
   

@@ -359,7 +359,7 @@ export async function rejectPayment(payload: {
   const supabase = client();
   const { error } = await supabase.rpc('reject_payment', {
     p_payment_id:          payload.paymentId,
-    p_reason:              payload.reason.trim(),
+    p_rejection_reason:    payload.reason.trim(),
     p_reviewed_by_user_id: payload.reviewerUserId,
   });
   if (error) throw new Error(error.message || 'Failed to reject payment.');
