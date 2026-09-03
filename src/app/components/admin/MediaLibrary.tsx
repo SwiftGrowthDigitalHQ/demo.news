@@ -412,12 +412,12 @@ export function MediaLibrary() {
   }
 
   const gridColumns = isMobile ? 'repeat(auto-fill, minmax(140px, 1fr))' : 'repeat(auto-fill, minmax(180px, 1fr))';
-  const cardGap = isMobile ? 'gap-3' : 'gap-4';
+  const cardGap = isMobile ? '12px' : '16px';
   const padding = isMobile ? 'p-3' : 'p-4';
 
   // Render Grid View
   const renderGridView = () => (
-    <div className="grid" style={{ gridTemplateColumns: gridColumns, ...cardGap }}>
+    <div className="grid" style={{ gridTemplateColumns: gridColumns, gap: cardGap }}>
       {paginate(filtered).map(item => (
         <div key={item.id} className="rounded-xl border overflow-hidden group" style={{ background: '#fff', borderColor: 'rgba(15,23,42,0.08)' }}>
           <div className="relative flex items-center justify-center" style={{ height: isMobile ? 100 : 120, background: '#f8fafc', overflow: 'hidden' }}>
