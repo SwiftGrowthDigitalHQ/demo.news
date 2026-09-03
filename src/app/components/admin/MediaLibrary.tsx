@@ -532,7 +532,7 @@ export function MediaLibrary() {
   };
 
   return (
-    <div className={`flex flex-col ${cardGap} p-4 sm:p-6`}>
+    <div className="flex flex-col p-4 sm:p-6" style={{ gap: cardGap }}>
       {/* Stats Cards */}
       <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)' }}>
         {stats.map(item => (
