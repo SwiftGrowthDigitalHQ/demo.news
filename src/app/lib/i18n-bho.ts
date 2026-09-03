@@ -343,6 +343,8 @@ export const bho: Record<TranslationKey, string> = {
   'sub.switchingTo': '{plan} पर बदलत बानी',
   'sub.planSwitchSubmitted': 'प्लान स्विच अनुरोध सबमिट हो गइल। हमार टीम जल्दी भुगतान सत्यापित करी।',
   'sub.planChangePending': '{plan} पर स्विच करे के रउआ के अनुरोध समीक्षा में बा। सत्यापन के इंतजार करीं।',
+  'sub.planChangeRejected': 'रउआ के {plan} अपग्रेड अनुरोध अस्वीकार कर दिहल गइल।',
+  'sub.tryAgain': 'फेर से कोशिश करीं',
 
   // ── Superadmin: Tenant & Payment management ───────────────────────────────
   'admin.tenants.title': 'टेनेंट',

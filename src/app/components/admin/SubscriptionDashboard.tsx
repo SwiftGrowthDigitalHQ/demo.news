@@ -378,6 +378,7 @@ function PlanSwitcher({
 
   // Already has a pending plan-change payment
   const changePending = tenant.plan_change_status === 'pending';
+  const changeRejected = tenant.plan_change_status === 'rejected';
 
   if (changePending) {
     return (
@@ -412,6 +413,81 @@ function PlanSwitcher({
             })}
           </span>
         </div>
+      </div>
+    );
+  }
+
+  if (changeRejected) {
+    return (
+      <div style={{
+        borderRadius: 14,
+        border: '1.5px solid #e2e8f0',
+        background: '#fff',
+        padding: 20,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+      }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', marginBottom: 12 }}>
+          {t('sub.changePlanTitle')}
+        </div>
+        <div style={{
+          background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+          border: '1.5px solid #fca5a5',
+          borderRadius: 10,
+          padding: '14px 16px',
+          fontSize: 13,
+          color: '#991b1b',
+          lineHeight: 1.6,
+          marginBottom: 16,
+        }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            <div>
+              <div style={{ fontWeight: 700, marginBottom: 4 }}>
+                {t('sub.planChangeRejected', {
+                  plan: tenant.requested_plan === 'yearly' ? t('sub.yearlyPlan') : t('sub.monthlyPlan'),
+                })}
+              </div>
+              {tenant.plan_change_submitted_at && (
+                <div style={{ fontSize: 12, color: '#b91c1c', opacity: 0.8 }}>
+                  Requested on {new Date(tenant.plan_change_submitted_at).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            // Clear rejected status by setting to none (will allow new payment submission)
+            // The actual clearing will happen when they submit a new payment
+            window.location.reload();
+          }}
+          style={{
+            width: '100%',
+            height: 44,
+            borderRadius: 9,
+            border: 'none',
+            background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+            color: '#fff',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 6px 16px rgba(220, 38, 38, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(220, 38, 38, 0.3)';
+          }}
+        >
+          {t('sub.tryAgain')} →
+        </button>
       </div>
     );
   }

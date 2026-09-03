@@ -370,6 +370,8 @@ export const en = {
   'sub.switchingTo': 'Switching to {plan}',
   'sub.planSwitchSubmitted': 'Plan switch request submitted. Our team will verify your payment soon.',
   'sub.planChangePending': 'Your request to switch to {plan} is under review. Please wait for verification.',
+  'sub.planChangeRejected': 'Your {plan} upgrade request was rejected.',
+  'sub.tryAgain': 'Try Again',
 
   // ── Superadmin: Tenant & Payment management ───────────────────────────────
   'admin.tenants.title': 'Tenants',

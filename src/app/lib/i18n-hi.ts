@@ -343,6 +343,8 @@ export const hi: Record<TranslationKey, string> = {
   'sub.switchingTo': '{plan} पर स्विच हो रहे हैं',
   'sub.planSwitchSubmitted': 'प्लान स्विच अनुरोध सबमिट हो गया। हमारी टीम जल्द ही भुगतान सत्यापित करेगी।',
   'sub.planChangePending': '{plan} पर स्विच करने का आपका अनुरोध समीक्षाधीन है। कृपया सत्यापन की प्रतीक्षा करें।',
+  'sub.planChangeRejected': 'आपका {plan} अपग्रेड अनुरोध अस्वीकार कर दिया गया।',
+  'sub.tryAgain': 'फिर से प्रयास करें',
 
   // ── Superadmin: Tenant & Payment management ───────────────────────────────
   'admin.tenants.title': 'टेनेंट्स',
