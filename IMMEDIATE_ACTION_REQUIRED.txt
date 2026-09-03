@@ -1,0 +1,150 @@
+================================================================================
+                    REJECTED PAYMENT BUG - ROOT CAUSE FOUND
+                         IMMEDIATE ACTION REQUIRED
+================================================================================
+
+PROBLEM:
+--------
+Customer sees: "Your request to switch to Yearly is under review"
+But payment status is: REJECTED with reason "UTR WRONG"
+
+This is wrong. The payment is rejected, not pending.
+
+ROOT CAUSE:
+-----------
+The reject_payment() function in the database does NOT update plan_change_status.
+
+It was implemented incorrectly on Aug 12 in migration:
+  20260812000003_subscription_lifecycle_complete.sql
+
+We tried to fix it on Sep 2 with:
+  20260902000001_fix_subscription_lifecycle.sql
+
+But that migration was NEVER applied to production database.
+
+THE FIX:
+--------
+New comprehensive migration created:
+  supabase/migrations/20260903000001_fix_rejected_payment_lifecycle.sql
+
+This migration:
+✅ Fixes reject_payment() function to set plan_change_status = 'rejected'
+✅ Fixes approve_subscription_payment() to clear plan_change_status
+✅ Cleans up existing stale rejected payment records
+✅ Already committed and pushed to GitHub (commit 0be0d21)
+
+DEPLOYMENT STEPS:
+-----------------
+
+1. APPLY MIGRATION TO DATABASE
+   
+   Open: https://app.supabase.com
+   → Your Project
+   → SQL Editor
+   → New Query
+   
+   Copy and paste entire contents of:
+   supabase/migrations/20260903000001_fix_rejected_payment_lifecycle.sql
+   
+   Click: RUN
+   
+   Wait for completion (no errors should appear)
+
+2. VERIFY MIGRATION WAS APPLIED
+   
+   Run this query in SQL Editor:
+   
+   SELECT pg_get_functiondef(p.oid) FROM pg_proc p 
+   WHERE p.proname = 'reject_payment';
+   
+   Look for: plan_change_status = 'rejected'
+   If found, migration worked ✅
+
+3. VERIFY DATA CLEANUP
+   
+   Run this query:
+   
+   SELECT * FROM public.tenants 
+   WHERE plan_change_status = 'pending' 
+   AND subscription_status = 'PAYMENT_DUE'
+   AND deleted_at IS NULL;
+   
+   Should return: EMPTY (no rows)
+   If empty, cleanup worked ✅
+
+4. REBUILD FRONTEND
+   
+   npm run build
+   
+   Takes ~3 minutes
+   Should complete with: ✓ built in 3m...
+
+5. DEPLOY FRONTEND
+   
+   Deploy the dist/ folder to production
+   (Via Vercel, your hosting, or manual upload)
+
+6. TEST IN BROWSER
+   
+   Hard refresh: Ctrl+Shift+R
+   
+   Load affected customer account
+   Go to: /admin/my-subscription
+   
+   Should now see: "Your Yearly upgrade request was rejected"
+   NOT: "Your request to switch to Yearly is under review"
+   
+   Should show rejection reason: "UTR WRONG"
+
+AFTER TESTING:
+   Report back with:
+   ✓ Migration applied successfully
+   ✓ UI now shows "rejected" instead of "under review"
+   ✓ Rejection reason visible
+   ✓ All tests passed
+
+FILES READY FOR DEPLOYMENT:
+----------------------------
+✅ Migration: supabase/migrations/20260903000001_fix_rejected_payment_lifecycle.sql
+✅ Frontend: Already updated (commit 424b53c)
+✅ Docs: ROOT_CAUSE_AND_FIX.md (gitignored)
+✅ Docs: DEPLOYMENT_INSTRUCTIONS.md (gitignored - detailed step-by-step)
+✅ Docs: FINAL_ISSUE_SUMMARY.md (gitignored - complete analysis)
+
+GIT STATUS:
+-----------
+Commit: 0be0d21
+Branch: main
+Status: Pushed to GitHub ✅
+Ready: YES ✅
+
+RISK ASSESSMENT:
+----------------
+Safety Level: LOW RISK ✅
+- Using CREATE OR REPLACE (backward compatible)
+- Within transaction (atomic)
+- Only updates stale data
+- No schema changes
+- Clear rollback path
+
+QUESTIONS?
+----------
+Check: ROOT_CAUSE_AND_FIX.md for detailed analysis
+Check: DEPLOYMENT_INSTRUCTIONS.md for step-by-step guide
+
+DO NOT:
+-------
+❌ Do not skip the verification queries - they prove it worked
+❌ Do not forget hard refresh (Ctrl+Shift+R) - needed for browser cache
+❌ Do not deploy frontend without migration applied
+❌ Do not assume it's fixed without testing in browser
+
+STATUS:
+-------
+Database migration: ✅ CREATED, ✅ COMMITTED, ✅ PUSHED, ⏳ AWAITING DEPLOYMENT
+Frontend code: ✅ UPDATED (previous commit), ⏳ NEEDS REBUILD
+Deployment: ⏳ READY FOR USER ACTION
+
+================================================================================
+Next: Apply migration to Supabase via SQL Editor
+================================================================================
