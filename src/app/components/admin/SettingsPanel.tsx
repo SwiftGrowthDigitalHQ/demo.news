@@ -1,8 +1,105 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Save, Globe, Mail, Palette, Share2, Key, Database, Image as ImageIcon, AlertCircle, Upload } from 'lucide-react';
 import { loadSiteSettings, markAuditLog, upsertSiteSettings, uploadAdminMedia } from '../../lib/admin';
 import { resolveAssetUrl, isValidAssetUrl } from '../../lib/assetResolver';
+
+// Helper component to load Google Drive images via media-proxy
+function GoogleDriveImagePreview({ url, width, height }: { url: string; width: number; height: number }) {
+  const [imageSrc, setImageSrc] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!url || !url.includes('drive.google.com')) {
+      // Not a Google Drive URL, use as-is
+      setImageSrc(resolveAssetUrl(url));
+      setLoading(false);
+      return;
+    }
+
+    // Extract FILE_ID
+    const fileId = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1];
+    if (!fileId) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch image from media-proxy
+    const mediaProxyUrl = `/api/media-proxy/${fileId}`;
+    fetch(mediaProxyUrl, { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.blob();
+      })
+      .then(blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        setImageSrc(blobUrl);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load image:', err);
+        setError(true);
+        setLoading(false);
+      });
+  }, [url]);
+
+  if (error) {
+    return null; // Will show error message instead
+  }
+
+  if (!imageSrc) {
+    return <div style={{ width, height, background: '#f0f0f0', borderRadius: 4 }} />;
+  }
+
+  return (
+    <img 
+      src={imageSrc}
+      alt="Preview"
+      style={{ width, height, objectFit: 'cover', borderRadius: 4, border: '1px solid #e2e8f0' }}
+    />
+  );
+}
+
+function LogoPreview({ url }: { url: string }) {
+  const [error, setError] = useState(false);
+
+  if (!url) return null;
+  if (!isValidAssetUrl(url)) return null;
+
+  return (
+    <>
+      <GoogleDriveImagePreview url={url} width={48} height={48} />
+      {error && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#ef4444' }}>
+          <AlertCircle size={14} />
+          <span>Unable to load image</span>
+        </div>
+      )}
+    </>
+  );
+}
+
+function FaviconPreview({ url }: { url: string }) {
+  const [error, setError] = useState(false);
+
+  if (!url) return null;
+  if (!isValidAssetUrl(url)) return null;
+
+  return (
+    <>
+      <GoogleDriveImagePreview url={url} width={32} height={32} />
+      {error && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#ef4444' }}>
+          <AlertCircle size={14} />
+          <span>Unable to load image</span>
+        </div>
+      )}
+    </>
+  );
+}
 
 const tabs = [
   { id: 'website', label: 'Website', icon: Globe },
@@ -339,15 +436,7 @@ export function SettingsPanel() {
                   <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                     {isValidAssetUrl(logoUrl) ? (
                       <>
-                        <img 
-                          src={resolveAssetUrl(logoUrl)} 
-                          alt="Logo preview" 
-                          style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, border: '1px solid #e2e8f0' }}
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.nextElementSibling!.style.display = 'flex';
-                          }}
-                        />
+                        <LogoPreview url={logoUrl} />
                         <div style={{ display: 'none', alignItems: 'center', gap: 4, fontSize: 11, color: '#ef4444' }}>
                           <AlertCircle size={14} />
                           <span>Unable to load image</span>
@@ -381,15 +470,7 @@ export function SettingsPanel() {
                   <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                     {isValidAssetUrl(faviconUrl) ? (
                       <>
-                        <img 
-                          src={resolveAssetUrl(faviconUrl)} 
-                          alt="Favicon preview" 
-                          style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 4, border: '1px solid #e2e8f0' }}
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.nextElementSibling!.style.display = 'flex';
-                          }}
-                        />
+                        <FaviconPreview url={faviconUrl} />
                         <div style={{ display: 'none', alignItems: 'center', gap: 4, fontSize: 11, color: '#ef4444' }}>
                           <AlertCircle size={14} />
                           <span>Unable to load image</span>
