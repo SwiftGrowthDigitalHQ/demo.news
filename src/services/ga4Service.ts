@@ -42,7 +42,7 @@ export async function getGA4Config(tenantId: string): Promise<GA4ServiceResponse
       };
     }
 
-    const { data, error } = await supabase.rpc('get_tenant_ga4_config', {
+    const { data, error } = await supabase.rpc('get_ga4_config', {
       p_tenant_id: tenantId
     });
 

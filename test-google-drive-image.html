@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Drive Image Test</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        img {
+            max-width: 400px;
+            border: 2px solid #ccc;
+            margin: 10px 0;
+            display: block;
+        }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+        code {
+            background: #eee;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: block;
+            margin: 5px 0;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h1>Google Drive Image Loading Test</h1>
+    
+    <div class="test">
+        <h2>Test 1: Thumbnail URL (SHOULD WORK)</h2>
+        <p>URL: <code id="url1"></code></p>
+        <img id="img1" 
+             onload="document.getElementById('status1').innerHTML='<span class=pass>✅ SUCCESS - Image loaded!</span>'" 
+             onerror="document.getElementById('status1').innerHTML='<span class=fail>❌ FAILED - Image did not load</span>'">
+        <p id="status1">Loading...</p>
+    </div>
+
+    <div class="test">
+        <h2>Test 2: Viewer URL (SHOULD FAIL)</h2>
+        <p>URL: <code id="url2"></code></p>
+        <img id="img2" 
+             onload="document.getElementById('status2').innerHTML='<span class=fail>❌ UNEXPECTED - Viewer URL should not work as image</span>'" 
+             onerror="document.getElementById('status2').innerHTML='<span class=pass>✅ EXPECTED - Viewer URL correctly fails</span>'">
+        <p id="status2">Loading...</p>
+    </div>
+
+    <div class="test">
+        <h2>Test 3: FILE_ID 2</h2>
+        <p>URL: <code id="url3"></code></p>
+        <img id="img3" 
+             onload="document.getElementById('status3').innerHTML='<span class=pass>✅ SUCCESS - Image loaded!</span>'" 
+             onerror="document.getElementById('status3').innerHTML='<span class=fail>❌ FAILED - Image did not load</span>'">
+        <p id="status3">Loading...</p>
+    </div>
+
+    <div class="test">
+        <h2>Test 4: FILE_ID 3</h2>
+        <p>URL: <code id="url4"></code></p>
+        <img id="img4" 
+             onload="document.getElementById('status4').innerHTML='<span class=pass>✅ SUCCESS - Image loaded!</span>'" 
+             onerror="document.getElementById('status4').innerHTML='<span class=fail>❌ FAILED - Image did not load</span>'">
+        <p id="status4">Loading...</p>
+    </div>
+
+    <script>
+        // Test FILE_IDs from database
+        const fileIds = [
+            '1vIq5ee5DwxrRhYVrYlXyMIcCjajNsbtZ',
+            '1rO95-jof0UNoMcqVqpHQIkSnVogQBIDv',
+            '1CsxXjqCZBBMZQoZbU4veXDbmYRje95yX'
+        ];
+        
+        // Test 1: Thumbnail URL (should work)
+        const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileIds[0]}&sz=w1600`;
+        document.getElementById('url1').textContent = thumbnailUrl;
+        document.getElementById('img1').src = thumbnailUrl;
+        
+        // Test 2: Viewer URL (should fail)
+        const viewerUrl = `https://drive.google.com/file/d/${fileIds[0]}/view?usp=drivesdk`;
+        document.getElementById('url2').textContent = viewerUrl;
+        document.getElementById('img2').src = viewerUrl;
+
+        // Test 3: FILE_ID 2
+        const thumbnail2 = `https://drive.google.com/thumbnail?id=${fileIds[1]}&sz=w1600`;
+        document.getElementById('url3').textContent = thumbnail2;
+        document.getElementById('img3').src = thumbnail2;
+
+        // Test 4: FILE_ID 3
+        const thumbnail3 = `https://drive.google.com/thumbnail?id=${fileIds[2]}&sz=w1600`;
+        document.getElementById('url4').textContent = thumbnail3;
+        document.getElementById('img4').src = thumbnail3;
+
+        console.log('Testing Google Drive URLs...');
+        console.log('Thumbnail 1:', thumbnailUrl);
+        console.log('Thumbnail 2:', thumbnail2);
+        console.log('Thumbnail 3:', thumbnail3);
+    </script>
+</body>
+</html>

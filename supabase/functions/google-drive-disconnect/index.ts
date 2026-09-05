@@ -17,22 +17,6 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
 /**
- * Validate tenant membership
- */
-async function validateTenantMembership(authUserId: string, tenantId: string): Promise<boolean> {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  
-  const { data, error } = await supabase
-    .from('tenant_memberships')
-    .select('id')
-    .eq('auth_user_id', authUserId)
-    .eq('tenant_id', tenantId)
-    .single();
-  
-  return !error && !!data;
-}
-
-/**
  * Main handler
  */
 serve(async (req: Request) => {
@@ -79,22 +63,26 @@ serve(async (req: Request) => {
       );
     }
     
-    // Validate tenant membership
-    const isMember = await validateTenantMembership(user.id, tenantId);
-    if (!isMember) {
+    // Validate tenant membership and check if user is admin/owner
+    const { data: membershipData, error: membershipError } = await supabase
+      .from('tenant_memberships')
+      .select('role')
+      .eq('auth_user_id', user.id)
+      .eq('tenant_id', tenantId)
+      .single();
+    
+    if (membershipError || !membershipData) {
       return new Response(
         JSON.stringify({ error: 'Forbidden: Not a member of this tenant' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    // Check if user has manage_settings permission
-    const { data: permData } = await supabase
-      .rpc('has_permission', { permission_key: 'manage_settings' });
-    
-    if (!permData) {
+    // Check if user has admin or owner role in this tenant
+    // Only admins and owners can manage Google Drive settings
+    if (!['admin', 'owner'].includes(membershipData.role)) {
       return new Response(
-        JSON.stringify({ error: 'Forbidden: Requires manage_settings permission' }),
+        JSON.stringify({ error: 'Forbidden: Only admins can manage Google Drive settings' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

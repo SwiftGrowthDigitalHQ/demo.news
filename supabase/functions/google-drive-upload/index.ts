@@ -297,6 +297,15 @@ async function uploadToDrive(
 
 /**
  * Set file to be accessible by anyone with the link
+ * 
+ * This is CRITICAL for image rendering to work:
+ * 1. User uploads image to Google Drive via Media Library
+ * 2. File is stored with a Google Drive file ID
+ * 3. We convert the Drive URL to thumbnail format
+ * 4. Browser requests the thumbnail URL
+ * 5. Google Drive checks permissions and serves the image
+ * 
+ * If this fails, images will show "Image unavailable" even though the URL is correct.
  */
 async function setFilePublicPermission(accessToken: string, fileId: string): Promise<void> {
   console.log('[Upload] Setting public permission for file:', fileId);
@@ -318,8 +327,39 @@ async function setFilePublicPermission(accessToken: string, fileId: string): Pro
   
   if (!response.ok) {
     const error = await response.text();
-    console.error('[Upload] Failed to set public permission:', error);
-    // Don't throw - file is still uploaded, just not publicly accessible
+    console.error('[Upload] CRITICAL: Failed to set public permission for file', fileId);
+    console.error('[Upload] Permission error details:', error);
+    console.error('[Upload] This file will NOT be visible on the public website!');
+    
+    // Try alternative approach: use shareLink permission
+    console.log('[Upload] Attempting alternative: setting viewersCanCopyContent...');
+    
+    try {
+      const altResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?supportsAllDrives=true`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            viewersCanCopyContent: true,
+          }),
+        }
+      );
+      
+      if (altResponse.ok) {
+        console.log('[Upload] Successfully set viewersCanCopyContent for file:', fileId);
+      } else {
+        console.error('[Upload] Alternative permission method also failed');
+      }
+    } catch (altErr) {
+      console.error('[Upload] Alternative permission error:', altErr);
+    }
+    
+    // IMPORTANT: Still throw error to alert caller
+    throw new Error(`Failed to set public permission for file ${fileId}: ${error}`);
   } else {
     console.log('[Upload] File is now publicly accessible');
   }

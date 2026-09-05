@@ -24,6 +24,15 @@ const SangTXPricingPage   = lazy(() => import('./pages/SangTXPricingPage').then(
 const SangTXContactPage   = lazy(() => import('./pages/SangTXContactPage').then(m => ({ default: m.SangTXContactPage })));
 const SangTXOnboardingPage = lazy(() => import('./pages/SangTXOnboardingPage').then(m => ({ default: m.SangTXOnboardingPage })));
 
+// ─── SangTX Legal / Policy pages (no CmsProvider needed) ─────────────────────
+const SangTXPrivacyPolicyPage = lazy(() => import('./pages/SangTXPrivacyPolicyPage').then(m => ({ default: m.SangTXPrivacyPolicyPage })));
+const SangTXTermsOfServicePage = lazy(() => import('./pages/SangTXTermsOfServicePage').then(m => ({ default: m.SangTXTermsOfServicePage })));
+const SangTXRefundPolicyPage = lazy(() => import('./pages/SangTXRefundPolicyPage').then(m => ({ default: m.SangTXRefundPolicyPage })));
+const SangTXCookiePolicyPage = lazy(() => import('./pages/SangTXCookiePolicyPage').then(m => ({ default: m.SangTXCookiePolicyPage })));
+const SangTXDisclaimerPage = lazy(() => import('./pages/SangTXDisclaimerPage').then(m => ({ default: m.SangTXDisclaimerPage })));
+const SangTXAcceptableUsePolicyPage = lazy(() => import('./pages/SangTXAcceptableUsePolicyPage').then(m => ({ default: m.SangTXAcceptableUsePolicyPage })));
+const SangTXLegalContactPage = lazy(() => import('./pages/SangTXLegalContactPage').then(m => ({ default: m.SangTXLegalContactPage })));
+
 // ─── Tenant news portal pages (need CmsProvider) ────────────────────────────
 const HomePage = lazy(() => import('./pages/HomePage').then(module => ({ default: module.HomePage })));
 const ArticlePage = lazy(() => import('./pages/ArticlePage').then(module => ({ default: module.ArticlePage })));
@@ -112,25 +121,21 @@ async function resolveRoute(pathname: string): Promise<{
   tenantSlug?: string;
   tenantPath?: string;
 }> {
-  console.log('[ROUTE RESOLVE] Starting resolution for:', pathname);
   
   // ── CUSTOM DOMAIN RESOLUTION ──────────────────────────────────────────────
   // Check if hostname is a custom domain (e.g., fakenews.com)
   const hostname = window.location.hostname;
   
   if (isCustomDomain(hostname)) {
-    console.log('[ROUTE RESOLVE] Custom domain detected:', hostname);
     
     const domainResolution = await getTenantByDomain(hostname);
     
     if (domainResolution) {
-      console.log('[ROUTE RESOLVE] Resolved to tenant:', domainResolution.tenantSlug);
       // Custom domain acts as if navigating to /{slug}{pathname}
       // So /article/test on fakenews.com → /fake-news/article/test
       return { type: 'tenant', tenantSlug: domainResolution.tenantSlug, tenantPath: pathname };
     }
     
-    console.log('[ROUTE RESOLVE] Custom domain not found:', hostname);
     // Custom domain exists but no matching tenant - show 404
     return { type: '404' };
   }
@@ -140,33 +145,31 @@ async function resolveRoute(pathname: string): Promise<{
     '/', '/features', '/pricing', '/contact',
     '/privacy', '/terms', '/login', '/register', '/onboarding',
     '/forgot-password', '/reset-password',
+    // SangTX global legal pages
+    '/privacy-policy', '/terms-of-service', '/refund-policy',
+    '/cookie-policy', '/disclaimer', '/acceptable-use-policy', '/legal-contact',
     // Legacy aliases kept for backwards-compat
     '/sangtx',
   ]);
   if (saasRoutes.has(pathname)) {
-    console.log('[ROUTE RESOLVE] Matched SaaS route');
     return { type: 'saas' };
   }
   if (pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')) {
-    console.log('[ROUTE RESOLVE] Matched password reset route');
     return { type: 'saas' };
   }
 
   // The sales demo is deliberately local-only and never mounts CmsProvider.
   if (pathname === '/demo' || pathname.startsWith('/demo/')) {
-    console.log('[ROUTE RESOLVE] Matched demo route');
     return { type: 'demo' };
   }
 
   // ── Super Admin panel ─────────────────────────────────────────────────────
   if (pathname.startsWith('/super-admin')) {
-    console.log('[ROUTE RESOLVE] Matched super-admin route');
     return { type: 'super_admin' };
   }
 
   // ── Admin panel ───────────────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
-    console.log('[ROUTE RESOLVE] Matched admin route');
     return { type: 'admin' };
   }
 
@@ -176,34 +179,26 @@ async function resolveRoute(pathname: string): Promise<{
   if (pathname.startsWith('/article/') || 
       pathname.startsWith('/category/') || 
       pathname.startsWith('/search')) {
-    console.log('[ROUTE RESOLVE] Direct content route, finding default tenant');
     // Try to find a default/primary tenant to serve content
     const defaultTenant = await getDefaultTenant();
     if (defaultTenant) {
-      console.log('[ROUTE RESOLVE] Using default tenant:', defaultTenant);
       // Treat the path as if it were under the default tenant
       return { type: 'tenant', tenantSlug: defaultTenant, tenantPath: pathname };
     }
-    console.log('[ROUTE RESOLVE] No default tenant found for direct content route');
   }
 
   // ── Tenant slugs: /<slug> or /<slug>/… ───────────────────────────────────
   const parts = pathname.split('/');          // ['', 'tenant-slug', 'article', ...]
   const slug = parts[1];
   
-  console.log('[ROUTE RESOLVE] Checking tenant slug:', slug);
-  
   // Check if this slug belongs to a tenant (database lookup with cache)
   if (slug && await checkIfTenantSlug(slug)) {
-    console.log('[ROUTE RESOLVE] Confirmed tenant slug:', slug);
     // Strip the slug prefix to get the "inner" path for the news portal router
     const inner = '/' + parts.slice(2).join('/');
     const tenantPath = inner === '/' || inner === '' ? '/' : inner;
-    console.log('[ROUTE RESOLVE] Tenant path:', tenantPath);
     return { type: 'tenant', tenantSlug: slug, tenantPath };
   }
 
-  console.log('[ROUTE RESOLVE] No match found, returning 404');
   return { type: '404' };
 }
 
@@ -373,6 +368,56 @@ function AppRouter() {
     }
     if (pathname === '/terms') {
       return <TermsPage />;
+    }
+    // SangTX global legal pages
+    if (pathname === '/privacy-policy') {
+      return (
+        <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
+          <SangTXPrivacyPolicyPage />
+        </Suspense>
+      );
+    }
+    if (pathname === '/terms-of-service') {
+      return (
+        <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
+          <SangTXTermsOfServicePage />
+        </Suspense>
+      );
+    }
+    if (pathname === '/refund-policy') {
+      return (
+        <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
+          <SangTXRefundPolicyPage />
+        </Suspense>
+      );
+    }
+    if (pathname === '/cookie-policy') {
+      return (
+        <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
+          <SangTXCookiePolicyPage />
+        </Suspense>
+      );
+    }
+    if (pathname === '/disclaimer') {
+      return (
+        <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
+          <SangTXDisclaimerPage />
+        </Suspense>
+      );
+    }
+    if (pathname === '/acceptable-use-policy') {
+      return (
+        <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
+          <SangTXAcceptableUsePolicyPage />
+        </Suspense>
+      );
+    }
+    if (pathname === '/legal-contact') {
+      return (
+        <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
+          <SangTXLegalContactPage />
+        </Suspense>
+      );
     }
   }
 

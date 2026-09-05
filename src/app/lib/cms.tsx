@@ -242,12 +242,6 @@ async function loadPublicContent(tenantSlug: string | null) {
 
   const tenantId = tenantInfo.tenant_id;
 
-  console.log('[CMS] Resolved tenant:', {
-    slug: tenantSlug,
-    id: tenantId,
-    name: tenantInfo.tenant_name,
-  });
-
   // SECURITY: ALL queries filtered by tenant_id
   const [
     categoriesResult,

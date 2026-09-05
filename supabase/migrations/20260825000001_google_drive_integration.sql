@@ -180,15 +180,14 @@ drop policy if exists "tenant_read_own_gdrive_connection" on public.tenant_googl
 create policy "tenant_read_own_gdrive_connection" 
   on public.tenant_google_drive_connections
   for select using (
-    deleted_at is null
-    and (
+    (
       tenant_id in (select public.get_user_tenant_ids())
       or public.is_super_admin()
     )
   );
 
 comment on policy "tenant_read_own_gdrive_connection" on public.tenant_google_drive_connections is 
-  'Tenant members and super admin can read connection metadata. WARNING: Frontend must NEVER request access_token_encrypted or refresh_token_encrypted columns.';
+  'Tenant members and super admin can read connection metadata (including soft-deleted). WARNING: Frontend must NEVER request access_token_encrypted or refresh_token_encrypted columns. Frontend must filter deleted_at client-side.';
 
 -- Only tenant admins can manage connection (connect/disconnect)
 drop policy if exists "tenant_manage_own_gdrive_connection" on public.tenant_google_drive_connections;

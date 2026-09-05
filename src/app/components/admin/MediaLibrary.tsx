@@ -360,13 +360,12 @@ export function MediaLibrary() {
 
   const getPublicUrl = (item: AdminMediaItem) => {
     if (item.storage_provider === 'google_drive') {
-      if (item.mime_type.startsWith('image/') && item.drive_thumbnail_link) {
-        return item.drive_thumbnail_link;
-      }
-      if (item.drive_web_url) {
-        return item.drive_web_url;
-      }
       if (item.drive_file_id) {
+        // Return canonical Google Drive URL (not media-proxy)
+        // This is the canonical link to store in database
+        if (item.drive_web_url) {
+          return item.drive_web_url;
+        }
         return `https://drive.google.com/file/d/${item.drive_file_id}/view`;
       }
       return '';
@@ -377,7 +376,8 @@ export function MediaLibrary() {
   const getPreviewUrl = (item: AdminMediaItem) => {
     if (item.storage_provider === 'google_drive') {
       if (item.mime_type.startsWith('image/') && item.drive_file_id) {
-        return thumbnailUrls.get(item.drive_file_id) || '';
+        // Use media-proxy URL for admin preview (works for private files)
+        return `/api/media-proxy/${item.drive_file_id}`;
       }
       return '';
     }
@@ -385,7 +385,24 @@ export function MediaLibrary() {
   };
 
   const copyUrl = (item: AdminMediaItem) => {
-    const url = getPublicUrl(item);
+    let url: string;
+    
+    if (item.storage_provider === 'google_drive') {
+      // For Google Drive files, copy the canonical Drive URL (for database storage)
+      // NOT the media-proxy URL
+      if (item.drive_web_url) {
+        url = item.drive_web_url;
+      } else if (item.drive_file_id) {
+        // Fallback: construct canonical URL if drive_web_url is missing
+        url = `https://drive.google.com/file/d/${item.drive_file_id}/view`;
+      } else {
+        return;
+      }
+    } else {
+      // For Supabase storage, use the storage URL
+      url = `${import.meta.env.VITE_SUPABASE_URL ?? ''}/storage/v1/object/public/${item.storage_bucket}/${item.file_path}`;
+    }
+    
     navigator.clipboard.writeText(url).then(() => {
       toast.success('Image URL copied! Paste it in the article Featured Image field.');
     }).catch(() => {

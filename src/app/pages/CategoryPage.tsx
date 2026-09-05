@@ -280,7 +280,7 @@ export function CategoryPage({ slug }: { slug: string }) {
       <div className="max-w-[1440px] mx-auto px-4 py-4">
         <div className="relative rounded-2xl overflow-hidden bg-gray-900 h-44 flex items-center">
           {featuredArticle?.featured_image && (
-            <img src={featuredArticle.featured_image} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+            <ImageWithFallback src={getArticleThumbnail(featuredArticle.featured_image, featuredArticle.video_url)} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
           )}
           <div className="relative z-10 px-8">
             <div className="inline-flex items-center gap-2 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-3 uppercase tracking-wide">

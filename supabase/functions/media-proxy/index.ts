@@ -156,6 +156,7 @@ serve(async (req: Request) => {
       .from('media')
       .select('tenant_id, mime_type')
       .eq('drive_file_id', fileId)
+      .eq('deleted_at', null)
       .single();
     
     let tenantId: string;
@@ -187,22 +188,46 @@ serve(async (req: Request) => {
       .from('tenant_google_drive_connections')
       .select('access_token_encrypted, refresh_token_encrypted, token_expires_at')
       .eq('tenant_id', tenantId)
+      .eq('status', 'active')
       .is('deleted_at', null)
       .single();
     
     if (connError || !connection) {
-      console.error('[Media Proxy] No Drive connection:', connError);
-      return new Response(
-        JSON.stringify({ error: 'Drive connection not found' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log('[Media Proxy] No Drive connection, serving from thumbnail URL');
+      
+      // Redirect to public thumbnail URL - works for all Google Drive files
+      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
+      
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': thumbnailUrl,
+          'Cache-Control': 'public, max-age=31536000'
+        }
+      });
     }
     
     // Get valid access token (refresh if needed)
-    const accessToken = await getValidAccessToken(connection as DriveConnection, tenantId);
+    let accessToken: string;
+    try {
+      accessToken = await getValidAccessToken(connection as DriveConnection, tenantId);
+    } catch (tokenErr) {
+      console.log('[Media Proxy] Token refresh failed, falling back to thumbnail');
+      // Fall back to thumbnail redirect
+      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': thumbnailUrl,
+          'Cache-Control': 'public, max-age=31536000'
+        }
+      });
+    }
     
     // Fetch file from Google Drive
-    console.log('[Media Proxy] Fetching from Drive API...');
+    console.log('[Media Proxy] Fetching from Drive API with auth...');
     const driveResponse = await fetch(
       `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
       {
@@ -226,10 +251,12 @@ serve(async (req: Request) => {
     
     console.log('[Media Proxy] Success! Streaming file, Content-Type:', contentType);
     
-    // Stream the file with appropriate headers
+    // Stream the file with appropriate headers - ADD CACHING
     const headers = new Headers(corsHeaders);
     headers.set('Content-Type', contentType);
+    // Cache images for 1 year since they're immutable
     headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    headers.set('ETag', `"${fileId}"`);
     
     return new Response(driveResponse.body, {
       status: 200,
@@ -249,6 +276,7 @@ serve(async (req: Request) => {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, max-age=3600', // Cache errors for 1 hour
         },
       }
     );

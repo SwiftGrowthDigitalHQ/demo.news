@@ -350,6 +350,61 @@ Deno.serve(async (req) => {
 // Email Template
 // ═══════════════════════════════════════════
 
+/**
+ * Extract Google Drive file ID from various URL formats
+ */
+function extractGoogleDriveFileId(url: string): string | null {
+  if (!url || !url.includes('drive.google.com')) return null;
+  
+  // Format: https://drive.google.com/file/d/FILE_ID/view
+  const viewMatch = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
+  if (viewMatch) return viewMatch[1];
+  
+  // Format: https://drive.google.com/open?id=FILE_ID
+  const openMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
+  if (openMatch) return openMatch[1];
+  
+  // Format: https://drive.google.com/uc?id=FILE_ID
+  const ucMatch = url.match(/drive\.google\.com\/uc\?.*id=([^&]+)/);
+  if (ucMatch) return ucMatch[1];
+  
+  // Format: https://drive.google.com/thumbnail?id=FILE_ID
+  const thumbnailMatch = url.match(/drive\.google\.com\/thumbnail\?.*id=([^&]+)/);
+  if (thumbnailMatch) return thumbnailMatch[1];
+  
+  return null;
+}
+
+/**
+ * Convert Google Drive URLs to publicly accessible thumbnail format
+ */
+function convertToPublicImageUrl(url: string): string {
+  if (!url) return '';
+  
+  // Already a thumbnail URL, return as-is
+  if (url.includes('drive.google.com/thumbnail')) {
+    return url;
+  }
+  
+  // If it's a Supabase Storage URL or regular HTTPS (non-Drive), return as-is
+  if (url.includes('.supabase.co/storage/') || 
+      (!url.includes('drive.google.com') && url.startsWith('https://'))) {
+    return url;
+  }
+  
+  // Extract Google Drive file ID from various URL formats
+  const driveFileId = extractGoogleDriveFileId(url);
+  
+  if (driveFileId) {
+    // Convert to Google Drive thumbnail URL which is browser-renderable
+    // Format: https://drive.google.com/thumbnail?id=FILE_ID&sz=w1600
+    return `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1600`;
+  }
+  
+  // Return original URL (external image or non-Drive URL)
+  return url;
+}
+
 function buildEmailHTML(article: ArticlePayload, articleUrl: string, unsubUrl: string): string {
   return `
 <!DOCTYPE html>
@@ -361,7 +416,7 @@ function buildEmailHTML(article: ArticlePayload, articleUrl: string, unsubUrl: s
       <h1 style="margin:0;font-size:24px;color:#ffffff;">Buxar<span style="color:#ef4444;"> News</span></h1>
       <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;letter-spacing:1px;">BREAKING NEWS ALERT</p>
     </div>
-    ${article.featured_image ? `<img src="${article.featured_image}" alt="${article.title}" style="width:100%;height:auto;display:block;">` : ''}
+    ${article.featured_image ? `<img src="${convertToPublicImageUrl(article.featured_image)}" alt="${article.title}" style="width:100%;height:auto;display:block;">` : ''}
     <div style="padding:30px;">
       <h2 style="margin:0 0 12px;font-size:20px;color:#111827;line-height:1.3;">${article.title}</h2>
       <p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.6;">${article.excerpt}</p>

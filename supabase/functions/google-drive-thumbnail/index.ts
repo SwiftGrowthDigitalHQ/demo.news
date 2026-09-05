@@ -122,21 +122,23 @@ serve(async (req: Request) => {
     
     console.log('[GD_THUMB] JWT_VALIDATED');
     
-    // Query tenant from database (DO NOT rely on user_metadata.tenant_id)
+    // Query tenant from database via membership (not ownership)
+    // User must be a member of the tenant to access media
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    const { data: tenant, error: tenantError } = await supabase
-      .from('tenants')
-      .select('id')
-      .eq('owner_auth_user_id', user.id)
+    const { data: membership, error: membershipError } = await supabase
+      .from('tenant_memberships')
+      .select('tenant_id')
+      .eq('auth_user_id', user.id)
+      .limit(1)
       .single();
     
-    if (tenantError || !tenant) {
-      console.error('[GD_THUMB] TENANT_QUERY_FAILED:', tenantError);
-      return new Response('No tenant associated with user', { status: 403, headers: corsHeaders });
+    if (membershipError || !membership) {
+      console.error('[GD_THUMB] TENANT_MEMBERSHIP_QUERY_FAILED:', membershipError);
+      return new Response('No tenant association found', { status: 403, headers: corsHeaders });
     }
     
-    const tenantId = tenant.id;
+    const tenantId = membership.tenant_id;
     console.log('[GD_THUMB] Tenant:', tenantId, 'File:', driveFileId);
     
     // Verify file ownership

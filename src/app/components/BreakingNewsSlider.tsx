@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Flame, Clock3, TrendingUp } from 'lucide-rea
 import { AppLink, getArticleUrl } from '../lib/navigation';
 import { useCms } from '../lib/cms';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { getArticleThumbnail } from '../lib/articleImage';
 
 function formatDate(value: string | null | undefined) {
   if (!value) {
@@ -50,7 +51,7 @@ export function BreakingNewsSlider() {
           category: article.category_name,
           reporter: article.author_name,
           date: article.publish_at,
-          image: article.featured_image || '',
+          image: getArticleThumbnail(article.featured_image, article.video_url),
           href: getArticleUrl(article.slug, tenantSlug),
         };
       })
@@ -76,7 +77,7 @@ export function BreakingNewsSlider() {
       category: article.category_name,
       reporter: article.author_name,
       date: article.publish_at,
-      image: article.featured_image || '',
+      image: getArticleThumbnail(article.featured_image, article.video_url),
       href: getArticleUrl(article.slug, tenantSlug),
     }));
   }, [articles, breakingNews]);
@@ -105,7 +106,7 @@ export function BreakingNewsSlider() {
         id: article.id,
         title: article.title,
         date: article.publish_at,
-        image: article.featured_image || '',
+        image: getArticleThumbnail(article.featured_image, article.video_url),
         href: getArticleUrl(article.slug, tenantSlug),
       })),
     [articles],

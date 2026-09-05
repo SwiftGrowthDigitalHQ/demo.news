@@ -12,11 +12,13 @@ import { extractGoogleDriveFileId } from './articleImage';
 /**
  * Resolve any asset URL to a publicly accessible URL
  * 
- * Supports:
+ * For STORAGE/CANONICAL URLs (from database fields like featured_image):
  * - Supabase Storage URLs (passthrough)
- * - Google Drive URLs (converts to media proxy)
+ * - Google Drive canonical URLs (passthrough - never convert to proxy)
  * - Regular HTTPS URLs (passthrough)
- * - Empty/null URLs (returns empty string)
+ * 
+ * For RENDERING (see ImageWithFallback component):
+ * - The browser will intelligently try media-proxy first, then fallback to direct URL
  * 
  * @param url - The raw URL from database or input
  * @returns Publicly accessible URL or empty string
@@ -26,23 +28,20 @@ export function resolveAssetUrl(url: string | null | undefined): string {
   
   const trimmed = url.trim();
   
-  // Already a proxy URL, return as-is
-  if (trimmed.includes('/functions/v1/media-proxy/')) {
+  // Google Drive canonical URL - return as-is (NEVER convert to proxy here)
+  // Proxy conversion happens in ImageWithFallback component for rendering only
+  if (trimmed.includes('drive.google.com/file/d/')) {
+    return trimmed;
+  }
+  
+  // Already a thumbnail URL, return as-is
+  if (trimmed.includes('drive.google.com/thumbnail')) {
     return trimmed;
   }
   
   // Supabase Storage URL - return as-is
   if (trimmed.includes('.supabase.co/storage/')) {
     return trimmed;
-  }
-  
-  // Google Drive URL - extract file ID and route through media proxy
-  if (trimmed.includes('drive.google.com')) {
-    const fileId = extractGoogleDriveFileId(trimmed);
-    if (fileId) {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-      return `${supabaseUrl}/functions/v1/media-proxy/${fileId}`;
-    }
   }
   
   // Regular HTTPS URL - return as-is

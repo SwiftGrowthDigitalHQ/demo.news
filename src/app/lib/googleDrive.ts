@@ -105,24 +105,14 @@ export async function getDriveConnectionStatus(): Promise<DriveConnectionStatus>
   }
   
   // Direct query to tenant_google_drive_connections table
+  // Using maybeSingle() instead of single() to handle 0 rows gracefully
   const { data, error } = await supabase
     .from('tenant_google_drive_connections')
-    .select('status, google_account_email, last_error')
+    .select('status, google_account_email, last_error, deleted_at')
     .eq('tenant_id', tenantId)
-    .is('deleted_at', null)
-    .single();
+    .maybeSingle();
   
   if (error) {
-    // No connection found is not an error
-    if (error.code === 'PGRST116') {
-      return {
-        connected: false,
-        status: null,
-        google_account_email: null,
-        last_error: null,
-      };
-    }
-    
     console.error('[GoogleDrive] Error getting connection status:', error);
     return {
       connected: false,
@@ -132,7 +122,8 @@ export async function getDriveConnectionStatus(): Promise<DriveConnectionStatus>
     };
   }
   
-  if (!data) {
+  // Check if connection exists and is not soft-deleted
+  if (!data || data.deleted_at !== null) {
     return {
       connected: false,
       status: null,

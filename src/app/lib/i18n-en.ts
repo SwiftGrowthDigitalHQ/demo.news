@@ -193,6 +193,13 @@ export const en = {
   'footer.legal': 'LEGAL',
   'footer.privacy': 'Privacy Policy',
   'footer.terms': 'Terms of Service',
+  'footer.privacy-policy': 'Privacy Policy',
+  'footer.terms-of-service': 'Terms of Service',
+  'footer.refund-policy': 'Refund & Cancellation',
+  'footer.cookie-policy': 'Cookie Policy',
+  'footer.disclaimer': 'Disclaimer',
+  'footer.acceptable-use-policy': 'Acceptable Use',
+  'footer.legal-contact': 'Legal Contact',
   'footer.copyright': '© {year} SangTX. All rights reserved.',
   'footer.builtBy': 'Built by SwiftGrowthDigital',
 

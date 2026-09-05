@@ -58,7 +58,6 @@ async function loadTenantRegistry(): Promise<{ slugs: Set<string>; map: Map<stri
     tenantMapCache = map;
     lastCacheUpdate = now;
 
-    console.log(`[TENANT REGISTRY] Loaded ${slugs.size} tenant slugs`);
     return { slugs, map };
   } catch (err) {
     console.error('[TENANT REGISTRY] Exception loading tenants:', err);
@@ -70,11 +69,8 @@ async function loadTenantRegistry(): Promise<{ slugs: Set<string>; map: Map<stri
  * Check if a slug belongs to an active tenant
  */
 export async function isTenantSlug(slug: string): Promise<boolean> {
-  console.log('[TENANT REGISTRY] Checking if slug is tenant:', slug);
   const { slugs } = await loadTenantRegistry();
-  const result = slugs.has(slug);
-  console.log('[TENANT REGISTRY] Result for', slug, ':', result, '| Available slugs:', Array.from(slugs));
-  return result;
+  return slugs.has(slug);
 }
 
 /**
@@ -100,7 +96,6 @@ export function clearTenantCache(): void {
   tenantSlugsCache = null;
   tenantMapCache = null;
   lastCacheUpdate = 0;
-  console.log('[TENANT REGISTRY] Cache cleared');
 }
 
 /**

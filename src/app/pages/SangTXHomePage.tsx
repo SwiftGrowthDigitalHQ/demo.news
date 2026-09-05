@@ -1823,7 +1823,7 @@ function SiteFooter() {
               {t('footer.login')}
             </motion.button>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.08em', margin: '20px 0 14px' }}>{t('footer.legal')}</div>
-            {(['privacy','terms'] as const).map(l => (
+            {(['privacy-policy','terms-of-service','refund-policy','cookie-policy','disclaimer','acceptable-use-policy','legal-contact'] as const).map(l => (
               <motion.button
                 key={l}
                 onClick={() => nav(`/${l}`)}
@@ -1831,7 +1831,13 @@ function SiteFooter() {
                 whileHover={shouldReduce ? undefined : { color: '#e2e8f0', x: 3 }}
                 transition={{ duration: DUR.fast }}
               >
-                {t(`footer.${l}` as TranslationKey)}
+                {l === 'privacy-policy' && 'Privacy Policy'}
+                {l === 'terms-of-service' && 'Terms of Service'}
+                {l === 'refund-policy' && 'Refund & Cancellation'}
+                {l === 'cookie-policy' && 'Cookie Policy'}
+                {l === 'disclaimer' && 'Disclaimer'}
+                {l === 'acceptable-use-policy' && 'Acceptable Use'}
+                {l === 'legal-contact' && 'Legal Contact'}
               </motion.button>
             ))}
           </div>

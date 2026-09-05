@@ -1,6 +1,9 @@
 /**
  * Resolves the best available thumbnail image for an article.
  *
+ * IMPORTANT: Returns CANONICAL URLs, NOT converted URLs.
+ * The ImageWithFallback component will handle URL conversion and media-proxy logic.
+ *
  * Priority:
  * 1. featured_image (if it's a valid image URL, not a YouTube URL)
  * 2. YouTube thumbnail from video_url
@@ -11,9 +14,10 @@ export function getArticleThumbnail(
   featuredImage: string | null | undefined,
   videoUrl?: string | null | undefined
 ): string {
-  // If featured_image exists and is NOT a YouTube URL, convert if needed and return
+  // If featured_image exists and is NOT a YouTube URL, return as-is
+  // ImageWithFallback will handle conversion (media-proxy → thumbnail → placeholder)
   if (featuredImage && !isYouTubeUrl(featuredImage)) {
-    return convertToPublicImageUrl(featuredImage);
+    return featuredImage;  // Return canonical URL unchanged
   }
 
   // Try to get YouTube thumbnail from video_url
@@ -34,18 +38,20 @@ export function getArticleThumbnail(
 /**
  * Convert various image URL formats to publicly accessible URLs
  * 
- * For Google Drive URLs, routes them through the application's media proxy
- * which uses server-side authentication to fetch private files.
+ * For Google Drive URLs, converts to Google Drive thumbnail URL which is directly renderable
+ * in browsers. The thumbnail URL works when files are publicly shared.
+ * 
+ * For files that are private, the ImageWithFallback component will fall back to media-proxy.
  */
 export function convertToPublicImageUrl(url: string): string {
   if (!url) return '';
   
-  // Already a proxy URL, return as-is
-  if (url.includes('/functions/v1/media-proxy/')) {
+  // Already a thumbnail URL, return as-is
+  if (url.includes('drive.google.com/thumbnail')) {
     return url;
   }
   
-  // If it's a Supabase Storage URL or regular HTTPS, return as-is
+  // If it's a Supabase Storage URL or regular HTTPS (non-Drive), return as-is
   if (url.includes('.supabase.co/storage/') || 
       (!url.includes('drive.google.com') && url.startsWith('https://'))) {
     return url;
@@ -55,13 +61,12 @@ export function convertToPublicImageUrl(url: string): string {
   const driveFileId = extractGoogleDriveFileId(url);
   
   if (driveFileId) {
-    // Route through our media proxy which handles authentication server-side
-    // This works for both public and private Google Drive files
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    return `${supabaseUrl}/functions/v1/media-proxy/${driveFileId}`;
+    // Convert to Google Drive thumbnail URL which is browser-renderable when public
+    // Format: https://drive.google.com/thumbnail?id=FILE_ID&sz=w1600
+    return `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1600`;
   }
   
-  // Return original URL (external image)
+  // Return original URL (external image or non-Drive URL)
   return url;
 }
 
