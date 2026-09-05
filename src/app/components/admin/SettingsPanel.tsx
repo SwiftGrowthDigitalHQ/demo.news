@@ -31,26 +31,33 @@ function GoogleDriveImagePreview({ url, width, height, onError }: { url: string;
       return;
     }
 
-    console.log('Loading Google Drive image with FILE_ID:', fileId);
+    console.log('[GoogleDriveImagePreview] Loading image with FILE_ID:', fileId);
 
     // Fetch image from media-proxy
     const mediaProxyUrl = `/api/media-proxy/${fileId}`;
+    
     fetch(mediaProxyUrl, { credentials: 'include' })
       .then(res => {
-        console.log('Media-proxy response:', res.status);
+        console.log('[GoogleDriveImagePreview] Media-proxy response:', res.status, res.statusText);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.blob();
       })
       .then(blob => {
-        console.log('Image blob received:', blob.type, blob.size);
+        console.log('[GoogleDriveImagePreview] Blob received - Type:', blob.type, 'Size:', blob.size, 'bytes');
+        
+        // Validate blob is actually an image
+        if (!blob.type.startsWith('image/') && blob.type !== 'application/octet-stream') {
+          console.warn('[GoogleDriveImagePreview] Blob type not an image:', blob.type);
+        }
+        
         const blobUrl = URL.createObjectURL(blob);
-        console.log('Blob URL created:', blobUrl);
+        console.log('[GoogleDriveImagePreview] Blob URL created:', blobUrl);
         setImageSrc(blobUrl);
         setError(false);
         onError?.(false);
       })
       .catch((err) => {
-        console.error('Failed to load image from media-proxy:', err);
+        console.error('[GoogleDriveImagePreview] Failed to load image:', err);
         setError(true);
         onError?.(true);
       });
@@ -70,7 +77,7 @@ function GoogleDriveImagePreview({ url, width, height, onError }: { url: string;
       alt="Preview"
       style={{ width, height, objectFit: 'cover', borderRadius: 4, border: '1px solid #e2e8f0' }}
       onError={(e) => {
-        console.error('Image failed to load:', e);
+        console.error('[GoogleDriveImagePreview] Image render failed:', e);
         setError(true);
         onError?.(true);
       }}
