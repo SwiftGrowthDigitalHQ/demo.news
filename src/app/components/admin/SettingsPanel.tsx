@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useEffect, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Save, Globe, Mail, Palette, Share2, Key, Database, Image as ImageIcon, AlertCircle, Upload } from 'lucide-react';
 import { loadSiteSettings, markAuditLog, upsertSiteSettings, uploadAdminMedia } from '../../lib/admin';
