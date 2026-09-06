@@ -202,11 +202,11 @@ serve(async (req: Request) => {
       
       // Return a transparent PNG placeholder bytes instead of 302 redirect.
       // This prevents the browser from making direct CORS requests to
-      # drive.google.com/thumbnail, which fails with NetworkError/CORS errors
+      // drive.google.com/thumbnail, which fails with NetworkError/CORS errors
       // for private files. The placeholder ensures logo/favicon slots
-      # always display something instead of "Unable to load image".
+      // always display something instead of "Unable to load image".
       // Decodes the base64 PNG to actual binary bytes (same pattern used
-      # elsewhere in this file for token decryption).
+      // elsewhere in this file for token decryption).
       const placeholderPngBytes = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/l5Y6AAAAAElFTkSuQmCC'), c => c.charCodeAt(0));
       
       return new Response(placeholderPngBytes, {
@@ -227,11 +227,11 @@ serve(async (req: Request) => {
       
       // Return a transparent PNG placeholder bytes instead of 302 redirect.
       // This prevents the browser from making direct CORS requests to
-      # drive.google.com/thumbnail, which fails with NetworkError/CORS errors
+      // drive.google.com/thumbnail, which fails with NetworkError/CORS errors
       // for private files. The placeholder ensures logo/favicon slots
-      # always display something instead of "Unable to load image".
+      // always display something instead of "Unable to load image".
       // Decodes the base64 PNG to actual binary bytes (same pattern used
-      # elsewhere in this file for token decryption).
+      // elsewhere in this file for token decryption).
       const placeholderPngBytes = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/l5Y6AAAAAElFTkSuQmCC'), c => c.charCodeAt(0));
       
       return new Response(placeholderPngBytes, {
