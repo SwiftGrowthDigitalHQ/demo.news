@@ -1,33 +1,82 @@
 import React, { useState } from 'react';
-import { convertToPublicImageUrl, extractGoogleDriveFileId } from '../../lib/articleImage';
+import { convertToPublicImageUrl } from '../../lib/articleImage';
 
 export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElement>) {
   const [didError, setDidError] = useState(false);
-  const [attemptedProxy, setAttemptedProxy] = useState(false);
-  const [attemptedDirect, setAttemptedDirect] = useState(false);
   const [delayedSrc, setDelayedSrc] = useState<string | undefined>(props.src);
+  const [blobUrl, setBlobUrl] = useState<string>('');
 
   const { src, alt, style, className, ...rest } = props;
 
-  // Extract FILE_ID if this is a Google Drive URL
-  const fileId = src ? extractGoogleDriveFileId(src) : null;
-  const mediaProxyUrl = fileId ? `/api/media-proxy/${fileId}` : null;
-  
-  // Thumbnail URL is always direct (no proxy needed for direct access)
-  const thumbnailUrl = src ? convertToPublicImageUrl(src) : '';
+  // convertToPublicImageUrl returns URLs as-is
+  // Google Drive images are handled via blob URL creation below
+  const imageUrl = src ? convertToPublicImageUrl(src) : '';
 
-  // Add staggered delays to avoid Google rate limiting
+  // Handle Google Drive URLs by fetching via authenticated Edge Function
   React.useEffect(() => {
     if (!src) return;
-    const delay = Math.random() * 500; // Random delay up to 500ms
-    const timer = setTimeout(() => {
+    
+    const isGoogleDrive = src.includes('drive.google.com');
+    if (!isGoogleDrive) {
+      // Not a Google Drive URL, use directly
       setDelayedSrc(src);
-    }, delay);
-    return () => clearTimeout(timer);
+      setBlobUrl('');
+      return;
+    }
+
+    // For Google Drive URLs, fetch via authenticated google-drive-thumbnail
+    (async () => {
+      try {
+        const fileId = src.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1];
+        if (!fileId) {
+          setDidError(true);
+          return;
+        }
+
+        const { getSupabaseClient } = await import('../../../lib/supabase');
+        const supabase = getSupabaseClient();
+        
+        if (!supabase) {
+          setDidError(true);
+          return;
+        }
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          setDidError(true);
+          return;
+        }
+        
+        const thumbnailUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-drive-thumbnail?fileId=${fileId}&size=w400`;
+        
+        const response = await fetch(thumbnailUrl, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+        
+        if (!response.ok) {
+          setDidError(true);
+          return;
+        }
+        
+        const blob = await response.blob();
+        if (!blob.type.startsWith('image/')) {
+          setDidError(true);
+          return;
+        }
+        
+        const objectUrl = URL.createObjectURL(blob);
+        setBlobUrl(objectUrl);
+        setDelayedSrc(src);
+      } catch (err) {
+        setDidError(true);
+      }
+    })();
   }, [src]);
 
   // Don't render if src is empty/null
-  if (!delayedSrc || (!mediaProxyUrl && !thumbnailUrl)) {
+  if (!delayedSrc || !imageUrl) {
     return (
       <div className={`bg-gray-100 flex items-center justify-center ${className ?? ''}`} style={style}>
         <div className="text-center p-4">
@@ -41,20 +90,7 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
   }
 
   const handleError = () => {
-    // Priority order for Google Drive files:
-    // 1. Try media-proxy first (works for private files if OAuth exists)
-    if (mediaProxyUrl && !attemptedProxy) {
-      setAttemptedProxy(true);
-      return; // Re-render with mediaProxyUrl
-    }
-    
-    // 2. Fall back to direct thumbnail URL
-    if (!attemptedDirect && thumbnailUrl !== mediaProxyUrl) {
-      setAttemptedDirect(true);
-      return;
-    }
-    
-    // 3. All options failed - show placeholder
+    // Image failed to load - show placeholder
     setDidError(true);
   };
 
@@ -71,20 +107,9 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
     );
   }
 
-  // Determine which URL to use based on attempt flags:
-  // 1. If not attempted proxy yet and media-proxy available, try it
-  // 2. Otherwise use direct thumbnail URL
-  let urlToUse = delayedSrc;
-  if (!attemptedProxy && mediaProxyUrl) {
-    urlToUse = mediaProxyUrl;
-  } else if (attemptedProxy || !mediaProxyUrl) {
-    // Either proxy failed or proxy unavailable, use thumbnail
-    urlToUse = thumbnailUrl;
-  }
-
   return (
     <img
-      src={urlToUse}
+      src={blobUrl || imageUrl}
       alt={alt}
       className={className}
       style={style}

@@ -57,7 +57,7 @@ async function getCurrentUserTenantId(): Promise<string> {
   }
 
   if (ownedTenant) {
-    console.log('[ADMIN] Using owned tenant:', ownedTenant.slug, '(', ownedTenant.id, ')');
+    // Debug: Using owned tenant - removed unnecessary logging
     return ownedTenant.id;
   }
 

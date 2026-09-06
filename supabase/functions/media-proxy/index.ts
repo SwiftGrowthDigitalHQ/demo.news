@@ -177,14 +177,42 @@ serve(async (req: Request) => {
         .like('featured_image', `%${fileId}%`)
         .limit(1);
       
-      if (!articles || articles.length === 0) {
-        return new Response(
-          JSON.stringify({ error: 'File not authorized' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      if (articles && articles.length > 0) {
+        tenantId = articles[0].tenant_id;
+      } else {
+        // Not in articles - check if it's in site_settings (logo or favicon)
+        const { data: settings } = await supabase
+          .from('site_settings')
+          .select('tenant_id, logo_url, theme_config')
+          .is('deleted_at', null)
+          .limit(1000);
+        
+        // Find tenant where this fileId is used in logo_url or favicon_url
+        let foundTenantId: string | null = null;
+        if (settings) {
+          for (const setting of settings) {
+            const logoMatch = setting.logo_url && setting.logo_url.includes(fileId);
+            const faviconMatch = setting.theme_config && 
+              typeof setting.theme_config === 'object' && 
+              'favicon' in setting.theme_config &&
+              String(setting.theme_config.favicon).includes(fileId);
+            
+            if (logoMatch || faviconMatch) {
+              foundTenantId = setting.tenant_id;
+              break;
+            }
+          }
+        }
+        
+        if (!foundTenantId) {
+          return new Response(
+            JSON.stringify({ error: 'File not authorized' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        tenantId = foundTenantId;
       }
-      
-      tenantId = articles[0].tenant_id;
     }
     
     // Get Drive connection for this tenant

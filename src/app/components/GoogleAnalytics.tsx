@@ -55,7 +55,7 @@ export function GoogleAnalytics() {
           console.log('[GA4] Configuration loaded - Tracking active:', result.data.measurement_id);
           setMeasurementId(result.data.measurement_id);
         } else if (!cancelled) {
-          console.log('[GA4] Tracking not active or not configured');
+          // GA4 not configured - normal state, don't log
           setMeasurementId(null);
         }
       } catch (err) {

@@ -38,35 +38,19 @@ export function getArticleThumbnail(
 /**
  * Convert various image URL formats to publicly accessible URLs
  * 
- * For Google Drive URLs, converts to Google Drive thumbnail URL which is directly renderable
- * in browsers. The thumbnail URL works when files are publicly shared.
+ * For Google Drive URLs, returns as-is (the authenticated google-drive-thumbnail 
+ * Edge Function will handle serving via ImageWithFallback component).
  * 
- * For files that are private, the ImageWithFallback component will fall back to media-proxy.
+ * For files that are Supabase Storage, returns as-is (already public).
  */
 export function convertToPublicImageUrl(url: string): string {
   if (!url) return '';
   
-  // Already a thumbnail URL, return as-is
-  if (url.includes('drive.google.com/thumbnail')) {
-    return url;
-  }
-  
-  // If it's a Supabase Storage URL or regular HTTPS (non-Drive), return as-is
-  if (url.includes('.supabase.co/storage/') || 
-      (!url.includes('drive.google.com') && url.startsWith('https://'))) {
-    return url;
-  }
-  
-  // Extract Google Drive file ID from various URL formats
-  const driveFileId = extractGoogleDriveFileId(url);
-  
-  if (driveFileId) {
-    // Convert to Google Drive thumbnail URL which is browser-renderable when public
-    // Format: https://drive.google.com/thumbnail?id=FILE_ID&sz=w1600
-    return `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1600`;
-  }
-  
-  // Return original URL (external image or non-Drive URL)
+  // Return all URLs as-is
+  // ImageWithFallback component will handle:
+  // - Supabase Storage URLs (direct use)
+  // - Google Drive URLs (convert via google-drive-thumbnail Edge Function)
+  // - External HTTPS URLs (direct use)
   return url;
 }
 

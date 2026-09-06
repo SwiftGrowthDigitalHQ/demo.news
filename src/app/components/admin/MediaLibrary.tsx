@@ -366,8 +366,14 @@ export function MediaLibrary() {
   const getPreviewUrl = (item: AdminMediaItem) => {
     if (item.storage_provider === 'google_drive') {
       if (item.mime_type.startsWith('image/') && item.drive_file_id) {
-        // Use media-proxy URL for admin preview (works for private files)
-        return `/api/media-proxy/${item.drive_file_id}`;
+        // Use cached thumbnail blob URL if available (authenticated via google-drive-thumbnail)
+        // Blob URLs are created in useEffect from google-drive-thumbnail function
+        const blobUrl = thumbnailUrls.get(item.drive_file_id);
+        if (blobUrl) {
+          return blobUrl;
+        }
+        // Fallback to empty while loading (placeholder will show skeleton)
+        return '';
       }
       return '';
     }

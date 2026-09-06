@@ -7,6 +7,7 @@ import { AppLink, useAppNavigation } from '../lib/navigation';
 import { useCms } from '../lib/cms';
 import { useAuth } from '../lib/auth';
 import { resolveLogoUrl } from '../lib/assetResolver';
+import { PublicGoogleDriveImage } from './PublicGoogleDriveImage';
 
 const NAV_ITEMS = [
   { label: 'Home', path: '/' },
@@ -114,15 +115,23 @@ export function Header() {
           {/* Logo */}
           <AppLink to={tenantSlug ? `/${tenantSlug}` : '/'} className="shrink-0 flex items-center gap-1.5">
             {siteSettings?.logo_url && (
-              <img 
-                src={resolveLogoUrl(siteSettings.logo_url)} 
-                alt={brandName} 
-                className="h-9 w-9 rounded object-cover"
-                onError={(e) => {
-                  // Hide broken image on error
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
+              siteSettings.logo_url.includes('drive.google.com') ? (
+                <PublicGoogleDriveImage
+                  url={siteSettings.logo_url}
+                  alt={brandName}
+                  className="h-9 w-9 rounded object-cover"
+                />
+              ) : (
+                <img 
+                  src={resolveLogoUrl(siteSettings.logo_url)} 
+                  alt={brandName} 
+                  className="h-9 w-9 rounded object-cover"
+                  onError={(e) => {
+                    // Hide broken image on error
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              )
             )}
             <div className="leading-tight">
               <span className="text-xl font-extrabold text-[#111827]">{brandFirst}</span>

@@ -12,6 +12,7 @@ import {
 } from '../../lib/navConfig';
 import { resolveAssetUrl } from '../../lib/assetResolver';
 import { useIsMobile } from '../ui/use-mobile';
+import { useState, useEffect } from 'react';
 
 interface Props {
   activeSection: string;
@@ -25,9 +26,57 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
   const isMobile = useIsMobile();
   const { profile } = useAuth();
   const { tenant } = useTenant();
+  const [logoBlob, setLogoBlob] = useState<string>('');
   
   const roleDisplayName = getRoleDisplayName(profile);
   const isSA = isSuperAdmin(profile);
+  
+  // Load Google Drive logo via authenticated Edge Function
+  useEffect(() => {
+    if (!tenant?.logoUrl || !tenant.logoUrl.includes('drive.google.com')) {
+      setLogoBlob('');
+      return;
+    }
+
+    (async () => {
+      try {
+        const fileId = tenant.logoUrl.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1];
+        if (!fileId) {
+          setLogoBlob('');
+          return;
+        }
+
+        const { getSupabaseClient } = await import('../../../lib/supabase');
+        const supabase = getSupabaseClient();
+        if (!supabase) {
+          setLogoBlob('');
+          return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          setLogoBlob('');
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-drive-thumbnail?fileId=${fileId}&size=w100`,
+          { headers: { 'Authorization': `Bearer ${session.access_token}` } }
+        );
+
+        if (!response.ok) {
+          setLogoBlob('');
+          return;
+        }
+
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        setLogoBlob(objectUrl);
+      } catch (err) {
+        setLogoBlob('');
+      }
+    })();
+  }, [tenant?.logoUrl]);
   
   // CRITICAL: Get correct nav items based on role
   const visibleItems = isSA ? getSuperAdminNavItems() : getTenantNavItems();
@@ -77,7 +126,7 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
           flexShrink: 0,
         }}
       >
-        {brandLogo ? (
+        {brandLogo || logoBlob ? (
           // Tenant logo
           <div
             className="flex items-center justify-center rounded-lg flex-shrink-0 overflow-hidden"
@@ -89,7 +138,7 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
             }}
           >
             <img
-              src={brandLogo}
+              src={logoBlob || brandLogo!}
               alt={brandName}
               style={{
                 width: '100%',

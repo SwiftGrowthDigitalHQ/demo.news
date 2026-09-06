@@ -1,56 +1,38 @@
 /**
+/**
  * Centralized Asset Resolver for Tenant Branding Assets
  * 
  * Handles logo, favicon, and other tenant-specific images from multiple sources:
  * - Supabase Storage
- * - Google Drive (via media proxy)
+ * - Google Drive (returns canonical URLs for authenticated Edge Function handling)
  * - External HTTPS URLs
  */
 
 /**
  * Resolve any asset URL to a publicly accessible URL
  * 
- * For STORAGE/CANONICAL URLs (from database fields like featured_image):
- * - Supabase Storage URLs (passthrough)
- * - Google Drive canonical URLs - converted to media-proxy for private files
+ * For asset URLs from database fields (like logo_url, favicon_url):
+ * - Supabase Storage URLs (passthrough - public)
+ * - Google Drive canonical URLs (passthrough - backend handles via Edge Function)
  * - Regular HTTPS URLs (passthrough)
  * 
- * For RENDERING:
- * - Media-proxy URLs serve private files via server-side auth
- * - Direct URLs work for publicly shared files
+ * Components like Header, Footer use this to display logos/favicon.
+ * For Google Drive URLs, components should use GoogleDriveImagePreview 
+ * or ImageWithFallback which handle authenticated fetching via Edge Function.
  * 
  * @param url - The raw URL from database or input
- * @returns Publicly accessible URL or empty string
+ * @returns URL to use for display
  */
 export function resolveAssetUrl(url: string | null | undefined): string {
   if (!url || url.trim() === '') return '';
   
   const trimmed = url.trim();
   
-  // Google Drive canonical URL - convert to media-proxy for server-side auth
-  // This handles private files without making them publicly shared
-  if (trimmed.includes('drive.google.com/file/d/')) {
-    const fileId = trimmed.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1];
-    if (fileId) return `/api/media-proxy/${fileId}`;
-    return trimmed;
-  }
-  
-  // Already a thumbnail URL, return as-is
-  if (trimmed.includes('drive.google.com/thumbnail')) {
-    return trimmed;
-  }
-  
-  // Supabase Storage URL - return as-is
-  if (trimmed.includes('.supabase.co/storage/')) {
-    return trimmed;
-  }
-  
-  // Regular HTTPS URL - return as-is
-  if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {
-    return trimmed;
-  }
-  
-  // Unknown format - return as-is and let browser handle it
+  // Return all URLs as-is
+  // - Supabase Storage URLs work directly
+  // - Google Drive URLs are handled by components via authenticated Edge Function
+  // - External HTTPS URLs work directly
+  // - Relative paths work for static assets
   return trimmed;
 }
 

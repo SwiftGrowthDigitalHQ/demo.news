@@ -1,6 +1,7 @@
 import { Facebook, Twitter, Youtube, Instagram, Mail, Phone, MapPin, ExternalLink, Send, Linkedin, MessageCircle } from 'lucide-react';
 import { AppLink } from '../lib/navigation';
 import { resolveAssetUrl } from '../lib/assetResolver';
+import { PublicGoogleDriveImage } from './PublicGoogleDriveImage';
 
 export const socialIcons: Record<string, any> = {
   facebook: Facebook,
@@ -144,7 +145,11 @@ export function FooterPresentation({
         {/* Logo */}
         <div className="mb-4">
           {logoUrl ? (
-            <img src={resolveAssetUrl(logoUrl)} alt={siteName} className="h-10 mb-2" />
+            logoUrl.includes('drive.google.com') ? (
+              <PublicGoogleDriveImage url={logoUrl} alt={siteName} className="h-10 mb-2" />
+            ) : (
+              <img src={resolveAssetUrl(logoUrl)} alt={siteName} className="h-10 mb-2" />
+            )
           ) : (
             <h3 className="text-xl font-extrabold leading-none">
               <span className="text-white">{nameFirst}</span>
@@ -220,7 +225,11 @@ export function FooterPresentation({
             <div>
               <div className="mb-5">
                 {logoUrl ? (
-                  <img src={resolveAssetUrl(logoUrl)} alt={siteName} className="h-12 mb-2" />
+                  logoUrl.includes('drive.google.com') ? (
+                    <PublicGoogleDriveImage url={logoUrl} alt={siteName} className="h-12 mb-2" />
+                  ) : (
+                    <img src={resolveAssetUrl(logoUrl)} alt={siteName} className="h-12 mb-2" />
+                  )
                 ) : (
                   <h3 className="text-2xl font-extrabold leading-none">
                     <span className="text-white">{nameFirst}</span>

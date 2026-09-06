@@ -31,36 +31,60 @@ function GoogleDriveImagePreview({ url, width, height, onError }: { url: string;
       return;
     }
 
-    console.log('[GoogleDriveImagePreview] Loading image with FILE_ID:', fileId);
-
-    // Fetch image from media-proxy
-    const mediaProxyUrl = `/api/media-proxy/${fileId}`;
-    
-    fetch(mediaProxyUrl, { credentials: 'include' })
-      .then(res => {
-        console.log('[GoogleDriveImagePreview] Media-proxy response:', res.status, res.statusText);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.blob();
-      })
-      .then(blob => {
-        console.log('[GoogleDriveImagePreview] Blob received - Type:', blob.type, 'Size:', blob.size, 'bytes');
+    // Fetch image from authenticated google-drive-thumbnail Edge Function
+    (async () => {
+      try {
+        const { getSupabaseClient } = await import('../../../lib/supabase');
+        const supabase = getSupabaseClient();
         
-        // Validate blob is actually an image
-        if (!blob.type.startsWith('image/') && blob.type !== 'application/octet-stream') {
-          console.warn('[GoogleDriveImagePreview] Blob type not an image:', blob.type);
+        if (!supabase) {
+          console.error('[GoogleDriveImagePreview] No Supabase client available');
+          setError(true);
+          onError?.(true);
+          return;
         }
         
-        const blobUrl = URL.createObjectURL(blob);
-        console.log('[GoogleDriveImagePreview] Blob URL created:', blobUrl);
-        setImageSrc(blobUrl);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          console.error('[GoogleDriveImagePreview] No session token');
+          setError(true);
+          onError?.(true);
+          return;
+        }
+        
+        const thumbnailUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-drive-thumbnail?fileId=${fileId}&size=w400`;
+        
+        const response = await fetch(thumbnailUrl, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+        
+        if (!response.ok) {
+          console.error('[GoogleDriveImagePreview] Failed:', response.status, await response.text());
+          setError(true);
+          onError?.(true);
+          return;
+        }
+        
+        const blob = await response.blob();
+        if (!blob.type.startsWith('image/')) {
+          console.error('[GoogleDriveImagePreview] Unexpected content type:', blob.type);
+          setError(true);
+          onError?.(true);
+          return;
+        }
+        
+        const objectUrl = URL.createObjectURL(blob);
+        setImageSrc(objectUrl);
         setError(false);
         onError?.(false);
-      })
-      .catch((err) => {
-        console.error('[GoogleDriveImagePreview] Failed to load image:', err);
+      } catch (err) {
+        console.error('[GoogleDriveImagePreview] Error:', err);
         setError(true);
         onError?.(true);
-      });
+      }
+    })();
   }, [url]);
 
   if (error) {
