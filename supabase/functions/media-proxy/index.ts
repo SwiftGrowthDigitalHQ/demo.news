@@ -31,7 +31,10 @@ async function decryptToken(encryptedToken: string): Promise<string> {
   const iv = combined.slice(0, 12);
   const encrypted = combined.slice(12);
   
-  const keyData = Uint8Array.from(atob(GDRIVE_ENCRYPTION_KEY), c => c.charCodeAt(0));
+  // Match oauth-callback encryption format: TextEncoder with padEnd/substring
+  const encoder = new TextEncoder();
+  const normalizedKey = GDRIVE_ENCRYPTION_KEY.padEnd(32, '0').substring(0, 32);
+  const keyData = encoder.encode(normalizedKey);
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     keyData,
@@ -54,7 +57,9 @@ async function encryptToken(token: string): Promise<string> {
   const data = encoder.encode(token);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   
-  const keyData = Uint8Array.from(atob(GDRIVE_ENCRYPTION_KEY), c => c.charCodeAt(0));
+  // Match oauth-callback key format: TextEncoder with padEnd/substring
+  const normalizedKey = GDRIVE_ENCRYPTION_KEY.padEnd(32, '0').substring(0, 32);
+  const keyData = encoder.encode(normalizedKey);
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     keyData,

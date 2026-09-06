@@ -48,12 +48,12 @@ interface DriveFolder {
 async function encryptToken(token: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(token);
-  
   // Generate random IV (12 bytes for GCM)
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  
-  // Import encryption key from environment
-  const keyData = Uint8Array.from(atob(GDRIVE_ENCRYPTION_KEY), c => c.charCodeAt(0));
+  // Import encryption key using consistent format: TextEncoder with padEnd/substring
+  // This ensures all encryption/decryption uses the same key format
+  const normalizedKey = GDRIVE_ENCRYPTION_KEY.padEnd(32, '0').substring(0, 32);
+  const keyData = encoder.encode(normalizedKey);
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     keyData,
