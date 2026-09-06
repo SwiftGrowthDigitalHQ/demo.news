@@ -7,18 +7,17 @@
  * - External HTTPS URLs
  */
 
-import { extractGoogleDriveFileId } from './articleImage';
-
 /**
  * Resolve any asset URL to a publicly accessible URL
  * 
  * For STORAGE/CANONICAL URLs (from database fields like featured_image):
  * - Supabase Storage URLs (passthrough)
- * - Google Drive canonical URLs (passthrough - never convert to proxy)
+ * - Google Drive canonical URLs - converted to media-proxy for private files
  * - Regular HTTPS URLs (passthrough)
  * 
- * For RENDERING (see ImageWithFallback component):
- * - The browser will intelligently try media-proxy first, then fallback to direct URL
+ * For RENDERING:
+ * - Media-proxy URLs serve private files via server-side auth
+ * - Direct URLs work for publicly shared files
  * 
  * @param url - The raw URL from database or input
  * @returns Publicly accessible URL or empty string
@@ -28,9 +27,11 @@ export function resolveAssetUrl(url: string | null | undefined): string {
   
   const trimmed = url.trim();
   
-  // Google Drive canonical URL - return as-is (NEVER convert to proxy here)
-  // Proxy conversion happens in ImageWithFallback component for rendering only
+  // Google Drive canonical URL - convert to media-proxy for server-side auth
+  // This handles private files without making them publicly shared
   if (trimmed.includes('drive.google.com/file/d/')) {
+    const fileId = trimmed.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1];
+    if (fileId) return `/api/media-proxy/${fileId}`;
     return trimmed;
   }
   
@@ -80,7 +81,8 @@ export function isValidAssetUrl(url: string | null | undefined): boolean {
     trimmed.startsWith('https://') ||
     trimmed.startsWith('http://') ||
     trimmed.includes('drive.google.com') ||
-    trimmed.includes('.supabase.co')
+    trimmed.includes('.supabase.co') ||
+    trimmed.startsWith('/api/media-proxy/')
   );
 }
 

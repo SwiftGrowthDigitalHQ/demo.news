@@ -32,19 +32,49 @@ const corsHeaders = {
  * Decrypt OAuth token using AES-256-GCM
  */
 async function decryptToken(encryptedToken: string): Promise<string> {
+  // CRITICAL: Validate encryption key is configured
+  // Without this check, atob('') creates empty key → wrong decryption
+  if (!GDRIVE_ENCRYPTION_KEY) {
+    console.error('[GD_THUMB] CRITICAL: GDRIVE_ENCRYPTION_KEY not configured');
+    throw new Error('Google Drive encryption key not configured');
+  }
+  
   try {
+    // Decode base64-encoded token: [IV(12 bytes)][Ciphertext][AuthTag(16 bytes)]
     const combined = Uint8Array.from(atob(encryptedToken), c => c.charCodeAt(0));
+    
+    // Extract IV (first 12 bytes)
     const iv = combined.slice(0, 12);
+    
+    // Extract ciphertext + auth tag (remaining bytes)
+    // Web Crypto API handles authentication tag automatically
     const ciphertext = combined.slice(12);
     
+    // Decode encryption key from base64
     const keyData = Uint8Array.from(atob(GDRIVE_ENCRYPTION_KEY), c => c.charCodeAt(0));
-    const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'AES-GCM' }, false, ['decrypt']);
     
-    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cryptoKey, ciphertext);
+    // Import key for decryption
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt']
+    );
+    
+    // Decrypt using AES-GCM
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      cryptoKey,
+      ciphertext
+    );
+    
+    // Convert decrypted bytes to string
     const decoder = new TextDecoder();
     return decoder.decode(decrypted);
   } catch (error) {
     console.error('[GD_THUMB] Decryption failed:', error);
+    console.error('[GD_THUMB] This typically means GDRIVE_ENCRYPTION_KEY is missing or incorrect');
     throw new Error('Failed to decrypt token');
   }
 }
@@ -78,7 +108,7 @@ async function refreshAccessToken(refreshToken: string): Promise<{ access_token:
 serve(async (req: Request) => {
   console.log('[GD_THUMB] REQUEST_RECEIVED');
   console.log('[GD_THUMB] METHOD:', req.method);
-  console.log('[GD_THUMB] ORIGIN_PRESENT:', !!req.headers.get('origin'));
+  console.log('[GD_THUMB] GDRIVE_ENCRYPTION_KEY length:', GDRIVE_ENCRYPTION_KEY.length, '(should be 44 for base64 32-byte key)');
   
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -171,6 +201,7 @@ serve(async (req: Request) => {
     }
     
     console.log('[GD_THUMB] Connection found');
+    console.log('[GD_THUMB] access_token_encrypted length:', connection.access_token_encrypted?.length || 0);
     
     // Decrypt and check token expiry
     let accessToken = await decryptToken(connection.access_token_encrypted);

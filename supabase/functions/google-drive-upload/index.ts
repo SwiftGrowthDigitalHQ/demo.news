@@ -45,33 +45,45 @@ interface UploadedFile {
  * Production AES-256-GCM decryption using Web Crypto API
  */
 async function decryptToken(encryptedToken: string): Promise<string> {
-  // Decode base64
-  const combined = Uint8Array.from(atob(encryptedToken), c => c.charCodeAt(0));
+  // Validate encryption key is configured
+  if (!GDRIVE_ENCRYPTION_KEY) {
+    console.error('[Upload] CRITICAL: GDRIVE_ENCRYPTION_KEY not configured in Supabase Edge Function secrets');
+    throw new Error('Google Drive encryption key not configured. Contact administrator.');
+  }
   
-  // Extract IV and encrypted data
-  const iv = combined.slice(0, 12);
-  const encrypted = combined.slice(12);
-  
-  // Import decryption key from environment
-  const keyData = Uint8Array.from(atob(GDRIVE_ENCRYPTION_KEY), c => c.charCodeAt(0));
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'AES-GCM' },
-    false,
-    ['decrypt']
-  );
-  
-  // Decrypt
-  const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
-    cryptoKey,
-    encrypted
-  );
-  
-  // Return string
-  const decoder = new TextDecoder();
-  return decoder.decode(decrypted);
+  try {
+    // Decode base64
+    const combined = Uint8Array.from(atob(encryptedToken), c => c.charCodeAt(0));
+    
+    // Extract IV and encrypted data
+    const iv = combined.slice(0, 12);
+    const encrypted = combined.slice(12);
+    
+    // Import decryption key from environment
+    const keyData = Uint8Array.from(atob(GDRIVE_ENCRYPTION_KEY), c => c.charCodeAt(0));
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt']
+    );
+    
+    // Decrypt
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      cryptoKey,
+      encrypted
+    );
+    
+    // Return string
+    const decoder = new TextDecoder();
+    return decoder.decode(decrypted);
+  } catch (err) {
+    console.error('[Upload] Token decryption failed:', err instanceof Error ? err.message : String(err));
+    console.error('[Upload] This typically means GDRIVE_ENCRYPTION_KEY is missing or incorrect in Supabase Edge Function secrets');
+    throw new Error('Failed to decrypt Google Drive tokens. Please reconnect Google Drive.');
+  }
 }
 
 /**
@@ -127,6 +139,9 @@ async function getDriveConnection(tenantId: string): Promise<DriveConnection | n
     console.error('[Upload] No Drive connection found for tenant:', tenantId);
     return null;
   }
+  
+  // Log key validation
+  console.log('[Upload] GDRIVE_ENCRYPTION_KEY length:', GDRIVE_ENCRYPTION_KEY.length, '(should be 44)');
   
   return data as DriveConnection;
 }
@@ -289,50 +304,53 @@ async function uploadToDrive(
   const result = await response.json();
   console.log('[Upload] File uploaded to Drive:', result.id);
   
-  // Make file publicly accessible with link
-  await setFilePublicPermission(accessToken, result.id);
-  
   return result;
 }
 
 /**
  * Set file to be accessible by anyone with the link
  * 
- * This is CRITICAL for image rendering to work:
- * 1. User uploads image to Google Drive via Media Library
- * 2. File is stored with a Google Drive file ID
- * 3. We convert the Drive URL to thumbnail format
- * 4. Browser requests the thumbnail URL
- * 5. Google Drive checks permissions and serves the image
+ * This IMPROVES image rendering but is NOT CRITICAL for upload success:
+ * - File is already uploaded to Google Drive with valid FILE_ID
+ * - If permission setting fails, file still exists and can be accessed via proxy
+ * - Permission errors should NOT cause upload failure
  * 
- * If this fails, images will show "Image unavailable" even though the URL is correct.
+ * The file is usable even without public permission because:
+ * 1. Media Library admin has access via authenticated proxy
+ * 2. Authenticated articles can use proxy with OAuth tokens
+ * 3. Public articles fall back to thumbnail URL (may be restricted)
  */
 async function setFilePublicPermission(accessToken: string, fileId: string): Promise<void> {
-  console.log('[Upload] Setting public permission for file:', fileId);
+  console.log('[Upload] Attempting to set public permission for file:', fileId);
   
-  const response = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        role: 'reader',
-        type: 'anyone',
-      }),
-    }
-  );
-  
-  if (!response.ok) {
-    const error = await response.text();
-    console.error('[Upload] CRITICAL: Failed to set public permission for file', fileId);
-    console.error('[Upload] Permission error details:', error);
-    console.error('[Upload] This file will NOT be visible on the public website!');
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          role: 'reader',
+          type: 'anyone',
+        }),
+      }
+    );
     
-    // Try alternative approach: use shareLink permission
-    console.log('[Upload] Attempting alternative: setting viewersCanCopyContent...');
+    if (response.ok) {
+      console.log('[Upload] File is now publicly accessible');
+      return; // Success
+    }
+    
+    const error = await response.text();
+    console.warn('[Upload] Failed to set public permission for file', fileId);
+    console.warn('[Upload] Permission error details:', error);
+    console.warn('[Upload] Note: File upload succeeded, but may require auth to view');
+    
+    // Try alternative approach: use viewersCanCopyContent
+    console.log('[Upload] Attempting alternative permission method...');
     
     try {
       const altResponse = await fetch(
@@ -351,17 +369,21 @@ async function setFilePublicPermission(accessToken: string, fileId: string): Pro
       
       if (altResponse.ok) {
         console.log('[Upload] Successfully set viewersCanCopyContent for file:', fileId);
+        return; // Alternative success
       } else {
-        console.error('[Upload] Alternative permission method also failed');
+        const altError = await altResponse.text();
+        console.warn('[Upload] Alternative permission method also failed:', altError);
       }
     } catch (altErr) {
-      console.error('[Upload] Alternative permission error:', altErr);
+      console.warn('[Upload] Alternative permission attempt error:', altErr);
     }
     
-    // IMPORTANT: Still throw error to alert caller
-    throw new Error(`Failed to set public permission for file ${fileId}: ${error}`);
-  } else {
-    console.log('[Upload] File is now publicly accessible');
+    // IMPORTANT: Permission failure is NOT critical - file upload succeeded
+    console.log('[Upload] Permission setting failed, but file is still accessible via proxy');
+    
+  } catch (err) {
+    console.error('[Upload] Unexpected error while setting permissions:', err);
+    // Still don't throw - permission is bonus, not critical
   }
 }
 
@@ -522,13 +544,18 @@ serve(async (req: Request) => {
       targetFolderId
     );
     
-    // Create media record
+    // Create media record (do this BEFORE setting permissions)
+    // This ensures the file is recorded in our database even if permissions fail
     const mediaRecord = await createMediaRecord(
       tenantId,
       driveFile,
       fileName,
       targetFolderId
     );
+    
+    // Set public permission (non-critical - doesn't block upload success)
+    // File is already in Drive and database, permission just improves access
+    await setFilePublicPermission(accessToken, driveFile.id);
     
     // Return response
     return new Response(

@@ -249,16 +249,6 @@ export function MediaLibrary() {
     } catch (uploadError) {
       console.error('Upload error:', uploadError);
       toast.error(uploadError instanceof Error ? uploadError.message : 'Failed to upload media.');
-      
-      if (storageProvider === 'google_drive') {
-        const useFallback = confirm('Google Drive upload failed. Would you like to upload to platform storage instead?');
-        if (useFallback) {
-          setStorageProvider('supabase');
-          setSaving(false);
-          await handleUpload(file);
-          return;
-        }
-      }
     } finally {
       setSaving(false);
     }

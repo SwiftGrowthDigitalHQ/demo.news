@@ -1,0 +1,205 @@
+================================================================================
+GOOGLE DRIVE FIX - FINAL TEST STEPS (Manual Browser Actions Required)
+================================================================================
+
+STATUS SO FAR:
+✅ Old connections deleted from database (1 connection removed)
+✅ Page refreshed - shows "Not connected" status
+✅ Console errors changed from 500 to 503 (correct behavior)
+✅ "Connect Google Drive" button visible
+
+NEXT: Manual user actions required
+
+================================================================================
+STEP 1: CLICK "Connect Google Drive" BUTTON
+================================================================================
+
+In browser at: http://localhost:5173/admin/media
+
+ACTION:
+1. Click the blue "Connect Google Drive" button
+2. Google consent screen will appear
+3. Read the permissions requested
+4. Click "Allow" button (blue)
+5. You'll be redirected back to Media Library
+6. Wait for toast: "Google Drive connected successfully!"
+
+EXPECTED:
+- Toast message appears: "Google Drive connected successfully!"
+- Status changes to: "Connected - freelancerw725@gmail.com"
+- "Connect Google Drive" button changes to "Disconnect Google Drive"
+
+CONSOLE CHECK (F12 → Console):
+- No new errors should appear
+- Should see message about successful connection
+
+================================================================================
+STEP 2: UPLOAD TEST IMAGE
+================================================================================
+
+Once reconnected:
+
+ACTION:
+1. Click "Browse Files" button (red button)
+2. Select a JPG or PNG from your computer
+3. Wait for upload to complete
+4. Toast should show: "Media uploaded."
+
+EXPECTED:
+- Upload completes without errors
+- Image thumbnail appears in Media Library grid
+- Image name visible below thumbnail
+
+CONSOLE CHECK (F12 → Console):
+Look for:
+- ✅ NO "Failed to decrypt token" errors
+- ✅ NO "500" errors
+- ✅ NO "CORS error" messages
+- ✅ Only normal operation logs
+
+If you see any RED errors, screenshot them
+
+================================================================================
+STEP 3: VERIFY IMAGE IN GOOGLE DRIVE
+================================================================================
+
+ACTION:
+1. Open: https://drive.google.com (new browser tab)
+2. Navigate to folders:
+   SwiftGrowthDigital
+   → fake-news
+   → News Portal
+   → Images
+3. Look for your uploaded file
+
+EXPECTED:
+- Your test image appears in the Images folder
+- File size matches what you uploaded
+- Filename format: XXXXXXXXX_XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX.png
+
+================================================================================
+STEP 4: VERIFY NETWORK REQUESTS
+================================================================================
+
+ACTION:
+1. Go back to Media Library tab
+2. Press F12 → Network tab
+3. Scroll down to see upload request
+4. Look for request named: "google-drive-upload"
+5. Check its Response tab
+
+EXPECTED:
+- Request status: 200 (not 500, not 503)
+- Response shows: {"media": {id, drive_file_id, ...}}
+- No error messages in response
+
+================================================================================
+STEP 5: FINAL VERIFICATION CHECKLIST
+================================================================================
+
+Complete this checklist:
+
+CLEANUP & CONNECTION:
+[ ] Old connections were deleted (we did this)
+[ ] Page showed "Not connected" after refresh
+[ ] Clicked "Connect Google Drive"
+[ ] OAuth completed successfully
+[ ] Toast showed "Google Drive connected successfully!"
+
+UPLOAD TEST:
+[ ] Clicked "Browse Files"
+[ ] Selected a JPG/PNG image
+[ ] Upload completed
+[ ] Toast showed "Media uploaded."
+[ ] Image thumbnail visible in grid
+
+CONSOLE (F12):
+[ ] Zero "Failed to decrypt token" errors
+[ ] Zero "500" errors
+[ ] Zero "CORS" errors
+[ ] Zero "OpaqueResponse" errors
+
+NETWORK (F12 → Network):
+[ ] Upload request status: 200 (green)
+[ ] Thumbnail requests: 200 (green)
+[ ] No 500 or 503 errors
+
+GOOGLE DRIVE:
+[ ] Uploaded image exists in Google Drive Images folder
+[ ] File size is correct
+[ ] Filename looks like: {timestamp}_{uuid}.png
+
+================================================================================
+POSSIBLE ISSUES & SOLUTIONS
+================================================================================
+
+ISSUE: OAuth doesn't complete
+SOLUTION:
+- Try clicking "Connect Google Drive" again
+- Clear browser cache (Ctrl+Shift+Delete)
+- Check if you're still authenticated (look for user profile in top-right)
+
+ISSUE: Upload fails after reconnection
+SOLUTION:
+- Check console for error message
+- Screenshot the error
+- Hard refresh page (Ctrl+Shift+R)
+- Try upload again
+
+ISSUE: Still seeing "Failed to decrypt token" errors
+SOLUTION:
+- This means old tokens still exist in database
+- Cleanup didn't work properly
+- Need to run cleanup command again
+
+ISSUE: Image uploads but doesn't appear in Google Drive
+SOLUTION:
+- Check that you're looking in right folder: SwiftGrowthDigital/fake-news/News Portal/Images
+- Image might have different filename than expected
+- Refresh Google Drive page
+
+================================================================================
+REPORT BACK WITH:
+================================================================================
+
+After completing all steps, provide:
+
+1. Screenshot of "Connected" status (after OAuth)
+
+2. Screenshot of Media Library showing uploaded image thumbnail
+
+3. Console output (any errors?):
+   [paste or describe]
+
+4. Network tab - upload request status:
+   Status: ___ (200? 500? other?)
+
+5. Google Drive verification:
+   Did you find the uploaded image? Yes/No
+   File size: ___ bytes
+
+6. FINAL RESULT:
+   PASS: Everything worked, no decrypt errors, image in Drive and Media Library
+   FAIL: [describe what didn't work]
+
+================================================================================
+SUCCESS CRITERIA:
+================================================================================
+
+FIX IS COMPLETE when:
+✅ Cleanup deleted old connections (DONE)
+✅ Page shows "Not connected" (DONE)
+✅ Console shows 503 "not connected" not 500 "decrypt failed" (DONE)
+✅ OAuth reconnection works
+✅ New tokens created without errors
+✅ Upload succeeds (HTTP 200)
+✅ No "decrypt token" errors in console
+✅ Image visible in Media Library
+✅ Image exists in Google Drive
+✅ Upload/thumbnail HTTP status: 200 (not 500)
+
+ALL ABOVE = ✅ PASS - FIX SUCCESSFUL
+
+================================================================================
+
+Ready? Start with Step 1: Click "Connect Google Drive" button

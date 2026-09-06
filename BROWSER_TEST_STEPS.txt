@@ -1,0 +1,220 @@
+================================================================================
+GOOGLE DRIVE FIX - STEP-BY-STEP BROWSER TEST
+================================================================================
+
+GOAL: Execute cleanup, reconnect Google Drive, upload image, verify fix works
+
+================================================================================
+STEP 1: CLEANUP OLD CONNECTIONS
+================================================================================
+
+1. Open: http://localhost:5173/admin/media
+2. Press F12 (DevTools)
+3. Click "Console" tab
+4. Paste this command:
+
+(async () => {
+  try {
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) { console.error('Not authenticated'); return; }
+    
+    const response = await fetch(
+      'https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/force-disconnect-old-gdrive',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'x-force-disconnect-secret': 'admin-cleanup-gdrive-v1'
+        },
+        body: JSON.stringify({ secret: 'admin-cleanup-gdrive-v1' })
+      }
+    );
+    
+    const result = await response.json();
+    if (!response.ok) {
+      console.error('❌ Cleanup failed:', result);
+      return;
+    }
+    
+    console.log('✅ Cleanup successful!');
+    console.log('Deleted connections:', result.deleted);
+    console.log('Remaining:', result.remaining);
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+  }
+})();
+
+5. Press ENTER
+
+EXPECTED OUTPUT:
+✅ Cleanup successful!
+Deleted connections: 1
+Remaining: 0
+
+ACTUAL OUTPUT:
+[paste here after running]
+
+
+================================================================================
+STEP 2: REFRESH PAGE
+================================================================================
+
+1. Press F5 (or Cmd+R on Mac)
+2. Wait for page to load
+3. Look at the main content area
+
+EXPECTED: "Connect Google Drive" button visible (blue button)
+ACTUAL:   [describe what you see]
+
+
+================================================================================
+STEP 3: CONNECT GOOGLE DRIVE
+================================================================================
+
+1. Click "Connect Google Drive" button (blue)
+2. Google consent screen appears
+3. Review permissions
+4. Click "Allow" button (blue button on Google screen)
+5. Wait for redirect back to Media Library
+
+EXPECTED: Toast message: "Google Drive connected successfully!"
+ACTUAL:   [paste console output or describe]
+
+
+================================================================================
+STEP 4: PREPARE TEST IMAGE
+================================================================================
+
+1. Find a JPG or PNG file on your computer (any size < 100MB)
+2. Have it ready to upload
+
+EXAMPLE FILES:
+- Any screenshot
+- Any photo
+- Any JPG/PNG
+
+
+================================================================================
+STEP 5: UPLOAD TEST IMAGE
+================================================================================
+
+1. In Media Library, click "Browse Files" button (red button)
+2. Select your test image
+3. Wait for upload to complete
+
+EXPECTED:
+- Upload progress shown
+- Toast: "Media uploaded."
+- Image appears in grid below
+
+ACTUAL:
+[describe what happened]
+
+
+================================================================================
+STEP 6: CHECK CONSOLE FOR ERRORS
+================================================================================
+
+1. Keep DevTools open (F12)
+2. Click on "Console" tab
+3. Look for any error messages
+4. Scroll up to see all messages
+
+EXPECTED: NO error messages starting with:
+- "Failed to decrypt"
+- "500"
+- "CORS error"
+- "OpaqueResponse"
+
+ACTUAL ERRORS (if any):
+[paste error messages here]
+
+
+================================================================================
+STEP 7: CHECK NETWORK TAB
+================================================================================
+
+1. Click "Network" tab in DevTools
+2. Upload should already be complete (check timestamps)
+3. Look for request: "google-drive-upload"
+4. Check its response status
+
+EXPECTED: Status 200 (green check)
+ACTUAL:   [screenshot or describe]
+
+
+================================================================================
+STEP 8: VERIFY IMAGE IN MEDIA LIBRARY
+================================================================================
+
+1. Close DevTools (F12) to see full page
+2. Scroll down in Media Library
+3. Look for your newly uploaded image
+
+EXPECTED:
+- Image thumbnail visible
+- Image name shown
+- Image in grid
+
+ACTUAL:
+[screenshot or describe]
+
+
+================================================================================
+STEP 9: VERIFY IN GOOGLE DRIVE (Optional but Recommended)
+================================================================================
+
+1. Open: https://drive.google.com (new tab)
+2. Navigate: SwiftGrowthDigital → fake-news → News Portal → Images
+3. Look for your uploaded file
+
+EXPECTED:
+- File exists in Google Drive
+- File size matches upload
+- File name format: {timestamp}_{uuid}.{ext}
+
+ACTUAL:
+[screenshot or describe]
+
+
+================================================================================
+FINAL VERIFICATION
+================================================================================
+
+Complete this checklist:
+
+Console:
+[ ] Zero "Failed to decrypt token" errors
+[ ] Zero "500" errors
+[ ] Zero CORS errors
+
+Network:
+[ ] Upload returned HTTP 200
+[ ] Thumbnail requests returned 200
+
+UI:
+[ ] Image visible in Media Library
+[ ] Image has thumbnail
+[ ] Upload success toast shown
+
+Google Drive:
+[ ] File exists in correct folder
+[ ] File has correct size
+
+================================================================================
+SUMMARY
+================================================================================
+
+If ALL items checked: ✅ FIX SUCCESSFUL
+
+If ANY item failed: ❌ ISSUE PERSISTS
+
+Report back with:
+1. Console output from Step 1
+2. Description from Step 5
+3. Any error messages from Step 6
+4. Network status from Step 7
+5. Final verification checklist
+
+================================================================================

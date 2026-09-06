@@ -107,18 +107,14 @@ export function SangTXAuthPage({ mode }: { mode: AuthMode }) {
     });
     
     if (roleSlug === 'super_admin') {
-      console.log('[LOGIN DEBUG 5] Redirecting to /super-admin (super_admin role)');
       navigate('/super-admin');
     } else if (roleSlug === 'admin' || roleSlug === 'editor') {
-      console.log('[LOGIN DEBUG 6] Redirecting to /admin (admin/editor role)');
       navigate('/admin');
     } else if (ownsTenant) {
       // Tenant owners go to admin panel to manage their tenant
-      console.log('[LOGIN DEBUG 7] Redirecting to /admin (tenant owner)');
       navigate('/admin');
     } else {
       // Regular users with no tenant go to homepage
-      console.log('[LOGIN DEBUG 8] Redirecting to / (no role, no tenant)');
       navigate('/');
     }
   };

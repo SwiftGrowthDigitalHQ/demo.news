@@ -193,17 +193,22 @@ serve(async (req: Request) => {
       .single();
     
     if (connError || !connection) {
-      console.log('[Media Proxy] No Drive connection, serving from thumbnail URL');
+      console.log('[Media Proxy] No Drive connection, serving placeholder');
       
-      // Redirect to public thumbnail URL - works for all Google Drive files
-      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
+      // Return a transparent PNG placeholder bytes instead of 302 redirect.
+      // This prevents the browser from making direct CORS requests to
+      # drive.google.com/thumbnail, which fails with NetworkError/CORS errors
+      // for private files. The placeholder ensures logo/favicon slots
+      # always display something instead of "Unable to load image".
+      // Decodes the base64 PNG to actual binary bytes (same pattern used
+      # elsewhere in this file for token decryption).
+      const placeholderPngBytes = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/l5Y6AAAAAElFTkSuQmCC'), c => c.charCodeAt(0));
       
-      return new Response(null, {
-        status: 302,
+      return new Response(placeholderPngBytes, {
         headers: {
           ...corsHeaders,
-          'Location': thumbnailUrl,
-          'Cache-Control': 'public, max-age=31536000'
+          'Content-Type': 'image/png',
+          'Cache-Control': 'public, max-age=31536000, immutable'
         }
       });
     }
@@ -213,15 +218,22 @@ serve(async (req: Request) => {
     try {
       accessToken = await getValidAccessToken(connection as DriveConnection, tenantId);
     } catch (tokenErr) {
-      console.log('[Media Proxy] Token refresh failed, falling back to thumbnail');
-      // Fall back to thumbnail redirect
-      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
-      return new Response(null, {
-        status: 302,
+      console.log('[Media Proxy] Token refresh failed, serving placeholder');
+      
+      // Return a transparent PNG placeholder bytes instead of 302 redirect.
+      // This prevents the browser from making direct CORS requests to
+      # drive.google.com/thumbnail, which fails with NetworkError/CORS errors
+      // for private files. The placeholder ensures logo/favicon slots
+      # always display something instead of "Unable to load image".
+      // Decodes the base64 PNG to actual binary bytes (same pattern used
+      # elsewhere in this file for token decryption).
+      const placeholderPngBytes = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/l5Y6AAAAAElFTkSuQmCC'), c => c.charCodeAt(0));
+      
+      return new Response(placeholderPngBytes, {
         headers: {
           ...corsHeaders,
-          'Location': thumbnailUrl,
-          'Cache-Control': 'public, max-age=31536000'
+          'Content-Type': 'image/png',
+          'Cache-Control': 'public, max-age=31536000, immutable'
         }
       });
     }

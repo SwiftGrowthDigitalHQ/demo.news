@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "std/": "https://deno.land/std@0.208.0/"
+  },
+  "functions": {
+    "force-disconnect-old-gdrive": {
+      "verify_jwt": false
+    }
+  }
+}

@@ -423,21 +423,8 @@ function AppRouter() {
 
   // ── Admin panel ───────────────────────────────────────────────────────────
   if (route.type === 'admin') {
-    console.log('[ADMIN ROUTE DEBUG 1] /admin route accessed:', {
-      loading: auth.loading,
-      ready: auth.ready,
-      hasSession: !!auth.session,
-      hasUser: !!auth.user,
-      hasProfile: !!auth.profile,
-      profileEmail: auth.profile?.email ?? null,
-      roleSlug: auth.profile?.role_slug ?? null,
-      ownedTenantId: auth.profile?.owned_tenant_id ?? null,
-      canAccessAdmin: auth.canAccessAdmin,
-    });
-    
     // Show loading screen while auth is initializing
     if (auth.loading || !auth.ready) {
-      console.log('[ADMIN ROUTE DEBUG 2] Showing loading screen - auth not ready');
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
           <div className="text-center">
@@ -450,16 +437,8 @@ function AppRouter() {
     
     // Auth is ready, check authorization
     if (!auth.canAccessAdmin) {
-      console.error('[ADMIN ROUTE DEBUG 3] Access DENIED - showing login page:', {
-        hasProfile: !!auth.profile,
-        roleSlug: auth.profile?.role_slug ?? null,
-        ownedTenantId: auth.profile?.owned_tenant_id ?? null,
-        canAccessAdmin: auth.canAccessAdmin,
-      });
       return <SangTXAuthPage mode="login" />;
     }
-    
-    console.log('[ADMIN ROUTE DEBUG 4] Access GRANTED - rendering AdminPage with CmsProvider');
     
     // For admin routes, use the owned tenant slug for CmsProvider
     // This prevents "Tenant slug is required" errors during CMS initialization

@@ -1,0 +1,94 @@
+================================================================================
+GOOGLE DRIVE FIX - AWAITING BROWSER TEST EXECUTION
+================================================================================
+
+ROOT CAUSE: Old tokens encrypted with padEnd(), new functions decrypt with atob()
+FIX DEPLOYED: All Edge Functions, cleanup function, encryption key set
+STATUS: Ready for testing
+
+================================================================================
+ACTION REQUIRED FROM USER
+================================================================================
+
+Follow BROWSER_TEST_STEPS.txt OR READY_TO_TEST.md file
+
+Specifically:
+1. Execute cleanup command in browser console
+2. Refresh page
+3. Click "Connect Google Drive" 
+4. Upload test JPG/PNG image
+5. Check console for errors
+6. Report results
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+After testing, verify:
+
+[ ] Cleanup command executed successfully (showed "Deleted: 1")
+[ ] Page refreshed and shows "Connect Google Drive" button
+[ ] Google Drive reconnected (toast showed success)
+[ ] Image uploaded without errors
+[ ] Image visible in Media Library
+[ ] Console shows ZERO "Failed to decrypt token" errors
+[ ] Console shows ZERO "500" errors
+[ ] Network tab shows upload returned HTTP 200
+[ ] Image exists in Google Drive (manual verification)
+
+================================================================================
+EXPECTED SUCCESS STATE
+================================================================================
+
+Console Output:
+✅ Cleanup successful!
+Deleted: 1
+Remaining: 0
+
+Toast Messages:
+✅ Google Drive connected successfully!
+✅ Media uploaded.
+
+Network Tab:
+✅ POST /functions/v1/google-drive-upload → HTTP 200
+
+UI:
+✅ Image thumbnail visible in Media Library
+✅ No broken images
+✅ No error messages
+
+================================================================================
+IF SOMETHING FAILS
+================================================================================
+
+What to check:
+1. Console for error messages (take screenshot)
+2. Network tab for failed requests (take screenshot)
+3. Browser DevTools "Application" tab for storage/cookies
+
+Report:
+- What exact error message appeared?
+- At what step did it fail?
+- Any network errors?
+- Any console errors?
+
+================================================================================
+FINAL RESULT
+================================================================================
+
+After testing, report:
+
+RESULT: [PASS / FAIL]
+
+If PASS:
+- Upload works without decrypt errors ✅
+- Image in Google Drive ✅
+- Visible in Media Library ✅
+- Ready for production ✅
+
+If FAIL:
+- Which step failed?
+- What error message?
+- Screenshots of console/network errors?
+
+================================================================================

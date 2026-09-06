@@ -11,6 +11,10 @@
       "destination": "https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/sitemap-proxy"
     },
     {
+      "source": "/api/media-proxy/(.*)",
+      "destination": "https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/media-proxy/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

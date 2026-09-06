@@ -1,0 +1,51 @@
+================================================================================
+GOOGLE DRIVE FIX - COPY & PASTE THIS EXACT COMMAND IN BROWSER CONSOLE
+================================================================================
+
+STEPS:
+1. Go to: http://localhost:5173/admin/media
+2. Press F12 (or right-click → Inspect → Console tab)
+3. COPY ENTIRE COMMAND BELOW (starts with "(async" ends with "();")
+4. PASTE into console
+5. Press ENTER
+6. WAIT for result
+
+================================================================================
+
+COMMAND TO COPY:
+
+(async () => {try {const session = (await supabase.auth.getSession()).data.session;if (!session) throw new Error('Not authenticated');const response = await fetch('https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/force-disconnect-old-gdrive', {method: 'POST', headers: {'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json', 'x-force-disconnect-secret': 'admin-cleanup-gdrive-v1'}, body: JSON.stringify({secret: 'admin-cleanup-gdrive-v1'})});const result = await response.json();if (!response.ok) {console.error('❌ FAILED:', result);return;}console.log('✅ SUCCESS!');console.log('Deleted connections:', result.deleted);console.log('Remaining connections:', result.remaining);} catch (err) {console.error('❌ ERROR:', err.message);}})();
+
+================================================================================
+
+EXPECTED OUTPUT:
+
+✅ SUCCESS!
+Deleted connections: 1
+Remaining connections: 0
+
+================================================================================
+
+WHAT TO DO NEXT:
+
+1. Refresh page (F5)
+2. Click "Connect Google Drive"
+3. Complete Google OAuth (click "Allow")
+4. Upload test image
+5. Verify image appears in Media Library
+
+================================================================================
+
+IF SOMETHING GOES WRONG:
+
+❌ Command returns error
+   → Copy error message and check console
+
+❌ "Not authenticated" error
+   → Reload page and try again
+
+❌ After reconnect, upload still fails
+   → Check console for new errors
+   → Hard refresh page (Ctrl+Shift+R)
+
+================================================================================
