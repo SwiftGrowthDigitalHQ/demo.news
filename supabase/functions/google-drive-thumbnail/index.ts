@@ -50,10 +50,8 @@ async function decryptToken(encryptedToken: string): Promise<string> {
     // Web Crypto API handles authentication tag automatically
     const ciphertext = combined.slice(12);
     
-    // Match oauth-callback encryption format: TextEncoder with padEnd/substring
-    const encoder = new TextEncoder();
-    const normalizedKey = GDRIVE_ENCRYPTION_KEY.padEnd(32, '0').substring(0, 32);
-    const keyData = encoder.encode(normalizedKey);
+    // Match oauth-callback encryption format: atob-based key
+    const keyData = Uint8Array.from(atob(GDRIVE_ENCRYPTION_KEY), c => c.charCodeAt(0));
     
     // Import key for decryption
     const cryptoKey = await crypto.subtle.importKey(

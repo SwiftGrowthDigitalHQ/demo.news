@@ -31,10 +31,8 @@ async function decryptToken(encryptedToken: string): Promise<string> {
   const iv = combined.slice(0, 12);
   const encrypted = combined.slice(12);
   
-  // Match oauth-callback encryption format: TextEncoder with padEnd/substring
-  const encoder = new TextEncoder();
-  const normalizedKey = GDRIVE_ENCRYPTION_KEY.padEnd(32, '0').substring(0, 32);
-  const keyData = encoder.encode(normalizedKey);
+  // Decrypt key using base64 format (must match oauth-callback)
+  const keyData = Uint8Array.from(atob(GDRIVE_ENCRYPTION_KEY), c => c.charCodeAt(0));
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     keyData,
@@ -57,9 +55,8 @@ async function encryptToken(token: string): Promise<string> {
   const data = encoder.encode(token);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   
-  // Match oauth-callback key format: TextEncoder with padEnd/substring
-  const normalizedKey = GDRIVE_ENCRYPTION_KEY.padEnd(32, '0').substring(0, 32);
-  const keyData = encoder.encode(normalizedKey);
+  // Import key using base64 format (must match oauth-callback)
+  const keyData = Uint8Array.from(atob(GDRIVE_ENCRYPTION_KEY), c => c.charCodeAt(0));
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     keyData,
@@ -133,11 +130,13 @@ serve(async (req: Request) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
   };
   
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
   
   try {
