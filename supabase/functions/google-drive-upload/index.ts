@@ -404,7 +404,7 @@ async function createMediaRecord(
       tenant_id: tenantId,
       storage_provider: 'google_drive',
       file_name: originalFileName,
-      file_path: driveFile.id, // Store Drive file ID in file_path for compatibility
+      file_path: `${tenantId}/${driveFile.id}`, // Must match media_path_tenant_consistency constraint
       storage_bucket: 'google_drive',
       mime_type: driveFile.mimeType,
       file_size: parseInt(driveFile.size, 10),
