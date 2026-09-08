@@ -104,8 +104,8 @@ export function isCustomDomain(hostname: string): boolean {
   
   // Known SaaS/platform domains - NOT custom tenant domains
   const saasDomains = [
-    'demo.swiftgrowthdigital.com',
-    'demo-news-three.vercel.app',
+    'sangtx.com',
+    'www.sangtx.com',
   ];
   
   if (saasDomains.some(domain => normalized === domain || normalized.endsWith('.' + domain))) {
