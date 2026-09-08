@@ -55,6 +55,7 @@ export type AdminSection =
   // Overview
   | 'overview'
   | 'analytics'
+  | 'public-page'
   // Content
   | 'news'
   | 'categories'
@@ -105,6 +106,7 @@ export const SUPER_ADMIN_ONLY_SECTIONS: AdminSection[] = [
 export const TENANT_ADMIN_SECTIONS: AdminSection[] = [
   'overview',
   'analytics',
+  'public-page',
   'news',
   'categories',
   'breaking',
@@ -362,6 +364,7 @@ export function canAccessSection(
     const sectionPermissionMap: Record<AdminSection, keyof UserPermissions> = {
       'overview': 'canViewAnalytics',
       'analytics': 'canViewAnalytics',
+      'public-page': 'canViewAnalytics',
       'news': 'canManageContent',
       'categories': 'canManageCategories',
       'breaking': 'canManageContent',

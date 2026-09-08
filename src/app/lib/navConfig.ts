@@ -62,6 +62,13 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     icon: BarChart3,
     category: 'OVERVIEW',
   },
+  {
+    id: 'public-page',
+    label: 'Public Website',
+    icon: Globe,
+    category: 'OVERVIEW',
+    tenantOnly: true,
+  },
 
   // ─────────────────────────────────────────────────────────────────────────
   // CONTENT MANAGEMENT - Tenant Only (news website operations)

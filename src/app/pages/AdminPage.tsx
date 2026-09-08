@@ -193,6 +193,9 @@ function renderAdminSection(section: string) {
       return <AdminReports />;
     case 'analytics':
       return <AnalyticsDashboard />;
+    case 'public-page':
+      // Public Website link - opens in new tab
+      return null;
     default:
       return <OverviewDashboard />;
   }

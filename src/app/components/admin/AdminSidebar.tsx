@@ -220,6 +220,16 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
                 <button
                   key={item.id}
                   onClick={() => {
+                    // Special handling for public-page: open in new tab
+                    if (item.id === 'public-page') {
+                      if (tenant?.slug) {
+                        window.open(`${window.location.origin}/${tenant.slug}/`, '_blank');
+                      }
+                      if (isMobile && onClose) onClose();
+                      return;
+                    }
+                    
+                    // Normal navigation for other items
                     onNavigate(item.id);
                     if (isMobile && onClose) onClose();
                   }}
