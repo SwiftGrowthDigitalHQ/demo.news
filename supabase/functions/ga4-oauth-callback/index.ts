@@ -25,7 +25,11 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '
 const GOOGLE_OAUTH_CLIENT_ID = Deno.env.get('GOOGLE_OAUTH_CLIENT_ID') || '';
 const GOOGLE_OAUTH_CLIENT_SECRET = Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET') || '';
 const GA4_ENCRYPTION_KEY = Deno.env.get('GA4_ENCRYPTION_KEY') || '';
-const FRONTEND_URL = Deno.env.get('SITE_URL') || 'http://localhost:5173';
+// SITE_URL env var MUST be set in production (Supabase Edge Function secrets)
+// Development: http://localhost:5173
+// Production: https://www.sangtx.com (or https://your-domain.com for multi-tenant)
+// Fallback to production domain (safer than localhost) if env var not set
+const FRONTEND_URL = Deno.env.get('SITE_URL') || 'https://www.sangtx.com';
 
 interface TokenResponse {
   access_token: string;

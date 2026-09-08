@@ -26,7 +26,11 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') || '';
 const FIREBASE_PROJECT_ID = Deno.env.get('FIREBASE_PROJECT_ID') || '';
 const FIREBASE_CLIENT_EMAIL = Deno.env.get('FIREBASE_CLIENT_EMAIL') || '';
 const FIREBASE_PRIVATE_KEY = (Deno.env.get('FIREBASE_PRIVATE_KEY') || '').replace(/\\n/g, '\n');
-const SITE_URL = Deno.env.get('SITE_URL') || 'http://localhost:5173';
+// SITE_URL env var MUST be set in production (Supabase Edge Function secrets)
+// Development: http://localhost:5173
+// Production: https://www.sangtx.com (or https://your-domain.com for multi-tenant)
+// Fallback to production domain (safer than localhost) if env var not set
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://www.sangtx.com';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
