@@ -329,6 +329,8 @@ async function storeConnection(
     last_sync_at: new Date().toISOString(),
     // IMPORTANT: Clear soft-delete flag on reconnect (deleted_at must be NULL for active connection)
     deleted_at: null,
+    // IMPORTANT: Clear any previous error messages on successful reconnection
+    last_error: null,
     // IMPORTANT: connected_by_user_id must be null (not empty string) if no user ID
     connected_by_user_id: connectedByUserId || null,
   };
