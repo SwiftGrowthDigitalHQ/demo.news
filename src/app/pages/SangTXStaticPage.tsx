@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useAppNavigation } from '../lib/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
+import { DURATION } from '../motion/variants';
 
 interface SangTXStaticPageProps {
   title: string;
@@ -212,7 +213,7 @@ function SangTXPageFooter() {
             <motion.button
               onClick={() => nav('/legal-contact')}
               whileHover={shouldReduce ? undefined : { color: '#e2e8f0', x: 3 }}
-              transition={{ duration: DUR.fast }}
+              transition={{ duration: DURATION.fast }}
               style={{
                 fontSize: 13,
                 color: '#64748b',
@@ -229,7 +230,7 @@ function SangTXPageFooter() {
             <motion.button
               onClick={() => nav('/contact')}
               whileHover={shouldReduce ? undefined : { color: '#e2e8f0', x: 3 }}
-              transition={{ duration: DUR.fast }}
+              transition={{ duration: DURATION.fast }}
               style={{
                 fontSize: 13,
                 color: '#64748b',
