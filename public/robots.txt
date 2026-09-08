@@ -5,4 +5,9 @@ Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
 Disallow: /reset-password
-Sitemap: /sitemap.xml
+
+# Primary sitemap for production domain
+Sitemap: https://sangtx.com/sitemap.xml
+
+# www variant
+Sitemap: https://www.sangtx.com/sitemap.xml
