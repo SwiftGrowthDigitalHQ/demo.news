@@ -77,7 +77,7 @@ DECLARE
   v_canonical_url TEXT;
 BEGIN
   -- Check if xml-sitemap plugin is enabled for sangtx tenant
-  SELECT COUNT(*), MAX(enabled), MAX(configuration->>'canonical_base_url')
+  SELECT COUNT(*), bool_or(enabled), MAX(configuration->>'canonical_base_url')
   INTO v_plugin_row_count, v_plugin_enabled, v_canonical_url
   FROM public.tenant_plugins tp
   JOIN public.tenants t ON tp.tenant_id = t.id
