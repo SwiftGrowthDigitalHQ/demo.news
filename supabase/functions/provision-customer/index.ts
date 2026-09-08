@@ -47,7 +47,7 @@ const SUPABASE_URL             = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 // CORS headers — only allow the configured frontend origin
-const SITE_URL = Deno.env.get('SITE_URL') ?? 'http://localhost:5173';
+const SITE_URL = Deno.env.get('SITE_URL') ?? 'https://www.sangtx.com';
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin':  SITE_URL,
   'Access-Control-Allow-Methods': 'POST, OPTIONS',

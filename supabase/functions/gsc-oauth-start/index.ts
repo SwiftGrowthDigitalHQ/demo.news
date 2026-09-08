@@ -25,7 +25,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const GOOGLE_OAUTH_CLIENT_ID = Deno.env.get('GOOGLE_OAUTH_CLIENT_ID') || '';
-const FRONTEND_URL = Deno.env.get('SITE_URL') || 'http://localhost:5173';
+const FRONTEND_URL = Deno.env.get('SITE_URL') || 'https://www.sangtx.com';
 
 interface StartOAuthRequest {
   tenant_id: string;
