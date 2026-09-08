@@ -82,8 +82,7 @@ BEGIN
   FROM public.tenant_plugins tp
   JOIN public.tenants t ON tp.tenant_id = t.id
   WHERE t.slug = 'sangtx'
-    AND tp.plugin_key = 'xml-sitemap'
-    AND tp.deleted_at IS NULL;
+    AND tp.plugin_key = 'xml-sitemap';
   
   IF v_plugin_row_count > 0 AND v_plugin_enabled = TRUE THEN
     RAISE NOTICE 'XML Sitemap Plugin activated for sangtx tenant (canonical_url: %)', v_canonical_url;
