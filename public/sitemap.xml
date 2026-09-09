@@ -19,10 +19,10 @@
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Primary sitemap for articles (dynamic, generated from database) -->
   <sitemap>
-    <loc>https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/xml-sitemap?tenant=sangtx&type=articles&page=1</loc>
+    <loc>https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/xml-sitemap?tenant=sangtx&amp;type=articles&amp;page=1</loc>
   </sitemap>
   <!-- Categories sitemap (dynamic, generated from database) -->
   <sitemap>
-    <loc>https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/xml-sitemap?tenant=sangtx&type=categories&page=1</loc>
+    <loc>https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/xml-sitemap?tenant=sangtx&amp;type=categories&amp;page=1</loc>
   </sitemap>
 </sitemapindex>
