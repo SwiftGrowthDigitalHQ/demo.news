@@ -11,6 +11,10 @@
       "destination": "https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/sitemap-proxy"
     },
     {
+      "source": "/privacy-policy",
+      "destination": "/privacy-policy.html"
+    },
+    {
       "source": "/api/media-proxy/(.*)",
       "destination": "https://csuocfxbucohfvowfwtq.supabase.co/functions/v1/media-proxy/$1"
     },
@@ -30,7 +34,7 @@
       ]
     },
     {
-      "source": "/(robots.txt|sitemap.xml|site.webmanifest|firebase-messaging-sw.js)",
+      "source": "/(robots.txt|sitemap.xml|privacy-policy.html|site.webmanifest|firebase-messaging-sw.js)",
       "headers": [
         {
           "key": "Cache-Control",
