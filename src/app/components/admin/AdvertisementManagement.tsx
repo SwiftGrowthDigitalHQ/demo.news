@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Eye, Globe, IndianRupee, Plus, RefreshCw, Target, TrendingUp, Upload, X } from 'lucide-react';
+import { Eye, Globe, IndianRupee, Plus, RefreshCw, Target, TrendingUp } from 'lucide-react';
 import {
   Cell,
   CartesianGrid,
@@ -31,8 +31,8 @@ import {
   upsertAdminAd,
   upsertCampaign,
   upsertSiteSettings,
-  uploadAdminMedia,
 } from '../../lib/admin';
+import { PublicGoogleDriveImage } from '../PublicGoogleDriveImage';
 import { Pagination, usePagination } from './Pagination';
 
 type AdForm = {
@@ -122,8 +122,6 @@ export function AdvertisementManagement() {
   const [openCampaign, setOpenCampaign] = useState(false);
   const [adForm, setAdForm] = useState<AdForm>(emptyAd);
   const [campaignForm, setCampaignForm] = useState<CampaignForm>(emptyCampaign);
-  const [adBannerUploading, setAdBannerUploading] = useState(false);
-  const adBannerInputRef = useRef<HTMLInputElement>(null);
   const { page, perPage, setPage, setPerPage, paginate } = usePagination();
 
   const load = async () => {
@@ -266,33 +264,6 @@ export function AdvertisementManagement() {
     }
   };
 
-  const handleAdBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-
-    setAdBannerUploading(true);
-    try {
-      const media = await uploadAdminMedia(file, { alt_text: `Ad: ${adForm.title || 'Advertisement'}` });
-      setAdForm(current => ({ ...current, banner_url: media.publicUrl }));
-      toast.success('Banner image uploaded');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to upload banner image');
-    } finally {
-      setAdBannerUploading(false);
-    }
-  };
-
-  const clearAdBanner = () => {
-    setAdForm(current => ({ ...current, banner_url: '' }));
-    if (adBannerInputRef.current) {
-      adBannerInputRef.current.value = '';
-    }
-  };
 
   const saveAd = async () => {
     if (!adForm.title.trim() || !adForm.advertiser_name.trim() || !adForm.placement.trim()) {
@@ -731,82 +702,35 @@ export function AdvertisementManagement() {
             </select>
             <Input value={adForm.ad_type} onChange={event => setAdForm(current => ({ ...current, ad_type: event.target.value as AdForm['ad_type'] }))} placeholder="Ad Type" />
             <Input value={adForm.target_url} onChange={event => setAdForm(current => ({ ...current, target_url: event.target.value }))} placeholder="Target URL" />
+            <Input value={adForm.banner_url} onChange={event => setAdForm(current => ({ ...current, banner_url: event.target.value }))} placeholder="Banner URL" />
           </div>
 
-          {/* Banner Image Section */}
-          <div className="rounded-xl border border-gray-200 p-4 space-y-3">
-            <div className="text-sm font-medium text-gray-900">Banner Image / Creative</div>
-            
-            {/* Image Preview */}
-            {adForm.banner_url && (
-              <div className="relative rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center" style={{ maxHeight: '200px' }}>
-                <img 
-                  src={adForm.banner_url} 
-                  alt={adForm.title || 'Advertisement'} 
-                  style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
-                  onError={() => {
-                    toast.error('Image URL invalid or not accessible');
-                  }}
-                />
-                <button
-                  onClick={clearAdBanner}
-                  className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full hover:bg-red-700 transition-colors"
-                  title="Remove image"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            )}
-
-            {/* Upload Button and Manual URL */}
-            <div className="space-y-3">
-              {/* Upload UI */}
-              <div className="flex gap-2">
-                <label className="flex-1 cursor-pointer">
-                  <input 
-                    ref={adBannerInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleAdBannerUpload} 
-                    disabled={adBannerUploading}
-                    style={{ display: 'none' }}
+          {/* Banner Image Preview */}
+          {adForm.banner_url && (
+            <div className="rounded-xl border border-gray-200 p-4 space-y-2">
+              <div className="text-sm font-medium text-gray-900">Image Preview</div>
+              <div className="rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center" style={{ maxHeight: '200px' }}>
+                {adForm.banner_url.includes('drive.google.com') ? (
+                  <PublicGoogleDriveImage 
+                    url={adForm.banner_url} 
+                    alt={adForm.title || 'Advertisement'}
+                    style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
                   />
-                  <div style={{
-                    padding: '8px 12px',
-                    borderRadius: 6,
-                    background: adBannerUploading ? '#f1f5f9' : '#dc2626',
-                    color: '#fff',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    opacity: adBannerUploading ? 0.5 : 1,
-                    justifyContent: 'center',
-                    cursor: adBannerUploading ? 'not-allowed' : 'pointer',
-                    textAlign: 'center' as const,
-                  }}>
-                    <Upload size={16} />
-                    {adBannerUploading ? 'Uploading...' : 'Upload Image'}
-                  </div>
-                </label>
-              </div>
-
-              {/* Manual URL Input */}
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Or paste URL directly:</div>
-                <Input 
-                  value={adForm.banner_url} 
-                  onChange={event => setAdForm(current => ({ ...current, banner_url: event.target.value }))} 
-                  placeholder="https://... or Supabase media URL"
-                  disabled={adBannerUploading}
-                />
+                ) : (
+                  <img 
+                    src={adForm.banner_url} 
+                    alt={adForm.title || 'Advertisement'} 
+                    style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                    onError={() => {
+                      toast.error('Image URL invalid or not accessible');
+                    }}
+                  />
+                )}
               </div>
             </div>
-          </div>
+          )}
 
           <div className="grid gap-4 py-2 md:grid-cols-2">
-            <Input value={adForm.start_date} onChange={event => setAdForm(current => ({ ...current, start_date: event.target.value }))} placeholder="Start Date" />
             <Input value={adForm.end_date} onChange={event => setAdForm(current => ({ ...current, end_date: event.target.value }))} placeholder="End Date" />
             <Input value={adForm.click_count} onChange={event => setAdForm(current => ({ ...current, click_count: event.target.value }))} placeholder="Click Count" />
             <Input value={adForm.impression_count} onChange={event => setAdForm(current => ({ ...current, impression_count: event.target.value }))} placeholder="Impression Count" />

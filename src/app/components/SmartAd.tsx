@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { getActiveAds, trackImpression, trackClick, type AdPlacement, type AdRecord } from '../lib/adService';
+import { PublicGoogleDriveImage } from './PublicGoogleDriveImage';
 import { Phone, ArrowRight, Sparkles, BookOpen, Globe } from 'lucide-react';
 
 interface SmartAdProps {
@@ -79,13 +80,24 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
 
   // Direct banner WITH image
   if (currentAd.banner_url) {
+    const isGoogleDrive = currentAd.banner_url.includes('drive.google.com');
+    
     return (
       <div ref={containerRef} className={className}>
         {showLabel && <AdLabel />}
         <a href={currentAd.target_url || '#'} target="_blank" rel="noopener noreferrer sponsored" onClick={handleClick}
           className="block rounded-lg overflow-hidden hover:shadow-lg hover:scale-[1.005] transition-all duration-300">
-          <img src={currentAd.banner_url} alt={currentAd.title} loading="lazy" decoding="async"
-            className="w-full h-auto rounded-lg" style={{ objectFit: 'contain' }} />
+          {isGoogleDrive ? (
+            <PublicGoogleDriveImage 
+              url={currentAd.banner_url} 
+              alt={currentAd.title}
+              className="w-full h-auto rounded-lg"
+              style={{ objectFit: 'contain' }}
+            />
+          ) : (
+            <img src={currentAd.banner_url} alt={currentAd.title} loading="lazy" decoding="async"
+              className="w-full h-auto rounded-lg" style={{ objectFit: 'contain' }} />
+          )}
         </a>
         {ads.length > 1 && (
           <div className="flex justify-center gap-1 mt-1.5">
