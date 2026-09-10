@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Save, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown } from 'lucide-react';
-import { useIsMobile } from '../../lib/hooks/useIsMobile';
+import { useIsMobile } from '../ui/use-mobile';
 import {
   getFooterSettings,
   updateFooterSettings,

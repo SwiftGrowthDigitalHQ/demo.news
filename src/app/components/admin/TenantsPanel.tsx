@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../../lib/auth';
-import { useIsMobile } from '../../lib/hooks/useIsMobile';
+import { useIsMobile } from '../ui/use-mobile';
 import {
   listAllTenants,
   adminSetTenantStatus,
