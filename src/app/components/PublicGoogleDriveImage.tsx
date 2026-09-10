@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface PublicGoogleDriveImageProps {
   /**
@@ -26,6 +26,12 @@ interface PublicGoogleDriveImageProps {
  * 
  * This approach preserves the private Google Drive architecture -
  * files do NOT need to be publicly shared.
+ * 
+ * Object URL Lifecycle:
+ * - Created when blob is received
+ * - Stored in useRef (not state) to avoid closure bugs
+ * - Revoked when: (1) new blob arrives, (2) component unmounts, (3) fileId changes
+ * - Never revoked while img element might be using it
  */
 export function PublicGoogleDriveImage({
   url,
@@ -36,6 +42,11 @@ export function PublicGoogleDriveImage({
 }: PublicGoogleDriveImageProps) {
   const [didError, setDidError] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string>('');
+  
+  // Track current blob URL in ref to avoid closure bugs in cleanup
+  // This ref is NOT included in dependency array to prevent stale closure
+  const currentBlobUrlRef = useRef<string>('');
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Extract file ID from Google Drive URL
   // Format: https://drive.google.com/file/d/{fileId}/view?...
@@ -53,6 +64,10 @@ export function PublicGoogleDriveImage({
   React.useEffect(() => {
     if (!fileId) return;
 
+    // Create new abort controller for this fetch
+    abortControllerRef.current = new AbortController();
+    const abortSignal = abortControllerRef.current.signal;
+
     (async () => {
       try {
         // Use local /api/media-proxy endpoint (Vercel rewrite to Edge Function)
@@ -61,32 +76,70 @@ export function PublicGoogleDriveImage({
           headers: {
             'Accept': 'image/*',
           },
+          signal: abortSignal,
         });
 
         if (!response.ok) {
-          setDidError(true);
+          if (!abortSignal.aborted) {
+            setDidError(true);
+          }
           return;
         }
+
+        // Check abort before blob conversion
+        if (abortSignal.aborted) return;
 
         const blob = await response.blob();
         
         if (!blob.type.startsWith('image/')) {
-          setDidError(true);
+          if (!abortSignal.aborted) {
+            setDidError(true);
+          }
           return;
         }
 
+        // Check abort before creating object URL
+        if (abortSignal.aborted) return;
+
         // Create object URL from blob for reliable rendering
         const objectUrl = URL.createObjectURL(blob);
+
+        // Check abort one more time before state update
+        if (abortSignal.aborted) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+
+        // Revoke previous object URL before setting new one
+        if (currentBlobUrlRef.current) {
+          URL.revokeObjectURL(currentBlobUrlRef.current);
+        }
+
+        // Update ref and state with new object URL
+        currentBlobUrlRef.current = objectUrl;
         setBlobUrl(objectUrl);
+        setDidError(false);
       } catch (err) {
-        setDidError(true);
+        // Only update state if not aborted (AbortError means intentional cancellation)
+        if (err instanceof Error && err.name === 'AbortError') {
+          // Request was aborted - do not update state
+          return;
+        }
+        if (!abortSignal.aborted) {
+          setDidError(true);
+        }
       }
     })();
 
+    // Cleanup function: abort fetch and revoke object URL
     return () => {
-      // Cleanup object URL
-      if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
+      // Abort in-flight requests
+      abortControllerRef.current?.abort();
+      
+      // Revoke object URL on unmount or fileId change
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = '';
       }
     };
   }, [fileId]);

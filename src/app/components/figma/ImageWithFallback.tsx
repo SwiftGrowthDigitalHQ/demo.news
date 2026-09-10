@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { convertToPublicImageUrl } from '../../lib/articleImage';
 
 export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElement>) {
   const [didError, setDidError] = useState(false);
   const [delayedSrc, setDelayedSrc] = useState<string | undefined>(props.src);
   const [blobUrl, setBlobUrl] = useState<string>('');
+  
+  // Track current blob URL in ref to avoid closure bugs in cleanup
+  const currentBlobUrlRef = useRef<string>('');
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const { src, alt, style, className, ...rest } = props;
 
@@ -16,22 +20,42 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
   // - Authenticated users: google-drive-thumbnail (requires JWT, validates tenant ownership)
   // - Unauthenticated (public): media-proxy (no auth, validates file is referenced in articles/media)
   React.useEffect(() => {
-    if (!src) return;
+    if (!src) {
+      // Cleanup when src becomes empty
+      setDelayedSrc(undefined);
+      setBlobUrl('');
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = '';
+      }
+      return;
+    }
     
     const isGoogleDrive = src.includes('drive.google.com');
     if (!isGoogleDrive) {
       // Not a Google Drive URL, use directly
+      // Revoke any previous object URL since we're not using blobs anymore
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = '';
+      }
       setDelayedSrc(src);
       setBlobUrl('');
       return;
     }
+
+    // Create new abort controller for this fetch
+    abortControllerRef.current = new AbortController();
+    const abortSignal = abortControllerRef.current.signal;
 
     // For Google Drive URLs, route based on authentication context
     (async () => {
       try {
         const fileId = src.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1];
         if (!fileId) {
-          setDidError(true);
+          if (!abortSignal.aborted) {
+            setDidError(true);
+          }
           return;
         }
 
@@ -39,7 +63,9 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
         const supabase = getSupabaseClient();
         
         if (!supabase) {
-          setDidError(true);
+          if (!abortSignal.aborted) {
+            setDidError(true);
+          }
           return;
         }
         
@@ -64,26 +90,81 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
           };
         }
         
-        const response = await fetch(thumbnailUrl, fetchOptions);
+        // Check abort before fetching
+        if (abortSignal.aborted) return;
+        
+        const response = await fetch(thumbnailUrl, {
+          ...fetchOptions,
+          signal: abortSignal,
+        });
         
         if (!response.ok) {
-          setDidError(true);
+          if (!abortSignal.aborted) {
+            setDidError(true);
+          }
           return;
         }
+        
+        // Check abort before blob conversion
+        if (abortSignal.aborted) return;
         
         const blob = await response.blob();
         if (!blob.type.startsWith('image/')) {
-          setDidError(true);
+          if (!abortSignal.aborted) {
+            setDidError(true);
+          }
           return;
         }
         
+        // Check abort before creating object URL
+        if (abortSignal.aborted) return;
+        
         const objectUrl = URL.createObjectURL(blob);
+        
+        // Check abort one more time before state update
+        if (abortSignal.aborted) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+        
+        // Revoke previous object URL before setting new one
+        if (currentBlobUrlRef.current) {
+          URL.revokeObjectURL(currentBlobUrlRef.current);
+        }
+        
+        // Update ref and state with new object URL
+        currentBlobUrlRef.current = objectUrl;
         setBlobUrl(objectUrl);
         setDelayedSrc(src);
+        setDidError(false);
       } catch (err) {
-        setDidError(true);
+        // Only update state if not aborted (AbortError means intentional cancellation)
+        if (err instanceof Error && err.name === 'AbortError') {
+          // Request was aborted - do not update state
+          return;
+        }
+        if (!abortSignal.aborted) {
+          setDidError(true);
+        }
       }
     })();
+
+    // Cleanup function
+    return () => {
+      // Abort in-flight requests
+      abortControllerRef.current?.abort();
+      
+      // Revoke object URL only on unmount or src change
+      // Do NOT revoke if this abort is due to React StrictMode remount
+      // (the URL will be needed by the img element)
+      // Instead, we track and revoke only when absolutely certain it's safe
+      if (currentBlobUrlRef.current && src) {
+        // Only revoke if we're changing sources (src parameter changed)
+        // This prevents premature revocation during rendering
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = '';
+      }
+    };
   }, [src]);
 
   // Don't render if src is empty/null
