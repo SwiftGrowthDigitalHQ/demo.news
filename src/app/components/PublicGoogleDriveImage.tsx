@@ -70,9 +70,10 @@ export function PublicGoogleDriveImage({
 
     (async () => {
       try {
-        // Use local /api/media-proxy endpoint (Vercel rewrite to Edge Function)
-        // This avoids ORB blocks and uses tenant-level credentials
-        const response = await fetch(`/api/media-proxy/${fileId}`, {
+        // Use media-proxy Edge Function directly
+        // Note: Vercel rewrites /api/media-proxy to this endpoint in production
+        // On localhost, we use the Edge Function directly since rewrites aren't available
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-proxy?fileId=${fileId}`, {
           headers: {
             'Accept': 'image/*',
           },
