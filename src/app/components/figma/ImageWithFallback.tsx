@@ -82,10 +82,10 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
             'Authorization': `Bearer ${session.access_token}`,
           };
         } else {
-          // Unauthenticated (public page): Use media-proxy Edge Function directly
-          // Note: Vercel rewrites /api/media-proxy to this endpoint in production
-          // On localhost, we use the Edge Function directly since rewrites aren't available
-          thumbnailUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-proxy?fileId=${fileId}`;
+          // Unauthenticated (public page): Use media-proxy Edge Function
+          // Note: media-proxy extracts fileId from path, not query params
+          // It validates file authorization server-side using tenant credentials
+          thumbnailUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-proxy/${fileId}`;
           fetchOptions.headers = {
             'Accept': 'image/*',
           };
