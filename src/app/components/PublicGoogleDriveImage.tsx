@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 interface PublicGoogleDriveImageProps {
   /**
@@ -15,9 +15,11 @@ interface PublicGoogleDriveImageProps {
 /**
  * Renders Google Drive images on public website without authentication.
  * 
- * Uses the /api/media-proxy local endpoint which proxies to the media-proxy Edge Function.
+ * Uses the same blob-fetching mechanism as ImageWithFallback for reliability.
  * This approach:
  * - Avoids ORB (Origin Request Policy) blocks on cross-origin image requests
+ * - Fetches via /api/media-proxy Edge Function
+ * - Creates blob URL for reliable rendering
  * - Uses tenant-level server-side Google Drive credentials
  * - Handles token refresh automatically
  * - Works for private Google Drive files owned by the tenant
@@ -33,6 +35,7 @@ export function PublicGoogleDriveImage({
   onError,
 }: PublicGoogleDriveImageProps) {
   const [didError, setDidError] = useState(false);
+  const [blobUrl, setBlobUrl] = useState<string>('');
 
   // Extract file ID from Google Drive URL
   // Format: https://drive.google.com/file/d/{fileId}/view?...
@@ -45,6 +48,48 @@ export function PublicGoogleDriveImage({
       </div>
     );
   }
+
+  // Fetch Google Drive image as blob for reliable rendering
+  React.useEffect(() => {
+    if (!fileId) return;
+
+    (async () => {
+      try {
+        // Use local /api/media-proxy endpoint (Vercel rewrite to Edge Function)
+        // This avoids ORB blocks and uses tenant-level credentials
+        const response = await fetch(`/api/media-proxy/${fileId}`, {
+          headers: {
+            'Accept': 'image/*',
+          },
+        });
+
+        if (!response.ok) {
+          setDidError(true);
+          return;
+        }
+
+        const blob = await response.blob();
+        
+        if (!blob.type.startsWith('image/')) {
+          setDidError(true);
+          return;
+        }
+
+        // Create object URL from blob for reliable rendering
+        const objectUrl = URL.createObjectURL(blob);
+        setBlobUrl(objectUrl);
+      } catch (err) {
+        setDidError(true);
+      }
+    })();
+
+    return () => {
+      // Cleanup object URL
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+    };
+  }, [fileId]);
 
   if (didError) {
     return (
@@ -59,9 +104,16 @@ export function PublicGoogleDriveImage({
     );
   }
 
-  // Use the local /api/media-proxy endpoint which proxies to the Edge Function
-  // This avoids ORB blocks on cross-origin image requests
-  const proxyImageUrl = `/api/media-proxy/${fileId}`;
+  // Don't render until blob is ready
+  if (!blobUrl) {
+    return (
+      <div className={`bg-gray-100 flex items-center justify-center ${className ?? ''}`} style={style}>
+        <div className="text-center">
+          <div className="w-8 h-8 mx-auto border-2 border-gray-300 border-t-red-600 rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   const handleError = () => {
     setDidError(true);
@@ -70,7 +122,7 @@ export function PublicGoogleDriveImage({
 
   return (
     <img
-      src={proxyImageUrl}
+      src={blobUrl}
       alt={alt}
       className={className}
       style={style}
