@@ -204,10 +204,10 @@ serve(async (req: Request) => {
           }
         }
         
-        // If not found in site_settings, check footer_settings (which stores footer_logo_url)
+        // If not found in site_settings, check tenant_footer_settings (which stores footer_logo_url)
         if (!foundTenantId) {
           const { data: footerSettings } = await supabase
-            .from('footer_settings')
+            .from('tenant_footer_settings')
             .select('tenant_id, logo_url, footer_logo_url')
             .is('deleted_at', null)
             .limit(1000);
