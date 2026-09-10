@@ -217,7 +217,17 @@ serve(async (req: Request) => {
     
     console.log('[GD_THUMB] DRIVE_REQUEST_STARTED');
     
+    // Get requested size from query parameter (e.g., ?size=w400)
+    const requestedSize = url.searchParams.get('size');
+    console.log('[GD_THUMB] REQUESTED_SIZE:', requestedSize);
+    
     // Fetch from Google Drive
+    // NOTE: Google Drive API /drive/v3/files/{fileId}?alt=media returns full resolution
+    // Query parameter ?size is NOT supported by Google Drive API
+    // To implement true thumbnails, we would need to:
+    // 1. Use a CDN with on-the-fly resizing (Cloudinary, Imgix, etc.)
+    // 2. Pre-generate thumbnails when files are uploaded
+    // 3. Resize server-side (requires image processing library)
     const driveUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
     const driveResponse = await fetch(driveUrl, {
       headers: { 'Authorization': `Bearer ${accessToken}` },
@@ -236,13 +246,21 @@ serve(async (req: Request) => {
     
     // CRITICAL FIX: Buffer the response body before creating new Response
     // Passing driveResponse.body directly causes stream consumption, resulting in empty response body
-    const imageBuffer = await driveResponse.arrayBuffer();
+    let imageBuffer = await driveResponse.arrayBuffer();
     console.log('[GD_THUMB] IMAGE_BUFFER_SIZE:', imageBuffer.byteLength, 'bytes');
     
     if (imageBuffer.byteLength === 0) {
       console.error('[GD_THUMB] ERROR: Empty image buffer received from Google Drive');
       return new Response('Empty image data received', { status: 502, headers: corsHeaders });
     }
+    
+    // TODO: Implement thumbnail resizing
+    // Current limitation: Returns full-resolution image (~2-5 MB)
+    // To fix:
+    // 1. Add image processing library to Deno function (e.g., ImageMagick via deno-imagemagick)
+    // 2. Or use HTTP transformation proxy (CDN)
+    // 3. Or store pre-generated thumbnails in Supabase Storage
+    // For now, browser will cache the full image for 5 minutes
     
     console.log('[GD_THUMB] SUCCESS');
     

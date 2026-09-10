@@ -149,7 +149,21 @@ export function resolveSEOImage(
   pageImage?: string,
   seoDefaults?: TenantSEODefaults | null
 ): string | undefined {
-  if (pageImage) return pageImage;
+  if (pageImage) {
+    // Convert Google Drive URLs to media-proxy for og:image
+    // og:image must be a directly-accessible URL that doesn't require JS processing
+    // media-proxy returns the image blob directly, which crawlers can fetch
+    if (pageImage.includes('drive.google.com')) {
+      const fileId = pageImage.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1];
+      if (fileId) {
+        // Use media-proxy endpoint which serves Google Drive images directly
+        // This bypasses ORB (Origin Request Policy) and works with social media crawlers
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        return `${supabaseUrl}/functions/v1/media-proxy/${fileId}`;
+      }
+    }
+    return pageImage;
+  }
   return seoDefaults?.default_image_url || undefined;
 }
 

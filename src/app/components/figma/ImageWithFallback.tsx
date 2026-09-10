@@ -200,6 +200,24 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
     );
   }
 
+  // For Google Drive URLs, only render img when blob is ready
+  // This prevents the browser from trying to fetch the raw Google Drive URL
+  // which would trigger ORB (Origin Request Policy) errors
+  const isgoogleDrive = src?.includes('drive.google.com');
+  if (isgoogleDrive && !blobUrl) {
+    // Still loading the Google Drive image via proxy
+    return (
+      <div className={`bg-gray-100 flex items-center justify-center ${className ?? ''}`} style={style}>
+        <div className="text-center p-4">
+          <div className="inline-flex items-center justify-center">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1">Loading</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <img
       src={blobUrl || imageUrl}
