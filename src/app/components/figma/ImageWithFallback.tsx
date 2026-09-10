@@ -12,7 +12,9 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
   // Google Drive images are handled via blob URL creation below
   const imageUrl = src ? convertToPublicImageUrl(src) : '';
 
-  // Handle Google Drive URLs by fetching via authenticated Edge Function
+  // Handle Google Drive URLs by fetching via appropriate endpoint
+  // - Authenticated users: google-drive-thumbnail (requires JWT, validates tenant ownership)
+  // - Unauthenticated (public): media-proxy (no auth, validates file is referenced in articles/media)
   React.useEffect(() => {
     if (!src) return;
     
@@ -24,7 +26,7 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
       return;
     }
 
-    // For Google Drive URLs, fetch via authenticated google-drive-thumbnail
+    // For Google Drive URLs, route based on authentication context
     (async () => {
       try {
         const fileId = src.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1];
@@ -42,18 +44,27 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
         }
         
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) {
-          setDidError(true);
-          return;
+        const isAuthenticated = !!session?.access_token;
+        
+        let thumbnailUrl: string;
+        let fetchOptions: RequestInit = {};
+        
+        if (isAuthenticated) {
+          // Authenticated: Use google-drive-thumbnail (validates tenant ownership)
+          thumbnailUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-drive-thumbnail?fileId=${fileId}&size=w400`;
+          fetchOptions.headers = {
+            'Authorization': `Bearer ${session.access_token}`,
+          };
+        } else {
+          // Unauthenticated (public page): Use local media-proxy rewrite (validates file is referenced in articles/media)
+          // Uses local /api/media-proxy path which Vercel rewrites to Edge Function
+          thumbnailUrl = `/api/media-proxy/${fileId}`;
+          fetchOptions.headers = {
+            'Accept': 'image/*',
+          };
         }
         
-        const thumbnailUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-drive-thumbnail?fileId=${fileId}&size=w400`;
-        
-        const response = await fetch(thumbnailUrl, {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-        });
+        const response = await fetch(thumbnailUrl, fetchOptions);
         
         if (!response.ok) {
           setDidError(true);

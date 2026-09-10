@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useCms } from '../lib/cms';
 import { resolveLogoUrl, resolveFaviconUrl } from '../lib/assetResolver';
+import { extractGoogleDriveFileId } from '../lib/articleImage';
 
 function ensureLink(rel: string) {
   let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
@@ -10,6 +11,23 @@ function ensureLink(rel: string) {
     document.head.appendChild(link);
   }
   return link;
+}
+
+/**
+ * Convert Google Drive URLs to media-proxy URLs so unauthenticated pages can load them
+ * Falls back to original URL for non-Google Drive URLs
+ */
+function resolveAssetUrlForBrowser(url: string): string {
+  if (!url) return '';
+  
+  const fileId = extractGoogleDriveFileId(url);
+  if (fileId) {
+    // Route Google Drive files through local media-proxy endpoint (Vercel rewrites to Edge Function)
+    // This avoids cross-origin CORS issues and uses server-side tenant credentials
+    return `/api/media-proxy/${fileId}`;
+  }
+  
+  return url;
 }
 
 export function BrandingBridge() {
@@ -29,6 +47,10 @@ export function BrandingBridge() {
     const faviconRaw = String(theme.favicon ?? siteSettings?.logo_url ?? '');
     const logo = resolveLogoUrl(logoRaw);
     const favicon = resolveFaviconUrl(faviconRaw);
+    
+    // For browser display, convert Google Drive URLs to media-proxy URLs
+    const logoUrl = resolveAssetUrlForBrowser(logo);
+    const faviconUrl = resolveAssetUrlForBrowser(favicon);
     
     const siteName = siteSettings.site_name;
     const darkMode = Boolean(theme.dark_mode ?? false);
@@ -58,13 +80,14 @@ export function BrandingBridge() {
     document.title = siteName;
 
     const iconLink = ensureLink('icon');
-    if (favicon) {
-      iconLink.href = favicon;
+    if (faviconUrl) {
+      iconLink.href = faviconUrl;
+      iconLink.type = 'image/x-icon';
     }
 
     const appleIcon = ensureLink('apple-touch-icon');
-    if (logo) {
-      appleIcon.href = logo;
+    if (logoUrl) {
+      appleIcon.href = logoUrl;
     }
 
     const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]') ?? document.createElement('meta');
