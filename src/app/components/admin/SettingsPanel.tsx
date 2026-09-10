@@ -445,8 +445,8 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="flex gap-6 p-6">
-      <div className="flex flex-col gap-1" style={{ width: 180, flexShrink: 0 }}>
+    <div className="flex flex-col md:flex-row gap-6 p-6">
+      <div className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible" style={{ width: isMobile ? 'auto' : 180, flexShrink: 0 }}>
         {tabs.map(item => {
           const Icon = item.icon;
           return (
@@ -463,7 +463,7 @@ export function SettingsPanel() {
         })}
       </div>
 
-      <div className="flex-1 rounded-xl border p-6" style={{ background: '#fff', borderColor: 'rgba(15,23,42,0.08)' }}>
+      <div className="flex-1 rounded-xl border p-6 min-w-0" style={{ background: '#fff', borderColor: 'rgba(15,23,42,0.08)' }}>
         {activeTab === 'website' && (
           <>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Website Settings</h3>

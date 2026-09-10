@@ -451,7 +451,7 @@ export function FooterSettingsPanel() {
       </div>
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: isMobile ? 'wrap' : 'wrap', flexDirection: isMobile ? 'column-reverse' : 'row' }}>
-      <div style={{ flex: 1, minWidth: 320 }}>
+      <div style={{ flex: 1, minWidth: isMobile ? 0 : 320 }}>
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
         {(['brand', 'social', 'columns', 'pages', 'contact', 'apps', 'newsletter', 'ads'] as const).map(tab => (
