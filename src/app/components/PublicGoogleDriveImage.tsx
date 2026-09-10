@@ -92,6 +92,16 @@ export function PublicGoogleDriveImage({
 
         const blob = await response.blob();
         
+        // CRITICAL FIX: Validate blob is not empty
+        // Empty blobs result in naturalWidth=0 on img element even though HTTP=200
+        if (blob.size === 0) {
+          console.warn('[PublicGoogleDriveImage] Error: Empty blob received from proxy endpoint', { url });
+          if (!abortSignal.aborted) {
+            setDidError(true);
+          }
+          return;
+        }
+        
         if (!blob.type.startsWith('image/')) {
           if (!abortSignal.aborted) {
             setDidError(true);
