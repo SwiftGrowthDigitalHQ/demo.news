@@ -264,8 +264,8 @@ export function AdminPage() {
   }, [darkMode]);
 
   return (
-    <div className={`min-h-screen flex ${darkMode ? 'bg-gray-900' : 'bg-slate-50'}`}>
-      <div className="hidden lg:block sticky top-0 h-screen flex-shrink-0">
+    <div className={`w-full min-h-screen flex flex-col lg:flex-row ${darkMode ? 'bg-gray-900' : 'bg-slate-50'}`}>
+      <div className="hidden lg:flex sticky top-0 h-screen flex-shrink-0">
         <AdminSidebar
           activeSection={section}
           onNavigate={id => navigate(id === 'overview' ? '/admin' : `/admin/${id}`)}
@@ -295,7 +295,7 @@ export function AdminPage() {
         </SheetContent>
       </Sheet>
 
-      <div className="flex min-w-0 flex-1 flex-col max-h-screen overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col w-full max-h-screen overflow-hidden">
         <AdminHeader
           section={section}
           darkMode={darkMode}
