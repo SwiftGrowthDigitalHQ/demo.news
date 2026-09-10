@@ -186,7 +186,7 @@ export function UserManagement() {
           <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
             <div className="flex items-center gap-2 rounded-lg px-3" style={{ background: '#f8fafc', border: '1px solid rgba(15,23,42,0.08)', height: 36 }}>
               <Search size={14} style={{ color: '#94a3b8' }} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users..." style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: '#0f172a', width: 200 }} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users..." style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: '#0f172a', width: '100%', minWidth: 0 }} />
             </div>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
@@ -199,7 +199,7 @@ export function UserManagement() {
                   <DialogTitle>{form.id ? 'Edit User' : 'Create User'}</DialogTitle>
                   <DialogDescription>Save the account profile to Supabase.</DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-2 md:grid-cols-2">
+                <div className="grid gap-4 py-2 grid-cols-1 sm:grid-cols-2">
                   <Input value={form.full_name} onChange={event => setForm(current => ({ ...current, full_name: event.target.value }))} placeholder="Full name" />
                   <Input value={form.email} onChange={event => setForm(current => ({ ...current, email: event.target.value }))} placeholder="Email" type="email" />
                   <select

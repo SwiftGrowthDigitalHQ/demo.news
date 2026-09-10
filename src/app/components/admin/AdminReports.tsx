@@ -37,8 +37,8 @@ export function AdminReports() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="grid gap-4 md:grid-cols-4">
+    <div className="flex flex-col gap-6 p-3 md:p-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: 'Generated', value: String(logs.length) },
           { label: 'Exports', value: String(logs.length > 0 ? 1 : 0) },
@@ -54,16 +54,16 @@ export function AdminReports() {
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_320px] items-start">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_320px] items-start">
         <div className="rounded-2xl border border-gray-200 bg-white">
-          <div className="flex flex-col gap-4 border-b border-gray-200 p-4 md:flex-row md:items-center md:justify-between">
-            <div className="relative md:max-w-md flex-1">
+          <div className="flex flex-col gap-3 border-b border-gray-200 p-3 md:p-4 md:flex-row md:items-center md:justify-between md:gap-4">
+            <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search reports..." className="pl-10" />
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
               <Select defaultValue="month">
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Range" />
                 </SelectTrigger>
                 <SelectContent>
@@ -72,7 +72,7 @@ export function AdminReports() {
                   <SelectItem value="month">This month</SelectItem>
                 </SelectContent>
               </Select>
-              <Button className="bg-red-600 hover:bg-red-700">
+              <Button className="bg-red-600 hover:bg-red-700 w-full sm:w-auto">
                 <Download className="h-4 w-4" />
                 Export
               </Button>

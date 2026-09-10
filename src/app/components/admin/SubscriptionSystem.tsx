@@ -141,7 +141,7 @@ export function SubscriptionSystem() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 md:gap-6 p-3 md:p-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Subscribers', value: totalSubs.toLocaleString('en-IN'), icon: Users, color: '#dc2626' },
@@ -198,7 +198,7 @@ export function SubscriptionSystem() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 rounded-lg px-3" style={{ background: '#f8fafc', border: '1px solid rgba(15,23,42,0.08)', height: 34 }}>
               <Search size={13} style={{ color: '#94a3b8' }} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search subscribers..." style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 12, color: '#0f172a', width: 180 }} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search subscribers..." style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 12, color: '#0f172a', width: '100%', minWidth: 0 }} />
             </div>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>

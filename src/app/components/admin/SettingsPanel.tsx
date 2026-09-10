@@ -445,19 +445,20 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 p-6">
-      <div className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible" style={{ width: isMobile ? 'auto' : 180, flexShrink: 0 }}>
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6 p-3 md:p-6">
+      <div className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible min-w-0 md:flex-shrink-0 md:w-[180px]">
         {tabs.map(item => {
           const Icon = item.icon;
           return (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className="flex items-center gap-3 rounded-lg px-3"
+              className="flex items-center gap-2 md:gap-3 rounded-lg px-2 md:px-3 py-2 md:py-0 whitespace-nowrap md:whitespace-normal flex-shrink-0 md:flex-shrink-1"
               style={{ height: 40, fontSize: 13, background: activeTab === item.id ? '#fef2f2' : 'transparent', color: activeTab === item.id ? '#dc2626' : '#64748b', border: 'none', cursor: 'pointer', fontWeight: activeTab === item.id ? 600 : 400, textAlign: 'left' }}
             >
               <Icon size={15} />
-              {item.label}
+              <span className="hidden md:inline">{item.label}</span>
+              <span className="md:hidden text-xs">{item.label.split(' ')[0]}</span>
             </button>
           );
         })}
@@ -473,8 +474,8 @@ export function SettingsPanel() {
             {/* Logo with Preview */}
             <SettingRow label="Logo" desc="Used in the header (supports Google Drive, Supabase Storage, or direct URLs)">
               <div style={{ width: '100%' }}>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <input type="text" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://drive.google.com/file/d/..." style={{ flex: 1, padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }} />
+                <div style={{ display: 'flex', flexDirection: 'row', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                  <input type="text" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://drive.google.com/file/d/..." style={{ flex: 1, minWidth: 200, padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }} />
                   <label style={{ cursor: logoUploading ? 'not-allowed' : 'pointer' }}>
                     <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={logoUploading} style={{ display: 'none' }} />
                     <div style={{ padding: '8px 12px', borderRadius: 6, background: logoUploading ? '#f1f5f9' : '#dc2626', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, opacity: logoUploading ? 0.5 : 1 }}>
@@ -501,8 +502,8 @@ export function SettingsPanel() {
             {/* Favicon with Preview */}
             <SettingRow label="Favicon" desc="Browser tab icon (supports Google Drive, Supabase Storage, or direct URLs)">
               <div style={{ width: '100%' }}>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <input type="text" value={faviconUrl} onChange={(e) => setFaviconUrl(e.target.value)} placeholder="https://drive.google.com/file/d/..." style={{ flex: 1, padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }} />
+                <div style={{ display: 'flex', flexDirection: 'row', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                  <input type="text" value={faviconUrl} onChange={(e) => setFaviconUrl(e.target.value)} placeholder="https://drive.google.com/file/d/..." style={{ flex: 1, minWidth: 200, padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }} />
                   <label style={{ cursor: faviconUploading ? 'not-allowed' : 'pointer' }}>
                     <input type="file" accept="image/*" onChange={handleFaviconUpload} disabled={faviconUploading} style={{ display: 'none' }} />
                     <div style={{ padding: '8px 12px', borderRadius: 6, background: faviconUploading ? '#f1f5f9' : '#dc2626', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, opacity: faviconUploading ? 0.5 : 1 }}>

@@ -209,22 +209,23 @@ export function PluginManagementRefined() {
 
       <div className="plugin-page-container">
         {/* Header */}
-        <div className="flex items-start justify-between mb-8 animate-slide-up" style={{ animationDelay: '0ms' }}>
-          <div className="flex-1">
-            <h1 className="text-[32px] font-semibold leading-tight mb-2" style={{ color: 'var(--foreground)' }}>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-8 mb-6 md:mb-8 animate-slide-up" style={{ animationDelay: '0ms' }}>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl md:text-[32px] font-semibold leading-tight mb-2" style={{ color: 'var(--foreground)' }}>
               Plugins
             </h1>
-            <p className="text-[15px] leading-relaxed max-w-2xl" style={{ color: 'var(--muted-foreground)' }}>
+            <p className="text-sm md:text-[15px] leading-relaxed max-w-2xl" style={{ color: 'var(--muted-foreground)' }}>
               Manage and extend your news platform with powerful integrations, tools, and publishing capabilities.
             </p>
           </div>
-          <div className="flex items-center gap-2 ml-6">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              className="px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition-all hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-sm"
+              className="px-3 md:px-4 py-2 rounded-lg border text-xs md:text-sm font-medium flex items-center gap-2 transition-all hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-sm whitespace-nowrap"
               style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
             >
-              <Plus className="w-4 h-4" />
-              Add Plugin
+              <Plus className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">Add Plugin</span>
+              <span className="sm:hidden">Add</span>
             </button>
             <button
               className="p-2 rounded-lg border transition-all hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-sm"
@@ -237,26 +238,26 @@ export function PluginManagementRefined() {
 
         {/* Stats Bar */}
         <div 
-          className="flex items-center gap-6 px-5 py-4 rounded-xl border mb-6 animate-slide-up backdrop-blur-sm"
+          className="flex flex-wrap items-center gap-3 md:gap-6 px-3 md:px-5 py-3 md:py-4 rounded-xl border mb-4 md:mb-6 animate-slide-up backdrop-blur-sm"
           style={{ 
             borderColor: 'var(--border)', 
             background: 'var(--card)',
             animationDelay: '50ms'
           }}
         >
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>{stats.total}</span>
-            <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Plugins</span>
+          <div className="flex items-baseline gap-1 md:gap-2">
+            <span className="text-lg md:text-2xl font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>{stats.total}</span>
+            <span className="text-xs md:text-sm" style={{ color: 'var(--muted-foreground)' }}>Plugins</span>
           </div>
-          <div className="h-6 w-px" style={{ background: 'var(--border)' }} />
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-semibold tabular-nums text-green-600">{stats.active}</span>
-            <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Active</span>
+          <div className="hidden md:block h-6 w-px" style={{ background: 'var(--border)' }} />
+          <div className="flex items-baseline gap-1 md:gap-2">
+            <span className="text-lg md:text-2xl font-semibold tabular-nums text-green-600">{stats.active}</span>
+            <span className="text-xs md:text-sm" style={{ color: 'var(--muted-foreground)' }}>Active</span>
           </div>
-          <div className="h-6 w-px" style={{ background: 'var(--border)' }} />
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-semibold tabular-nums text-slate-500">{stats.inactive}</span>
-            <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Inactive</span>
+          <div className="hidden md:block h-6 w-px" style={{ background: 'var(--border)' }} />
+          <div className="flex items-baseline gap-1 md:gap-2">
+            <span className="text-lg md:text-2xl font-semibold tabular-nums text-slate-500">{stats.inactive}</span>
+            <span className="text-xs md:text-sm" style={{ color: 'var(--muted-foreground)' }}>Inactive</span>
           </div>
           {stats.updates > 0 && (
             <>
@@ -297,16 +298,16 @@ export function PluginManagementRefined() {
         )}
 
         {/* Toolbar */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5 animate-slide-up" style={{ animationDelay: '150ms' }}>
-          <div className="flex-1 flex flex-col md:flex-row md:items-center gap-3 w-full">
-            <div className="relative flex-1 w-full md:max-w-md">
+        <div className="flex flex-col gap-3 md:gap-4 mb-4 md:mb-5 animate-slide-up" style={{ animationDelay: '150ms' }}>
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 w-full">
+            <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--muted-foreground)' }} />
               <input
                 type="text"
                 placeholder="Search plugins..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all"
+                className="w-full pl-9 pr-3 py-2 rounded-lg border text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all"
                 style={{
                   background: 'var(--background)',
                   borderColor: 'var(--border)',
@@ -315,12 +316,12 @@ export function PluginManagementRefined() {
                 } as React.CSSProperties}
               />
             </div>
-            <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto md:overflow-visible">
+            <div className="flex items-center gap-1 md:gap-2 overflow-x-auto md:overflow-visible -mx-3 md:mx-0 px-3 md:px-0">
               {(['all', 'installed', 'active', 'updates'] as FilterType[]).map(type => (
                 <button
                   key={type}
                   onClick={() => setFilterType(type)}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
+                  className={`px-2 md:px-3 py-1 md:py-1.5 rounded-md text-xs md:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                     filterType === type 
                       ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm' 
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -332,12 +333,12 @@ export function PluginManagementRefined() {
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <div className="relative flex-1 md:flex-none">
+          <div className="flex items-center gap-2 w-full">
+            <div className="relative flex-1">
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value as PluginCategory | 'all')}
-                className="w-full pl-3 pr-9 py-1.5 rounded-lg border text-sm font-medium appearance-none cursor-pointer transition-all hover:border-slate-400 dark:hover:border-slate-500"
+                className="w-full pl-3 pr-8 py-1.5 rounded-lg border text-xs md:text-sm font-medium appearance-none cursor-pointer transition-all hover:border-slate-400 dark:hover:border-slate-500"
                 style={{
                   background: 'var(--background)',
                   borderColor: 'var(--border)',
@@ -483,7 +484,13 @@ export function PluginManagementRefined() {
 
         @media (max-width: 768px) {
           .plugin-page-container {
-            padding: 20px 16px;
+            padding: 16px 12px;
+          }
+        }
+
+        @media (max-width: 414px) {
+          .plugin-page-container {
+            padding: 12px 8px;
           }
         }
 

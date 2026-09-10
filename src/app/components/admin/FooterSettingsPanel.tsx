@@ -641,11 +641,11 @@ export function FooterSettingsPanel() {
             <>
               <Input label="Contact Title" value={contactTitle} onChange={setContactTitle} />
               <Input label="Address" value={contactAddress} onChange={setContactAddress} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
                 <Input label="City" value={contactCity} onChange={setContactCity} />
                 <Input label="State" value={contactState} onChange={setContactState} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
                 <Input label="Country" value={contactCountry} onChange={setContactCountry} />
                 <Input label="Postal Code" value={contactPostalCode} onChange={setContactPostalCode} />
               </div>
