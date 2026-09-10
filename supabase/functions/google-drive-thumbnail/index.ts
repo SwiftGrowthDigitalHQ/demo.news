@@ -233,10 +233,21 @@ serve(async (req: Request) => {
     
     const contentType = driveResponse.headers.get('content-type') || 'image/jpeg';
     console.log('[GD_THUMB] RESPONSE_CONTENT_TYPE:', contentType);
+    
+    // CRITICAL FIX: Buffer the response body before creating new Response
+    // Passing driveResponse.body directly causes stream consumption, resulting in empty response body
+    const imageBuffer = await driveResponse.arrayBuffer();
+    console.log('[GD_THUMB] IMAGE_BUFFER_SIZE:', imageBuffer.byteLength, 'bytes');
+    
+    if (imageBuffer.byteLength === 0) {
+      console.error('[GD_THUMB] ERROR: Empty image buffer received from Google Drive');
+      return new Response('Empty image data received', { status: 502, headers: corsHeaders });
+    }
+    
     console.log('[GD_THUMB] SUCCESS');
     
-    // Stream image with CORS headers
-    return new Response(driveResponse.body, {
+    // Return buffered image with CORS headers
+    return new Response(imageBuffer, {
       headers: {
         ...corsHeaders,
         'Content-Type': contentType,

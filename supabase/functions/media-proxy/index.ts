@@ -293,16 +293,29 @@ serve(async (req: Request) => {
     // Determine content type
     const contentType = mimeType || driveResponse.headers.get('content-type') || 'image/jpeg';
     
-    console.log('[Media Proxy] Success! Streaming file, Content-Type:', contentType);
+    // CRITICAL FIX: Buffer the response body before creating new Response
+    // Passing driveResponse.body directly causes stream consumption, resulting in empty response body
+    const fileBuffer = await driveResponse.arrayBuffer();
+    console.log('[Media Proxy] File buffer size:', fileBuffer.byteLength, 'bytes');
     
-    // Stream the file with appropriate headers - ADD CACHING
+    if (fileBuffer.byteLength === 0) {
+      console.error('[Media Proxy] ERROR: Empty file buffer received from Google Drive');
+      return new Response(
+        JSON.stringify({ error: 'Empty file data received from Google Drive' }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('[Media Proxy] Success! Returning file, Content-Type:', contentType);
+    
+    // Return buffered file with appropriate headers
     const headers = new Headers(corsHeaders);
     headers.set('Content-Type', contentType);
     // Cache images for 1 year since they're immutable
     headers.set('Cache-Control', 'public, max-age=31536000, immutable');
     headers.set('ETag', `"${fileId}"`);
     
-    return new Response(driveResponse.body, {
+    return new Response(fileBuffer, {
       status: 200,
       headers,
     });

@@ -23,9 +23,9 @@ function resolveAssetUrlForBrowser(url: string): string {
   const fileId = extractGoogleDriveFileId(url);
   if (fileId) {
     // Route Google Drive files through media-proxy Edge Function directly
-    // Note: Vercel rewrites /api/media-proxy to this endpoint in production
-    // On localhost, we use the Edge Function directly since rewrites aren't available
-    return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-proxy?fileId=${fileId}`;
+    // The endpoint extracts fileId from path: /functions/v1/media-proxy/{fileId}
+    // Uses server-side tenant credentials to fetch from Google Drive
+    return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-proxy/${fileId}`;
   }
   
   return url;

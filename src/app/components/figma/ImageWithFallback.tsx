@@ -110,6 +110,17 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
         if (abortSignal.aborted) return;
         
         const blob = await response.blob();
+        
+        // CRITICAL FIX: Validate blob is not empty
+        // Empty blobs result in naturalWidth=0 on img element even though HTTP=200
+        if (blob.size === 0) {
+          console.warn('[ImageWithFallback] Error: Empty blob received from proxy endpoint', { src });
+          if (!abortSignal.aborted) {
+            setDidError(true);
+          }
+          return;
+        }
+        
         if (!blob.type.startsWith('image/')) {
           if (!abortSignal.aborted) {
             setDidError(true);
