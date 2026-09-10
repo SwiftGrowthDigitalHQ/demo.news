@@ -142,7 +142,7 @@ export function SubscriptionSystem() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Subscribers', value: totalSubs.toLocaleString('en-IN'), icon: Users, color: '#dc2626' },
           { label: 'Active Subscribers', value: activeSubs.toLocaleString('en-IN'), icon: CheckCircle, color: '#16a34a' },
@@ -160,7 +160,7 @@ export function SubscriptionSystem() {
         })}
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {sourceBreakdown.map(source => (
           <div key={source.label} className="rounded-xl border p-5" style={{ background: '#fff', borderColor: 'rgba(15,23,42,0.08)' }}>
             <div style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{source.label}</div>

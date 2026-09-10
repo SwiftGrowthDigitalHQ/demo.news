@@ -66,7 +66,7 @@ export function SEOManager() {
       return;
     }
     void loadConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [auth.ready, auth.profile?.owned_tenant_id]);
   
   async function loadConfig() {
@@ -314,7 +314,7 @@ export function SEOManager() {
           
           <div className="space-y-4">
             {/* Basic Robots */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -339,7 +339,7 @@ export function SEOManager() {
             {/* Category/Tag Indexing */}
             <div className="border-t border-gray-200 pt-4">
               <p className="text-sm font-medium text-gray-700 mb-3">Content Type Indexing</p>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"

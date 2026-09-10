@@ -424,7 +424,7 @@ export function MediaLibrary() {
     );
   }
 
-  const gridColumns = isMobile ? 'repeat(auto-fill, minmax(140px, 1fr))' : 'repeat(auto-fill, minmax(180px, 1fr))';
+  const gridColumns = isMobile ? 'repeat(auto-fill, minmax(150px, 1fr))' : 'repeat(auto-fill, minmax(200px, 1fr))';
   const cardGap = isMobile ? '12px' : '16px';
   const padding = isMobile ? 'p-3' : 'p-4';
 

@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Save, Globe, Mail, Palette, Share2, Key, Database, Image as ImageIcon, AlertCircle, Upload } from 'lucide-react';
 import { loadSiteSettings, markAuditLog, upsertSiteSettings, uploadAdminMedia } from '../../lib/admin';
 import { resolveAssetUrl, isValidAssetUrl } from '../../lib/assetResolver';
+import { useIsMobile } from '../ui/use-mobile';
 
 // Helper component to load Google Drive images via media-proxy
 function GoogleDriveImagePreview({ url, width, height, onError }: { url: string; width: number; height: number; onError?: (error: boolean) => void }) {
@@ -157,13 +158,17 @@ const tabs = [
 ];
 
 function SettingRow({ label, desc, children }: { label: string; desc?: string; children: ReactNode }) {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="flex items-start justify-between gap-4 py-4 border-b" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
-      <div>
+    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 py-4 border-b" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
+      <div className="flex-1 min-w-0">
         <div style={{ fontSize: 13, fontWeight: 500, color: '#0f172a' }}>{label}</div>
         {desc && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{desc}</div>}
       </div>
-      <div style={{ flexShrink: 0, minWidth: 240 }}>{children}</div>
+      <div style={{ flexShrink: 0, width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'auto' : 240 }} className="md:text-right">
+        {children}
+      </div>
     </div>
   );
 }
@@ -610,7 +615,7 @@ export function SettingsPanel() {
           <>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Backup & Restore</h3>
             <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>Manage database and file backups</p>
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               {[
                 { label: 'Last Backup', value: '31 May 2026, 3:00 AM', color: '#16a34a' },
                 { label: 'Backup Size', value: '2.4 GB', color: '#0891b2' },

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Save, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown } from 'lucide-react';
+import { useIsMobile } from '../../lib/hooks/useIsMobile';
 import {
   getFooterSettings,
   updateFooterSettings,
@@ -29,6 +30,7 @@ import {
 import { FooterPreview } from '../FooterPreview';
 
 export function FooterSettingsPanel() {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'brand' | 'social' | 'columns' | 'pages' | 'contact' | 'apps' | 'newsletter' | 'ads'>('brand');
@@ -448,7 +450,7 @@ export function FooterSettingsPanel() {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: isMobile ? 'wrap' : 'wrap', flexDirection: isMobile ? 'column-reverse' : 'row' }}>
       <div style={{ flex: 1, minWidth: 320 }}>
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
@@ -722,7 +724,7 @@ export function FooterSettingsPanel() {
       </div>
 
       {/* Live Preview */}
-      <aside style={{ width: 460, maxWidth: '100%', flexShrink: 0, position: 'sticky', top: 16 }}>
+      <aside style={{ width: isMobile ? '100%' : 460, maxWidth: '100%', flexShrink: 0, position: isMobile ? 'static' : 'sticky', top: 16 }}>
         <FooterPreview
           brandName={brandName}
           tagline={tagline}

@@ -63,7 +63,7 @@ export function BreakingNewsControl() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { label: 'Active Tickers', value: items.filter(item => item.is_active).length, color: '#dc2626', bg: '#fef2f2' },
           { label: 'Total In Queue', value: items.length, color: '#7c3aed', bg: '#f5f3ff' },

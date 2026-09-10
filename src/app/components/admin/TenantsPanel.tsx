@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../../lib/auth';
+import { useIsMobile } from '../../lib/hooks/useIsMobile';
 import {
   listAllTenants,
   adminSetTenantStatus,
@@ -31,6 +32,7 @@ const S = {
 
 export function TenantsPanel() {
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
   const [tenants, setTenants] = useState<TenantRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -100,7 +102,7 @@ export function TenantsPanel() {
       </div>
 
       {/* Search */}
-      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 9, padding: '6px 12px', maxWidth: 380 }}>
+      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 9, padding: '6px 12px', maxWidth: isMobile ? '100%' : 380 }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
         </svg>
@@ -113,7 +115,7 @@ export function TenantsPanel() {
         <div style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', padding: '40px 0' }}>No tenants found.</div>
       ) : (
         <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isMobile ? 'auto' : 700 }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 {['Name / Slug', 'Plan', 'Status', 'Trial / Period Ends', 'Contact', 'Created', 'Actions'].map(h => (

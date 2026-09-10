@@ -375,7 +375,7 @@ export function AnalyticsDashboard() {
         <>
           {/* 1. OVERVIEW CARDS - Responsive Grid */}
           <div className="grid gap-3" style={{ 
-            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)' 
+            gridTemplateColumns: !isMobile ? 'repeat(4, 1fr)' : window.innerWidth < 480 ? 'repeat(1, 1fr)' : 'repeat(2, 1fr)'
           }}>
             <KPICard icon={Eye} iconBg="#fee2e2" iconColor="#dc2626" value={overview!.totalPageViews.toLocaleString()} label="Total Page Views" />
             <KPICard icon={Users} iconBg="#f3e8ff" iconColor="#7c3aed" value={overview!.uniqueVisitors.toLocaleString()} label="Unique Visitors" />

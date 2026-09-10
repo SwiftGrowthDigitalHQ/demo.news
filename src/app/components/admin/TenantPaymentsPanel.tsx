@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../../lib/auth';
+import { useIsMobile } from '../../lib/hooks/useIsMobile';
 import {
   listAllPayments,
   approvePayment,
@@ -41,11 +42,12 @@ const S = {
 };
 
 /* ── Payment detail modal ─────────────────────────────────────────────────── */
-function PaymentDetailModal({ payment, onClose, onApprove, onReject }: {
+function PaymentDetailModal({ payment, onClose, onApprove, onReject, isMobile }: {
   payment: PaymentRow;
   onClose: () => void;
   onApprove: () => void;
   onReject: () => void;
+  isMobile: boolean;
 }) {
   const rows: Array<[string, string | null | undefined]> = [
     ['Tenant', payment.tenant_name],
@@ -63,7 +65,7 @@ function PaymentDetailModal({ payment, onClose, onApprove, onReject }: {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ background: '#fff', borderRadius: 14, padding: 28, maxWidth: 520, width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(15,23,42,0.22)' }}>
+      <div style={{ background: '#fff', borderRadius: 14, padding: isMobile ? 16 : 28, maxWidth: isMobile ? '100%' : 520, width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(15,23,42,0.22)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Payment Details</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: 20, lineHeight: 1 }}>×</button>
@@ -103,6 +105,7 @@ function PaymentDetailModal({ payment, onClose, onApprove, onReject }: {
 /* ── Main component ───────────────────────────────────────────────────────── */
 export function TenantPaymentsPanel() {
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<PaymentStatus | 'ALL'>('SUBMITTED');
@@ -229,7 +232,7 @@ export function TenantPaymentsPanel() {
         <div style={{ fontSize: 13, color: '#94a3b8', padding: '40px 0', textAlign: 'center' }}>No payments found.</div>
       ) : (
         <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isMobile ? 'auto' : 700 }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 {['Tenant', 'Plan', 'Amount', 'Payment Date', 'UTR', 'Submitted', 'Status', 'Actions'].map(h => (
@@ -279,13 +282,14 @@ export function TenantPaymentsPanel() {
           onClose={() => setSelected(null)}
           onApprove={() => void handleApprove(selected)}
           onReject={() => { setRejecting(selected); setSelected(null); }}
+          isMobile={isMobile}
         />
       )}
 
       {/* Reject reason modal */}
       {rejecting && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ background: '#fff', borderRadius: 14, padding: 28, maxWidth: 420, width: '100%', boxShadow: '0 24px 64px rgba(15,23,42,0.22)' }}>
+          <div style={{ background: '#fff', borderRadius: 14, padding: isMobile ? 16 : 28, maxWidth: isMobile ? '100%' : 420, width: '100%', boxShadow: '0 24px 64px rgba(15,23,42,0.22)' }}>
             <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Reject Payment</h3>
             <p style={{ margin: '0 0 12px', fontSize: 13, color: '#64748b' }}>
               Tenant: <strong>{rejecting.tenant_name}</strong> — {formatCurrency(rejecting.amount)}

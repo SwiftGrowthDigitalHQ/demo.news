@@ -297,9 +297,9 @@ export function PluginManagementRefined() {
         )}
 
         {/* Toolbar */}
-        <div className="flex items-center justify-between gap-4 mb-5 animate-slide-up" style={{ animationDelay: '150ms' }}>
-          <div className="flex-1 flex items-center gap-3">
-            <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5 animate-slide-up" style={{ animationDelay: '150ms' }}>
+          <div className="flex-1 flex flex-col md:flex-row md:items-center gap-3 w-full">
+            <div className="relative flex-1 w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--muted-foreground)' }} />
               <input
                 type="text"
@@ -315,12 +315,12 @@ export function PluginManagementRefined() {
                 } as React.CSSProperties}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto md:overflow-visible">
               {(['all', 'installed', 'active', 'updates'] as FilterType[]).map(type => (
                 <button
                   key={type}
                   onClick={() => setFilterType(type)}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                     filterType === type 
                       ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm' 
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -332,12 +332,12 @@ export function PluginManagementRefined() {
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:flex-none">
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value as PluginCategory | 'all')}
-                className="pl-3 pr-9 py-1.5 rounded-lg border text-sm font-medium appearance-none cursor-pointer transition-all hover:border-slate-400 dark:hover:border-slate-500"
+                className="w-full pl-3 pr-9 py-1.5 rounded-lg border text-sm font-medium appearance-none cursor-pointer transition-all hover:border-slate-400 dark:hover:border-slate-500"
                 style={{
                   background: 'var(--background)',
                   borderColor: 'var(--border)',

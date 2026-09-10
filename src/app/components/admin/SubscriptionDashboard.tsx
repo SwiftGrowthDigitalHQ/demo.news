@@ -976,7 +976,7 @@ export function SubscriptionDashboard() {
 
   if (!tenant || !config) {
     return (
-      <div style={{ padding: 24, maxWidth: 600 }}>
+      <div style={{ padding: 24, maxWidth: isMobile ? '100%' : 600 }}>
         <div style={{ background: '#f8fafc', borderRadius: 12, border: '1px dashed #e2e8f0', padding: 32, textAlign: 'center' }}>
           <div style={{ fontSize: 14, color: '#64748b' }}>No subscription found for your account.</div>
           <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 6 }}>Complete the onboarding to create your news platform.</div>
@@ -1002,7 +1002,7 @@ export function SubscriptionDashboard() {
   return (
     <div style={{
       padding: '20px',
-      maxWidth: 680,
+      maxWidth: isMobile ? '100%' : 680,
       margin: '0 auto',
       display: 'flex',
       flexDirection: 'column',
