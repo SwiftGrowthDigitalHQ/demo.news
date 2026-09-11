@@ -221,7 +221,7 @@ export function PageMetadata(props: PageMetadataProps) {
       <meta property="og:type" content={ogType} />
       {(ogTitle || title) && <meta property="og:title" content={ogTitle || title} />}
       {(ogDescription || description) && <meta property="og:description" content={ogDescription || description} />}
-      {(ogImage || image) && <meta property="og:image" content={ogImage || image} />}
+      {(ogImage || image) && <meta property="og:image" content={resolveSEOImage(ogImage || image, seoDefaults)} />}
       {ogImageWidth && <meta property="og:image:width" content={String(ogImageWidth)} />}
       {ogImageHeight && <meta property="og:image:height" content={String(ogImageHeight)} />}
       {ogSiteName && <meta property="og:site_name" content={ogSiteName} />}
@@ -243,7 +243,7 @@ export function PageMetadata(props: PageMetadataProps) {
       {twitterCreator && <meta name="twitter:creator" content={twitterCreator} />}
       {(twitterTitle || title) && <meta name="twitter:title" content={twitterTitle || title} />}
       {(twitterDescription || description) && <meta name="twitter:description" content={twitterDescription || description} />}
-      {(twitterImage || image) && <meta name="twitter:image" content={twitterImage || image} />}
+      {(twitterImage || image) && <meta name="twitter:image" content={resolveSEOImage(twitterImage || image, seoDefaults)} />}
       
       {/* Structured Data */}
       {structuredData && (

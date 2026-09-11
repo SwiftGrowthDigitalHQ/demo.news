@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAppNavigation } from '../lib/navigation';
 import { useCms } from '../lib/cms';
 import { resolveAssetUrl } from '../lib/assetResolver';
+import { extractGoogleDriveFileId } from '../lib/articleImage';
 
 function getOrCreateMeta(selector: string, attrs: Record<string, string>) {
   const existing = document.head.querySelector<HTMLMetaElement>(selector);
@@ -101,8 +102,17 @@ export function SeoBridge() {
     getOrCreateMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: title });
     getOrCreateMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: description });
     if (image) {
-      getOrCreateMeta('meta[property="og:image"]', { property: 'og:image', content: image });
-      getOrCreateMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: image });
+      // Convert Google Drive URLs to media-proxy for og:image
+      let ogImageUrl = image;
+      if (image.includes('drive.google.com')) {
+        const fileId = extractGoogleDriveFileId(image);
+        if (fileId) {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          ogImageUrl = `${supabaseUrl}/functions/v1/media-proxy/${fileId}`;
+        }
+      }
+      getOrCreateMeta('meta[property="og:image"]', { property: 'og:image', content: ogImageUrl });
+      getOrCreateMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: ogImageUrl });
     }
 
     const canonical = getOrCreateLink('canonical');
