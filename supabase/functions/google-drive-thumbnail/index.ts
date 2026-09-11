@@ -226,37 +226,19 @@ serve(async (req: Request) => {
     let fetchUrl: string;
     let useThumbnail = false;
     
-    // OPTIMIZATION: If a size is requested, try to use Google Drive's cached thumbnail
+    // OPTIMIZATION: If a size is requested, try to use Google Drive's public thumbnail endpoint
+    // This is simpler and more reliable than fetching metadata
     if (requestedSize) {
-      // If we have a cached thumbnail link from the media table, use it directly (no auth needed)
-      if (mediaFile.drive_thumbnail_link) {
-        console.log('[GD_THUMB] Using Google Drive cached thumbnail from database');
-        fetchUrl = mediaFile.drive_thumbnail_link;
-        useThumbnail = true;
-      } else {
-        // Thumbnail not cached - fetch metadata first to get thumbnailLink
-        // This is more efficient than downloading the full file
-        console.log('[GD_THUMB] Fetching metadata to get thumbnailLink...');
-        const metadataUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=thumbnailLink,mimeType`;
-        const metaResponse = await fetch(metadataUrl, {
-          headers: { 'Authorization': `Bearer ${accessToken}` },
-        });
-        
-        if (metaResponse.ok) {
-          const fileMetadata = await metaResponse.json();
-          if (fileMetadata.thumbnailLink) {
-            console.log('[GD_THUMB] Using Google Drive thumbnailLink from metadata');
-            fetchUrl = fileMetadata.thumbnailLink;
-            useThumbnail = true;
-          } else {
-            console.log('[GD_THUMB] No thumbnailLink available, fetching full image');
-            fetchUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
-          }
-        } else {
-          console.log('[GD_THUMB] Metadata fetch failed, fetching full image');
-          fetchUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
-        }
-      }
+      // Parse size (e.g., "w400" -> 400)
+      const sizeMatch = requestedSize.match(/w(\d+)/);
+      const sizeParam = sizeMatch ? sizeMatch[1] : '400';
+      
+      // Try Google Drive's public thumbnail URL first
+      // Format: https://drive.google.com/uc?id={fileId}&sz=w{size}
+      // This works for any file and returns a pre-cached thumbnail
+      console.log('[GD_THUMB] Attempting public thumbnail URL with sz=w' + sizeParam);
+      fetchUrl = `https://drive.google.com/uc?id=${driveFileId}&sz=w${sizeParam}`;
+      useThumbnail = true;
     } else {
       // No size requested - fetch full resolution image
       console.log('[GD_THUMB] Using full-resolution image from Google Drive');
@@ -267,11 +249,8 @@ serve(async (req: Request) => {
     console.log('[GD_THUMB] USING_THUMBNAIL:', useThumbnail);
     
     // Fetch image from Google Drive
-    const driveResponse = await fetch(fetchUrl, {
-      headers: useThumbnail 
-        ? {} // Thumbnail link is public, no auth needed
-        : { 'Authorization': `Bearer ${accessToken}` }, // Full image needs auth
-    });
+    // Note: drive.google.com/uc requires NO authentication (public thumbnails)
+    const driveResponse = await fetch(fetchUrl);
     
     console.log('[GD_THUMB] DRIVE_RESPONSE_STATUS:', driveResponse.status);
     
