@@ -141,7 +141,7 @@ export async function compressImage(
       compressedDimensions: compressedDimensions || undefined,
     };
   } catch (error) {
-    console.error('[ImageCompression] Compression failed:', error);
+    // Silently catch and re-throw with descriptive message
     throw new Error(
       error instanceof Error
         ? `Image compression failed: ${error.message}`

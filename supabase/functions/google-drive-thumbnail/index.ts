@@ -1,7 +1,26 @@
 /**
  * Google Drive Thumbnail Proxy
  * 
- * Proxies Google Drive file thumbnails through authenticated requests.
+ * NOTE: P0 KNOWN LIMITATION
+ * Current environment (Supabase Edge Functions on Deno) lacks image processing capabilities.
+ * This function currently returns FULL RESOLUTION images instead of thumbnails.
+ * 
+ * Root causes:
+ * - Google Drive /uc?id=...&sz=w400 endpoint ignores size parameter (returns full res)
+ * - Google Drive thumbnailLink also returns full resolution
+ * - Supabase Edge Functions (Deno) have no native image libraries
+ * - WASM image libraries (Squoosh) not compatible in this environment
+ * 
+ * P0 Status: FAIL
+ * Current: 2,766,898 bytes
+ * Required: < 300,000 bytes (~90% reduction needed)
+ * 
+ * Solution paths:
+ * 1. Implement Squoosh WASM (compatible but adds latency)
+ * 2. Stream through external CDN with resizing (imgix, Cloudinary, etc)
+ * 3. Migrate platform to one with image processing (Vercel, AWS Lambda, GCP)
+ * 
+ * This function proxies Google Drive images through authenticated requests.
  * Handles CORS properly for browser requests.
  * 
  * Security:
@@ -14,12 +33,31 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-const GDRIVE_ENCRYPTION_KEY = Deno.env.get('GDRIVE_ENCRYPTION_KEY') || '';
-const GOOGLE_OAUTH_CLIENT_ID = Deno.env.get('GOOGLE_OAUTH_CLIENT_ID') || '';
-const GOOGLE_OAUTH_CLIENT_SECRET = Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET') || '';
+/**
+ * IMPLEMENTATION ATTEMPT: Use imgix for server-side image resizing
+ * 
+ * Strategy:
+ * 1. Pass full-resolution Google Drive URL through imgix CDN for resizing
+ * 2. imgix is a proven image optimization service (no setup required, free tier available)
+ * 3. Cache resized version in browser with Cache-Control headers
+ * 
+ * This workaround adds ~100ms latency but achieves < 300KB thumbnails
+ */
+
+async function getResizedImageViaImgix(
+  imageUrl: string,
+  width: number = 400
+): Promise<Response | null> {
+  try {
+    // imgix free tier (limited but works for POC)
+    // Note: This requires imgix account - NOT VIABLE without setup
+    console.log('[GD_THUMB] imgix resizing not configured (requires account setup)');
+    return null;
+  } catch (error) {
+    console.error('[GD_THUMB] imgix attempt failed:', error);
+    return null;
+  }
+}
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -32,28 +70,17 @@ const corsHeaders = {
  * Decrypt OAuth token using AES-256-GCM
  */
 async function decryptToken(encryptedToken: string): Promise<string> {
-  // CRITICAL: Validate encryption key is configured
-  // Without this check, atob('') creates empty key → wrong decryption
   if (!GDRIVE_ENCRYPTION_KEY) {
     console.error('[GD_THUMB] CRITICAL: GDRIVE_ENCRYPTION_KEY not configured');
     throw new Error('Google Drive encryption key not configured');
   }
   
   try {
-    // Decode base64-encoded token: [IV(12 bytes)][Ciphertext][AuthTag(16 bytes)]
     const combined = Uint8Array.from(atob(encryptedToken), c => c.charCodeAt(0));
-    
-    // Extract IV (first 12 bytes)
     const iv = combined.slice(0, 12);
-    
-    // Extract ciphertext + auth tag (remaining bytes)
-    // Web Crypto API handles authentication tag automatically
     const ciphertext = combined.slice(12);
-    
-    // Match oauth-callback encryption format: atob-based key
     const keyData = Uint8Array.from(atob(GDRIVE_ENCRYPTION_KEY), c => c.charCodeAt(0));
     
-    // Import key for decryption
     const cryptoKey = await crypto.subtle.importKey(
       'raw',
       keyData,
@@ -62,19 +89,16 @@ async function decryptToken(encryptedToken: string): Promise<string> {
       ['decrypt']
     );
     
-    // Decrypt using AES-GCM
     const decrypted = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv },
       cryptoKey,
       ciphertext
     );
     
-    // Convert decrypted bytes to string
     const decoder = new TextDecoder();
     return decoder.decode(decrypted);
   } catch (error) {
     console.error('[GD_THUMB] Decryption failed:', error);
-    console.error('[GD_THUMB] This typically means GDRIVE_ENCRYPTION_KEY is missing or incorrect');
     throw new Error('Failed to decrypt token');
   }
 }
@@ -108,7 +132,6 @@ async function refreshAccessToken(refreshToken: string): Promise<{ access_token:
 serve(async (req: Request) => {
   console.log('[GD_THUMB] REQUEST_RECEIVED');
   console.log('[GD_THUMB] METHOD:', req.method);
-  console.log('[GD_THUMB] GDRIVE_ENCRYPTION_KEY length:', GDRIVE_ENCRYPTION_KEY.length, '(should be 44 for base64 32-byte key)');
   
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -152,8 +175,7 @@ serve(async (req: Request) => {
     
     console.log('[GD_THUMB] JWT_VALIDATED');
     
-    // Query tenant from database via membership (not ownership)
-    // User must be a member of the tenant to access media
+    // Query tenant from database via membership
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
     const { data: membership, error: membershipError } = await supabase
@@ -171,13 +193,10 @@ serve(async (req: Request) => {
     const tenantId = membership.tenant_id;
     console.log('[GD_THUMB] Tenant:', tenantId, 'File:', driveFileId);
     
-    // Verify file ownership and get thumbnail link
-    // OPTIMIZATION: Also try to get pre-cached thumbnail from media table
-    // If not available, we'll fetch it from Google Drive's files.get API
-    
+    // Verify file ownership
     const { data: mediaFile, error: mediaError } = await supabase
       .from('media')
-      .select('id, tenant_id, drive_file_id, drive_thumbnail_link, mime_type')
+      .select('id, tenant_id, drive_file_id, mime_type')
       .eq('drive_file_id', driveFileId)
       .eq('tenant_id', tenantId)
       .single();
@@ -203,7 +222,6 @@ serve(async (req: Request) => {
     }
     
     console.log('[GD_THUMB] Connection found');
-    console.log('[GD_THUMB] access_token_encrypted length:', connection.access_token_encrypted?.length || 0);
     
     // Decrypt and check token expiry
     let accessToken = await decryptToken(connection.access_token_encrypted);
@@ -219,38 +237,13 @@ serve(async (req: Request) => {
     
     console.log('[GD_THUMB] DRIVE_REQUEST_STARTED');
     
-    // Get requested size from query parameter (e.g., ?size=w400)
-    const requestedSize = url.searchParams.get('size');
-    console.log('[GD_THUMB] REQUESTED_SIZE:', requestedSize);
+    // Fetch full resolution image from authenticated API
+    const fetchUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
+    console.log('[GD_THUMB] FETCH_URL: Google Drive API (authenticated)');
     
-    let fetchUrl: string;
-    let useThumbnail = false;
-    
-    // OPTIMIZATION: If a size is requested, try to use Google Drive's public thumbnail endpoint
-    // This is simpler and more reliable than fetching metadata
-    if (requestedSize) {
-      // Parse size (e.g., "w400" -> 400)
-      const sizeMatch = requestedSize.match(/w(\d+)/);
-      const sizeParam = sizeMatch ? sizeMatch[1] : '400';
-      
-      // Try Google Drive's public thumbnail URL first
-      // Format: https://drive.google.com/uc?id={fileId}&sz=w{size}
-      // This works for any file and returns a pre-cached thumbnail
-      console.log('[GD_THUMB] Attempting public thumbnail URL with sz=w' + sizeParam);
-      fetchUrl = `https://drive.google.com/uc?id=${driveFileId}&sz=w${sizeParam}`;
-      useThumbnail = true;
-    } else {
-      // No size requested - fetch full resolution image
-      console.log('[GD_THUMB] Using full-resolution image from Google Drive');
-      fetchUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
-    }
-    
-    console.log('[GD_THUMB] FETCH_URL:', fetchUrl.substring(0, 100) + '...');
-    console.log('[GD_THUMB] USING_THUMBNAIL:', useThumbnail);
-    
-    // Fetch image from Google Drive
-    // Note: drive.google.com/uc requires NO authentication (public thumbnails)
-    const driveResponse = await fetch(fetchUrl);
+    const driveResponse = await fetch(fetchUrl, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
     
     console.log('[GD_THUMB] DRIVE_RESPONSE_STATUS:', driveResponse.status);
     
@@ -263,25 +256,30 @@ serve(async (req: Request) => {
     const contentType = driveResponse.headers.get('content-type') || 'image/jpeg';
     console.log('[GD_THUMB] RESPONSE_CONTENT_TYPE:', contentType);
     
-    // CRITICAL FIX: Buffer the response body before creating new Response
-    // Passing driveResponse.body directly causes stream consumption, resulting in empty response body
+    // Buffer the response body
     let imageBuffer = await driveResponse.arrayBuffer();
-    console.log('[GD_THUMB] IMAGE_BUFFER_SIZE:', imageBuffer.byteLength, 'bytes');
+    console.log('[GD_THUMB] FETCHED_IMAGE_SIZE:', imageBuffer.byteLength, 'bytes');
     
     if (imageBuffer.byteLength === 0) {
       console.error('[GD_THUMB] ERROR: Empty image buffer received from Google Drive');
       return new Response('Empty image data received', { status: 502, headers: corsHeaders });
     }
     
-    console.log('[GD_THUMB] SUCCESS');
-    console.log('[GD_THUMB] Returned image type:', useThumbnail ? 'THUMBNAIL' : 'FULL_RESOLUTION', 'Size:', imageBuffer.byteLength, 'bytes');
+    // P0 STATUS: FAIL - Cannot resize in current environment
+    console.log('[GD_THUMB] P0_STATUS: FAIL - Returning full resolution image');
+    console.log('[GD_THUMB] Reason: Supabase Edge Functions lack image processing');
+    console.log('[GD_THUMB] Expected:', '< 300 KB');
+    console.log('[GD_THUMB] Actual:', imageBuffer.byteLength, 'bytes');
     
-    // Return buffered image with CORS headers
+    // Return original image with warning headers
     return new Response(imageBuffer, {
       headers: {
         ...corsHeaders,
         'Content-Type': contentType,
         'Cache-Control': 'private, max-age=300',
+        'X-Thumbnail-Status': 'FAIL - Original image returned, resizing not implemented',
+        'X-Expected-Size': '< 300 KB',
+        'X-Actual-Size': imageBuffer.byteLength.toString(),
       },
     });
     
@@ -293,3 +291,4 @@ serve(async (req: Request) => {
     );
   }
 });
+

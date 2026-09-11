@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Copy, Download, Eye, Film, FileText, Grid, Image, List, Search, Trash2, Upload, Cloud, X } from 'lucide-react';
+import { Copy, Eye, Film, FileText, Grid, List, Search, Trash2, Upload, Cloud } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -227,38 +227,31 @@ export function MediaLibrary() {
       
       // Compress image before upload
       if (file.type.startsWith('image/')) {
-        try {
-          toast.loading('Optimizing image...');
-          
-          const compressionResult = await compressImage(file, {
-            onProgress: (progress) => {
-              if (progress > 0) {
-                // Update toast with progress
-              }
-            },
-          });
-          
-          fileToUpload = new File(
-            [compressionResult.blob],
-            file.name.replace(/\.[^.]+$/, `.${compressionResult.blob.type === 'image/png' ? 'png' : 'webp'}`),
-            { type: compressionResult.blob.type }
-          );
-          
-          originalSize = compressionResult.originalSize;
-          compressedSize = compressionResult.compressedSize;
-          
-          // Dismiss loading toast
-          toast.dismiss();
-          
-          // Show compression result
-          const ratio = compressionResult.compressionRatio.toFixed(1);
-          toast.info(`Optimized: ${formatFileSize(originalSize)} → ${formatFileSize(compressedSize)} (${ratio}% smaller)`);
-        } catch (compressionError) {
-          console.error('Image compression failed:', compressionError);
-          toast.dismiss();
-          toast.warning('Could not optimize image, uploading original: ' + (compressionError instanceof Error ? compressionError.message : 'Unknown error'));
-          // Continue with original file
-        }
+        toast.loading('Optimizing image...');
+        
+        const compressionResult = await compressImage(file, {
+          onProgress: (progress) => {
+            if (progress > 0) {
+              // Update toast with progress
+            }
+          },
+        });
+        
+        fileToUpload = new File(
+          [compressionResult.blob],
+          file.name.replace(/\.[^.]+$/, `.${compressionResult.blob.type === 'image/png' ? 'png' : 'webp'}`),
+          { type: compressionResult.blob.type }
+        );
+        
+        originalSize = compressionResult.originalSize;
+        compressedSize = compressionResult.compressedSize;
+        
+        // Dismiss loading toast
+        toast.dismiss();
+        
+        // Show compression result
+        const ratio = compressionResult.compressionRatio.toFixed(1);
+        toast.info(`Optimized: ${formatFileSize(originalSize)} → ${formatFileSize(compressedSize)} (${ratio}% smaller)`);
       }
       
       let uploaded: any;
