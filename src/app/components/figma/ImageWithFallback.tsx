@@ -83,9 +83,9 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
           };
         } else {
           // Unauthenticated (public page): Use media-proxy Edge Function
-          // Note: media-proxy extracts fileId from path, not query params
-          // It validates file authorization server-side using tenant credentials
-          thumbnailUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-proxy/${fileId}`;
+          // Request thumbnail with ?thumbnail=1 to get Google Drive's pre-cached thumbnail
+          // Much smaller than full image for logo/footer contexts
+          thumbnailUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-proxy/${fileId}?thumbnail=1`;
           fetchOptions.headers = {
             'Accept': 'image/*',
           };

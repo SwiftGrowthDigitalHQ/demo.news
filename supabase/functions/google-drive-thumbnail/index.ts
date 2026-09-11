@@ -171,11 +171,13 @@ serve(async (req: Request) => {
     const tenantId = membership.tenant_id;
     console.log('[GD_THUMB] Tenant:', tenantId, 'File:', driveFileId);
     
-    // Verify file ownership
+    // Verify file ownership and get thumbnail link
+    // OPTIMIZATION: Also try to get pre-cached thumbnail from media table
+    // If not available, we'll fetch it from Google Drive's files.get API
     
     const { data: mediaFile, error: mediaError } = await supabase
       .from('media')
-      .select('id, tenant_id, drive_file_id')
+      .select('id, tenant_id, drive_file_id, drive_thumbnail_link, mime_type')
       .eq('drive_file_id', driveFileId)
       .eq('tenant_id', tenantId)
       .single();
@@ -221,16 +223,54 @@ serve(async (req: Request) => {
     const requestedSize = url.searchParams.get('size');
     console.log('[GD_THUMB] REQUESTED_SIZE:', requestedSize);
     
-    // Fetch from Google Drive
-    // NOTE: Google Drive API /drive/v3/files/{fileId}?alt=media returns full resolution
-    // Query parameter ?size is NOT supported by Google Drive API
-    // To implement true thumbnails, we would need to:
-    // 1. Use a CDN with on-the-fly resizing (Cloudinary, Imgix, etc.)
-    // 2. Pre-generate thumbnails when files are uploaded
-    // 3. Resize server-side (requires image processing library)
-    const driveUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
-    const driveResponse = await fetch(driveUrl, {
-      headers: { 'Authorization': `Bearer ${accessToken}` },
+    let fetchUrl: string;
+    let useThumbnail = false;
+    
+    // OPTIMIZATION: If a size is requested, try to use Google Drive's cached thumbnail
+    if (requestedSize) {
+      // If we have a cached thumbnail link from the media table, use it directly (no auth needed)
+      if (mediaFile.drive_thumbnail_link) {
+        console.log('[GD_THUMB] Using Google Drive cached thumbnail from database');
+        fetchUrl = mediaFile.drive_thumbnail_link;
+        useThumbnail = true;
+      } else {
+        // Thumbnail not cached - fetch metadata first to get thumbnailLink
+        // This is more efficient than downloading the full file
+        console.log('[GD_THUMB] Fetching metadata to get thumbnailLink...');
+        const metadataUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=thumbnailLink,mimeType`;
+        const metaResponse = await fetch(metadataUrl, {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+        
+        if (metaResponse.ok) {
+          const fileMetadata = await metaResponse.json();
+          if (fileMetadata.thumbnailLink) {
+            console.log('[GD_THUMB] Using Google Drive thumbnailLink from metadata');
+            fetchUrl = fileMetadata.thumbnailLink;
+            useThumbnail = true;
+          } else {
+            console.log('[GD_THUMB] No thumbnailLink available, fetching full image');
+            fetchUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
+          }
+        } else {
+          console.log('[GD_THUMB] Metadata fetch failed, fetching full image');
+          fetchUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
+        }
+      }
+    } else {
+      // No size requested - fetch full resolution image
+      console.log('[GD_THUMB] Using full-resolution image from Google Drive');
+      fetchUrl = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`;
+    }
+    
+    console.log('[GD_THUMB] FETCH_URL:', fetchUrl.substring(0, 100) + '...');
+    console.log('[GD_THUMB] USING_THUMBNAIL:', useThumbnail);
+    
+    // Fetch image from Google Drive
+    const driveResponse = await fetch(fetchUrl, {
+      headers: useThumbnail 
+        ? {} // Thumbnail link is public, no auth needed
+        : { 'Authorization': `Bearer ${accessToken}` }, // Full image needs auth
     });
     
     console.log('[GD_THUMB] DRIVE_RESPONSE_STATUS:', driveResponse.status);
@@ -254,15 +294,8 @@ serve(async (req: Request) => {
       return new Response('Empty image data received', { status: 502, headers: corsHeaders });
     }
     
-    // TODO: Implement thumbnail resizing
-    // Current limitation: Returns full-resolution image (~2-5 MB)
-    // To fix:
-    // 1. Add image processing library to Deno function (e.g., ImageMagick via deno-imagemagick)
-    // 2. Or use HTTP transformation proxy (CDN)
-    // 3. Or store pre-generated thumbnails in Supabase Storage
-    // For now, browser will cache the full image for 5 minutes
-    
     console.log('[GD_THUMB] SUCCESS');
+    console.log('[GD_THUMB] Returned image type:', useThumbnail ? 'THUMBNAIL' : 'FULL_RESOLUTION', 'Size:', imageBuffer.byteLength, 'bytes');
     
     // Return buffered image with CORS headers
     return new Response(imageBuffer, {

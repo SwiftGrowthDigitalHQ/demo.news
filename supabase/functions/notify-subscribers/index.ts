@@ -385,11 +385,6 @@ function extractGoogleDriveFileId(url: string): string | null {
 function convertToPublicImageUrl(url: string): string {
   if (!url) return '';
   
-  // Already a thumbnail URL, return as-is
-  if (url.includes('drive.google.com/thumbnail')) {
-    return url;
-  }
-  
   // If it's a Supabase Storage URL or regular HTTPS (non-Drive), return as-is
   if (url.includes('.supabase.co/storage/') || 
       (!url.includes('drive.google.com') && url.startsWith('https://'))) {
@@ -400,9 +395,10 @@ function convertToPublicImageUrl(url: string): string {
   const driveFileId = extractGoogleDriveFileId(url);
   
   if (driveFileId) {
-    // Convert to Google Drive thumbnail URL which is browser-renderable
-    // Format: https://drive.google.com/thumbnail?id=FILE_ID&sz=w1600
-    return `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1600`;
+    // Convert to media-proxy endpoint which handles ORB/CORS properly
+    // media-proxy returns Google Drive images server-side authenticated
+    const supabaseUrl = Deno.env.get('SITE_URL') || 'https://app.sangtx.com';
+    return `${supabaseUrl}/functions/v1/media-proxy/${driveFileId}`;
   }
   
   // Return original URL (external image or non-Drive URL)

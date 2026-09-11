@@ -156,9 +156,10 @@ serve(async (req: Request) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
     // Try to find file in media table first
+    // OPTIMIZATION: Also fetch drive_thumbnail_link if available
     const { data: media } = await supabase
       .from('media')
-      .select('tenant_id, mime_type')
+      .select('tenant_id, mime_type, drive_thumbnail_link')
       .eq('drive_file_id', fileId)
       .eq('deleted_at', null)
       .single();
@@ -292,13 +293,29 @@ serve(async (req: Request) => {
     }
     
     // Fetch file from Google Drive
+    // OPTIMIZATION: Use Google Drive's cached thumbnail if available and file is for logo/footer use
     console.log('[Media Proxy] Fetching from Drive API with auth...');
+    
+    // Determine if we should use thumbnail
+    // Thumbnails are much smaller and already cached by Google
+    // Safe to use for logo/footer display contexts
+    const usesThumbnail = media?.drive_thumbnail_link && (
+      // Check if this file is used in non-article contexts (logo, favicon, footer)
+      url.searchParams.has('thumbnail') // Explicit request for thumbnail
+    );
+    
+    const fetchUrl = usesThumbnail && media?.drive_thumbnail_link
+      ? media.drive_thumbnail_link
+      : `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+    
+    console.log('[Media Proxy] Using', usesThumbnail ? 'THUMBNAIL' : 'FULL_RESOLUTION', 'from:', fetchUrl.substring(0, 80));
+    
     const driveResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      fetchUrl,
       {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
+        headers: usesThumbnail && media?.drive_thumbnail_link 
+          ? {} // Thumbnail link is public, no auth needed
+          : { 'Authorization': `Bearer ${accessToken}` }, // Full image needs auth
       }
     );
     
