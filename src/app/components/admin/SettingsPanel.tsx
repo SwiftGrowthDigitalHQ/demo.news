@@ -161,12 +161,12 @@ function SettingRow({ label, desc, children }: { label: string; desc?: string; c
   const isMobile = useIsMobile();
   
   return (
-    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 py-4 border-b" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
+    <div className="flex flex-col gap-2 md:gap-4 py-4 border-b md:flex-row md:items-start md:justify-between" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
       <div className="flex-1 min-w-0">
-        <div style={{ fontSize: 13, fontWeight: 500, color: '#0f172a' }}>{label}</div>
+        <div style={{ fontSize: isMobile ? 13 : 13, fontWeight: 500, color: '#0f172a' }}>{label}</div>
         {desc && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{desc}</div>}
       </div>
-      <div style={{ flexShrink: 0, width: isMobile ? '100%' : 'auto', minWidth: isMobile ? 'auto' : 240 }} className="md:text-right">
+      <div className="w-full md:w-auto md:min-w-[240px] md:text-right">
         {children}
       </div>
     </div>
@@ -252,6 +252,7 @@ export function SettingsPanel() {
   const [activeTab, setActiveTab] = useState('website');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const isMobile = useIsMobile();
   const [siteName, setSiteName] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [faviconUrl, setFaviconUrl] = useState('');
@@ -445,26 +446,54 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 md:gap-6 p-3 md:p-6">
-      <div className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible min-w-0 md:flex-shrink-0 md:w-[180px]">
+    <div className="flex flex-col md:flex-row gap-0 md:gap-6 min-h-screen md:p-6 p-0 pb-20 md:pb-0">
+      {/* Tabs - Desktop sidebar or Mobile bottom nav */}
+      <div className={`${
+        isMobile 
+          ? 'fixed bottom-0 left-0 right-0 border-t bg-white flex flex-row justify-around px-0 py-2 z-40' 
+          : 'flex flex-col gap-1 flex-shrink-0 w-[180px]'
+      }`}
+        style={isMobile ? { borderColor: 'rgba(15,23,42,0.08)' } : {}}
+      >
         {tabs.map(item => {
           const Icon = item.icon;
           return (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className="flex items-center gap-2 md:gap-3 rounded-lg px-2 md:px-3 py-2 md:py-0 whitespace-nowrap md:whitespace-normal flex-shrink-0 md:flex-shrink-1"
-              style={{ height: 40, fontSize: 13, background: activeTab === item.id ? '#fef2f2' : 'transparent', color: activeTab === item.id ? '#dc2626' : '#64748b', border: 'none', cursor: 'pointer', fontWeight: activeTab === item.id ? 600 : 400, textAlign: 'left' }}
+              className={`${
+                isMobile
+                  ? 'flex flex-col items-center justify-center py-2 px-1 flex-1 text-center'
+                  : 'flex items-center gap-3 rounded-lg px-3 py-2 whitespace-normal'
+              } transition-colors`}
+              style={{ 
+                height: isMobile ? 60 : 40,
+                fontSize: isMobile ? 11 : 13, 
+                background: activeTab === item.id ? (isMobile ? '#fef2f2' : '#fef2f2') : 'transparent',
+                color: activeTab === item.id ? '#dc2626' : '#64748b',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: activeTab === item.id ? 600 : 400,
+                textAlign: 'center',
+                borderRadius: isMobile ? 0 : 8,
+                borderTop: isMobile && activeTab === item.id ? '2px solid #dc2626' : 'none',
+              }}
             >
-              <Icon size={15} />
-              <span className="hidden md:inline">{item.label}</span>
-              <span className="md:hidden text-xs">{item.label.split(' ')[0]}</span>
+              <Icon size={isMobile ? 20 : 15} />
+              <span className={isMobile ? 'text-xs leading-tight' : ''}>{isMobile ? item.label.split(' ')[0] : item.label}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="flex-1 rounded-xl border p-6 min-w-0" style={{ background: '#fff', borderColor: 'rgba(15,23,42,0.08)' }}>
+      {/* Content Area */}
+      <div className={`flex-1 rounded-xl border min-w-0 ${isMobile ? 'mx-0 mb-2 rounded-none border-0' : ''}`}
+        style={{ 
+          background: '#fff', 
+          borderColor: isMobile ? 'transparent' : 'rgba(15,23,42,0.08)',
+          padding: isMobile ? '16px 12px' : '24px',
+        }}
+      >
         {activeTab === 'website' && (
           <>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Website Settings</h3>
@@ -474,11 +503,11 @@ export function SettingsPanel() {
             {/* Logo with Preview */}
             <SettingRow label="Logo" desc="Used in the header (supports Google Drive, Supabase Storage, or direct URLs)">
               <div style={{ width: '100%' }}>
-                <div style={{ display: 'flex', flexDirection: 'row', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                  <input type="text" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://drive.google.com/file/d/..." style={{ flex: 1, minWidth: 200, padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+                  <input type="text" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://drive.google.com/file/d/..." style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }} />
                   <label style={{ cursor: logoUploading ? 'not-allowed' : 'pointer' }}>
                     <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={logoUploading} style={{ display: 'none' }} />
-                    <div style={{ padding: '8px 12px', borderRadius: 6, background: logoUploading ? '#f1f5f9' : '#dc2626', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, opacity: logoUploading ? 0.5 : 1 }}>
+                    <div style={{ padding: '8px 12px', borderRadius: 6, background: logoUploading ? '#f1f5f9' : '#dc2626', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: logoUploading ? 0.5 : 1, width: '100%' }}>
                       <Upload size={16} />
                       {logoUploading ? 'Uploading...' : 'Upload'}
                     </div>
@@ -502,11 +531,11 @@ export function SettingsPanel() {
             {/* Favicon with Preview */}
             <SettingRow label="Favicon" desc="Browser tab icon (supports Google Drive, Supabase Storage, or direct URLs)">
               <div style={{ width: '100%' }}>
-                <div style={{ display: 'flex', flexDirection: 'row', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                  <input type="text" value={faviconUrl} onChange={(e) => setFaviconUrl(e.target.value)} placeholder="https://drive.google.com/file/d/..." style={{ flex: 1, minWidth: 200, padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+                  <input type="text" value={faviconUrl} onChange={(e) => setFaviconUrl(e.target.value)} placeholder="https://drive.google.com/file/d/..." style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }} />
                   <label style={{ cursor: faviconUploading ? 'not-allowed' : 'pointer' }}>
                     <input type="file" accept="image/*" onChange={handleFaviconUpload} disabled={faviconUploading} style={{ display: 'none' }} />
-                    <div style={{ padding: '8px 12px', borderRadius: 6, background: faviconUploading ? '#f1f5f9' : '#dc2626', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, opacity: faviconUploading ? 0.5 : 1 }}>
+                    <div style={{ padding: '8px 12px', borderRadius: 6, background: faviconUploading ? '#f1f5f9' : '#dc2626', color: '#fff', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: faviconUploading ? 0.5 : 1, width: '100%' }}>
                       <Upload size={16} />
                       {faviconUploading ? 'Uploading...' : 'Upload'}
                     </div>
@@ -616,16 +645,16 @@ export function SettingsPanel() {
           <>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Backup & Restore</h3>
             <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>Manage database and file backups</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4 mb-6">
               {[
                 { label: 'Last Backup', value: '31 May 2026, 3:00 AM', color: '#16a34a' },
                 { label: 'Backup Size', value: '2.4 GB', color: '#0891b2' },
                 { label: 'Next Scheduled', value: '1 Jun 2026, 3:00 AM', color: '#7c3aed' },
                 { label: 'Backup Location', value: 'AWS S3 (ap-south-1)', color: '#f59e0b' },
               ].map((item, index) => (
-                <div key={index} className="rounded-lg p-4" style={{ background: '#f8fafc' }}>
+                <div key={index} className="rounded-lg p-3 md:p-4" style={{ background: '#f8fafc' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: item.color }}>{item.value}</div>
-                  <div style={{ fontSize: 11, color: '#94a3b8' }}>{item.label}</div>
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{item.label}</div>
                 </div>
               ))}
             </div>
@@ -638,8 +667,8 @@ export function SettingsPanel() {
           </>
         )}
 
-        <div className="flex justify-end mt-6 pt-4 border-t" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
-          <button onClick={() => void save()} disabled={saving} className="flex items-center gap-2" style={{ padding: '8px 24px', borderRadius: 8, background: '#dc2626', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+        <div className="flex justify-end mt-6 pt-4 border-t w-full" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
+          <button onClick={() => void save()} disabled={saving} className="flex items-center gap-2 whitespace-nowrap" style={{ padding: '8px 24px', borderRadius: 8, background: '#dc2626', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
             <Save size={15} /> {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>

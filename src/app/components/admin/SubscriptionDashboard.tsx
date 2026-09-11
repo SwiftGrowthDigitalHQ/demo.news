@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../lib/auth';
 import { useI18n, type TranslationKey } from '../../lib/i18n';
+import { useIsMobile } from '../ui/use-mobile';
 import {
   PLANS,
   loadMyTenant,
@@ -911,6 +912,7 @@ function InfoRow({ label, value, valueColor }: { label: string; value: string; v
 export function SubscriptionDashboard() {
   const { t } = useI18n();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   const [tenant,   setTenant]   = useState<TenantRow | null>(null);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
@@ -1083,7 +1085,7 @@ export function SubscriptionDashboard() {
           <p style={{ margin: '0 0 16px', fontSize: 14, color: '#475569', lineHeight: 1.6 }}>
             {t('sub.trialExpired')} {t('sub.paymentDueMsg')}
           </p>
-          <PaymentForm tenant={tenant} config={config} onSuccess={() => void load()} />
+          {lastPayment?.status !== 'REJECTED' && <PaymentForm tenant={tenant} config={config} onSuccess={() => void load()} />}
         </div>
       )}
 
@@ -1092,7 +1094,7 @@ export function SubscriptionDashboard() {
           <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#c2410c', lineHeight: 1.5 }}>
             ⚠️ {t('sub.pastDueMsg')}
           </div>
-          <PaymentForm tenant={tenant} config={config} onSuccess={() => void load()} />
+          {lastPayment?.status !== 'REJECTED' && <PaymentForm tenant={tenant} config={config} onSuccess={() => void load()} />}
         </div>
       )}
 
@@ -1101,7 +1103,7 @@ export function SubscriptionDashboard() {
           <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#991b1b', lineHeight: 1.5 }}>
             🔒 {t('sub.expiredMsg')}
           </div>
-          <PaymentForm tenant={tenant} config={config} onSuccess={() => void load()} />
+          {lastPayment?.status !== 'REJECTED' && <PaymentForm tenant={tenant} config={config} onSuccess={() => void load()} />}
         </div>
       )}
 

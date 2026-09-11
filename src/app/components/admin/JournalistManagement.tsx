@@ -72,10 +72,10 @@ export function JournalistManagement() {
   useEffect(() => { reset(); }, [search]);
 
   const stats = [
-    { label: 'Total Reporters', value: String(items.length) },
-    { label: 'Active', value: String(items.filter(item => item.status === 'active').length) },
-    { label: 'Inactive', value: String(items.filter(item => item.status !== 'active').length) },
-    { label: 'Pending Approvals', value: String(items.filter(item => item.status === 'pending').length) },
+    { label: 'Total\nReporters', value: String(items.length), icon: '👥', color: '#3b82f6' },
+    { label: 'Active', value: String(items.filter(item => item.status === 'active').length), icon: '✓', color: '#10b981' },
+    { label: 'Inactive', value: String(items.filter(item => item.status !== 'active').length), icon: '−', color: '#ef4444' },
+    { label: 'Pending\nApproval', value: String(items.filter(item => item.status === 'pending').length), icon: '⏱', color: '#f97316' },
   ];
 
   const edit = (item?: (typeof items)[number]) => {
@@ -155,26 +155,31 @@ export function JournalistManagement() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="grid grid-cols-4 gap-4">
-        {stats.map(item => (
-          <Card key={item.label}>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-gray-900">{item.value}</div>
-              <div className="text-sm text-gray-500">{item.label}</div>
+    <div className="flex flex-col gap-4 md:gap-6 p-3 md:p-6">
+      {/* Stats Grid - Mobile responsive 2x2 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        {stats.map((item, idx) => (
+          <Card key={item.label} className="border border-gray-200">
+            <CardContent className="pt-4 md:pt-6 pb-4 md:pb-6">
+              <div className="flex flex-col items-center text-center gap-1 md:gap-2">
+                <div style={{ fontSize: '24px', marginBottom: '4px' }}>{item.icon}</div>
+                <div className="text-xl md:text-2xl font-bold text-gray-900">{item.value}</div>
+                <div className="text-xs md:text-sm text-gray-500 whitespace-pre-line">{item.label}</div>
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-2 rounded-lg px-3" style={{ background: '#fff', border: '1px solid rgba(15,23,42,0.08)', height: 36 }}>
+      {/* Search and Add Reporter - Full width on mobile */}
+      <div className="flex flex-col gap-2 md:gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-2 rounded-lg px-3 flex-1" style={{ background: '#fff', border: '1px solid rgba(15,23,42,0.08)', height: 36 }}>
           <Search size={14} style={{ color: '#94a3b8' }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search journalists..." style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: '#0f172a', width: 200 }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reporters..." style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: '#0f172a', width: '100%' }} />
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-red-600 hover:bg-red-700" onClick={() => edit()}>
+            <Button className="bg-red-600 hover:bg-red-700 w-full md:w-auto" onClick={() => edit()}>
               <Plus size={15} /> Add Reporter
             </Button>
           </DialogTrigger>
@@ -193,58 +198,109 @@ export function JournalistManagement() {
             </div>
             <Textarea value={form.bio} onChange={event => setForm(current => ({ ...current, bio: event.target.value }))} placeholder="Bio" className="min-h-28" />
             <Textarea value={form.social_links} onChange={event => setForm(current => ({ ...current, social_links: event.target.value }))} placeholder='Social links JSON, e.g. {"twitter":"https://x.com/..." }' className="min-h-28" />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button className="bg-red-600 hover:bg-red-700" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Reporter'}</Button>
+            <DialogFooter className="flex gap-2 flex-col-reverse md:flex-row">
+              <Button variant="outline" onClick={() => setOpen(false)} className="w-full md:w-auto">Cancel</Button>
+              <Button className="bg-red-600 hover:bg-red-700 w-full md:w-auto" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Reporter'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
-        {paginate(filtered).map(item => (
-          <div key={item.id} className="rounded-xl border p-5" style={{ background: '#fff', borderColor: 'rgba(15,23,42,0.08)' }}>
-            <div className="flex items-start gap-4">
-              {item.avatar_url ? (
-                <img src={item.avatar_url} alt={item.full_name} className="rounded-xl flex-shrink-0 object-cover" style={{ width: 52, height: 52 }} />
-              ) : (
-                <div className="rounded-xl flex items-center justify-center flex-shrink-0" style={{ width: 52, height: 52, background: '#dc2626', color: '#fff', fontSize: 16, fontWeight: 700 }}>
-                  {item.full_name.split(' ').map(part => part[0]).join('').slice(0, 2)}
-                </div>
-              )}
-              <div className="flex-1">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a' }}>{item.full_name}</div>
-                    <div style={{ fontSize: 12, color: '#64748b' }}>{item.specialty ?? 'Reporter'}</div>
-                    <span style={{ fontSize: 10, background: '#fef2f2', color: '#dc2626', padding: '1px 6px', borderRadius: 99, fontWeight: 500, display: 'inline-block', marginTop: 4 }}>{item.slug}</span>
+      {/* Reporters Grid - Responsive layout */}
+      {filtered.length === 0 ? (
+        <div className="rounded-xl border p-6 md:p-10 text-center" style={{ background: '#fff', borderColor: 'rgba(15,23,42,0.08)' }}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>👤</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#0f172a', marginBottom: 4 }}>No reporters yet</div>
+          <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>Add your reporters and contributors to start managing your team.</div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-red-600 hover:bg-red-700" onClick={() => edit()}>
+                <Plus size={15} /> Add Reporter
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>{form.id ? 'Edit Reporter' : 'Create Reporter'}</DialogTitle>
+                <DialogDescription>Persist reporter profile data to Supabase.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-2 md:grid-cols-2">
+                <Input value={form.full_name} onChange={event => setForm(current => ({ ...current, full_name: event.target.value, slug: current._slugTouched ? current.slug : slugify(event.target.value) }))} placeholder="Reporter name" />
+                <Input value={form.slug} onChange={event => setForm(current => ({ ...current, slug: event.target.value, _slugTouched: true }))} placeholder="Slug (auto-generated)" />
+                <Input value={form.specialty} onChange={event => setForm(current => ({ ...current, specialty: event.target.value }))} placeholder="Specialty" />
+                <Input value={form.avatar_url} onChange={event => setForm(current => ({ ...current, avatar_url: event.target.value }))} placeholder="Avatar URL" />
+                <Input value={form.status} onChange={event => setForm(current => ({ ...current, status: event.target.value }))} placeholder="Status" />
+                <Input value={form.user_id} onChange={event => setForm(current => ({ ...current, user_id: event.target.value }))} placeholder="Linked user ID" />
+              </div>
+              <Textarea value={form.bio} onChange={event => setForm(current => ({ ...current, bio: event.target.value }))} placeholder="Bio" className="min-h-28" />
+              <Textarea value={form.social_links} onChange={event => setForm(current => ({ ...current, social_links: event.target.value }))} placeholder='Social links JSON, e.g. {"twitter":"https://x.com/..." }' className="min-h-28" />
+              <DialogFooter className="flex gap-2 flex-col-reverse md:flex-row">
+                <Button variant="outline" onClick={() => setOpen(false)} className="w-full md:w-auto">Cancel</Button>
+                <Button className="bg-red-600 hover:bg-red-700 w-full md:w-auto" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Reporter'}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          {paginate(filtered).map(item => (
+            <div key={item.id} className="rounded-lg md:rounded-xl border p-4 md:p-5" style={{ background: '#fff', borderColor: 'rgba(15,23,42,0.08)' }}>
+              <div className="flex items-start gap-3 md:gap-4">
+                {item.avatar_url ? (
+                  <img src={item.avatar_url} alt={item.full_name} className="rounded-lg flex-shrink-0 object-cover" style={{ width: 48, height: 48 }} />
+                ) : (
+                  <div className="rounded-lg flex items-center justify-center flex-shrink-0" style={{ width: 48, height: 48, background: '#dc2626', color: '#fff', fontSize: 14, fontWeight: 700 }}>
+                    {item.full_name.split(' ').map(part => part[0]).join('').slice(0, 2)}
                   </div>
-                  <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 99, fontWeight: 500, background: item.status === 'active' ? '#f0fdf4' : '#f8fafc', color: item.status === 'active' ? '#16a34a' : '#94a3b8' }}>
-                    {item.status === 'active' ? '● Active' : '○ Inactive'}
-                  </span>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }} className="truncate">{item.full_name}</div>
+                      <div style={{ fontSize: '12px', color: '#64748b' }} className="truncate">{item.specialty ?? 'Reporter'}</div>
+                      <span style={{ fontSize: '10px', background: '#fef2f2', color: '#dc2626', padding: '2px 8px', borderRadius: 99, fontWeight: 500, display: 'inline-block', marginTop: 3 }}>{item.slug}</span>
+                    </div>
+                    <span style={{ fontSize: '10px', padding: '4px 8px', borderRadius: 99, fontWeight: 500, background: item.status === 'active' ? '#f0fdf4' : '#f8fafc', color: item.status === 'active' ? '#16a34a' : '#94a3b8', flexShrink: 0 }}>
+                      {item.status === 'active' ? '✓ Active' : '○ Inactive'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 md:mt-4 flex items-center justify-between border-t pt-3 md:pt-4" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
+                <div style={{ fontSize: '12px', color: '#64748b' }} className="truncate">{item.email ?? 'No linked user'}</div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button onClick={() => edit(item)} style={{ color: '#7c3aed', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }} title="Edit"><Edit2 size={14} /></button>
+                  <button onClick={() => void remove(item)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }} title="Delete"><Trash2 size={14} /></button>
                 </div>
               </div>
             </div>
-
-            <div className="mt-4 flex items-center justify-between border-t pt-4" style={{ borderColor: 'rgba(15,23,42,0.06)' }}>
-              <div className="text-sm text-gray-500">{item.email ?? 'No linked user'}</div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => edit(item)} style={{ color: '#7c3aed', background: 'none', border: 'none', cursor: 'pointer' }}><Edit2 size={15} /></button>
-                <button onClick={() => void remove(item)} style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={15} /></button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <Pagination total={filtered.length} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} />
 
-      <div className="rounded-xl border p-5" style={{ background: '#fff', borderColor: 'rgba(15,23,42,0.08)' }}>
-        <h3 style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', marginBottom: 16 }}>Approval Queue</h3>
-        <div className="space-y-3 text-sm text-gray-600">
-          <div className="rounded-xl border border-gray-200 p-4">Reporter profiles are fully editable and persist to Supabase.</div>
-          <div className="rounded-xl border border-gray-200 p-4">Use the reporter slug for author pages and article attribution.</div>
-          <div className="rounded-xl border border-gray-200 p-4">Profile updates are logged in the audit trail.</div>
+      {/* Tips & Information Section */}
+      <div className="rounded-lg md:rounded-xl border p-4 md:p-5" style={{ background: '#fff', borderColor: 'rgba(15,23,42,0.08)' }}>
+        <div className="flex items-start gap-3 md:gap-4">
+          <div style={{ fontSize: '20px', flexShrink: 0 }}>ℹ️</div>
+          <div className="flex-1 min-w-0">
+            <h3 style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: 12 }}>Tips & Information</h3>
+            <div className="space-y-2 md:space-y-3 text-sm text-gray-600">
+              <div className="flex items-start gap-2">
+                <span style={{ fontSize: '16px', marginRight: '4px' }}>✏️</span>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Reporter profiles are fully editable and persist to Supabase.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span style={{ fontSize: '16px', marginRight: '4px' }}>🔗</span>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Use the reporter slug for author pages and article attribution.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span style={{ fontSize: '16px', marginRight: '4px' }}>📊</span>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Profile updates are logged in the audit trail.</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

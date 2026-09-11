@@ -213,6 +213,9 @@ export function AdminHeader({ section, darkMode, onToggleDark, onToggleNotificat
               <span />
             </DialogTrigger>
             <DialogContent className="sm:max-w-sm" side="bottom" align="end">
+              <div style={{ display: 'none' }}>
+                <h2>Profile Menu</h2>
+              </div>
               <div className="p-4">
                 <div className="flex items-center gap-3 mb-4">
                   {tenantLogoUrl ? (

@@ -316,7 +316,7 @@ export function PluginManagementRefined() {
                 } as React.CSSProperties}
               />
             </div>
-            <div className="flex items-center gap-1 md:gap-2 overflow-x-auto md:overflow-visible -mx-3 md:mx-0 px-3 md:px-0">
+            <div className="flex items-center gap-1 md:gap-2 overflow-x-auto -mx-3 md:mx-0 px-3 md:px-0 pb-1 md:pb-0">
               {(['all', 'installed', 'active', 'updates'] as FilterType[]).map(type => (
                 <button
                   key={type}
@@ -333,7 +333,7 @@ export function PluginManagementRefined() {
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-2 w-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
             <div className="relative flex-1">
               <select
                 value={categoryFilter}
@@ -405,7 +405,7 @@ export function PluginManagementRefined() {
 
         {/* Plugin Grid */}
         {viewMode === 'grid' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {filteredPlugins.map((plugin, index) => (
               <PluginCard
                 key={plugin.key}
@@ -484,13 +484,60 @@ export function PluginManagementRefined() {
 
         @media (max-width: 768px) {
           .plugin-page-container {
+            padding: 20px 16px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .plugin-page-container {
             padding: 16px 12px;
           }
         }
 
-        @media (max-width: 414px) {
+        @media (max-width: 375px) {
           .plugin-page-container {
-            padding: 12px 8px;
+            padding: 12px 10px;
+          }
+        }
+
+        .plugin-card {
+          border: 1px solid;
+          border-radius: 12px;
+          padding: 20px;
+          transition: all 0.3s ease;
+          animation: slide-up 0.4s ease-out backwards;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .plugin-card:hover {
+          border-color: var(--primary);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        @media (max-width: 640px) {
+          .plugin-card {
+            padding: 16px;
+            border-radius: 10px;
+          }
+        }
+
+        .plugin-icon-container {
+          width: 48px;
+          height: 48px;
+          border: 1px solid;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        @media (max-width: 640px) {
+          .plugin-icon-container {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
           }
         }
 
@@ -538,6 +585,34 @@ export function PluginManagementRefined() {
 
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
           background: var(--muted-foreground);
+        }
+
+        .drawer-slide-in {
+          animation: drawer-slide-in 0.3s ease-out;
+        }
+
+        @keyframes drawer-slide-in {
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .drawer-slide-in {
+            animation: drawer-slide-in-mobile 0.3s ease-out;
+          }
+
+          @keyframes drawer-slide-in-mobile {
+            from {
+              transform: translateY(100%);
+            }
+            to {
+              transform: translateY(0);
+            }
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -710,110 +785,208 @@ function PluginCard({
   );
 }
 
-// List View - Compact implementation
+// List View - Compact implementation with mobile responsiveness
 function PluginListView({ plugins, getStatus, onToggle, onDetails }: any) {
   return (
-    <div className="border rounded-xl overflow-hidden animate-fade-in" style={{ borderColor: 'var(--border)', background: 'var(--card)' }}>
-      <table className="w-full">
-        <thead>
-          <tr className="border-b" style={{ borderColor: 'var(--border)', background: 'var(--muted)' }}>
-            <th className="text-left px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Plugin</th>
-            <th className="text-left px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Category</th>
-            <th className="text-left px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Status</th>
-            <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {plugins.map((plugin: Plugin) => {
-            const status = getStatus(plugin);
-            const IconComponent = getPluginIcon(plugin.key);
-            const isActive = status === 'active';
-            
-            return (
-              <tr key={plugin.key} className="border-b transition-colors hover:bg-slate-50 dark:hover:bg-slate-900" style={{ borderColor: 'var(--border)' }}>
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-10 h-10 rounded-lg border flex items-center justify-center flex-shrink-0"
-                      style={{ borderColor: 'var(--border)', background: 'var(--background)' }}
-                    >
-                      <IconComponent size={20} className="text-slate-700 dark:text-slate-300" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{plugin.name}</div>
-                      <div className="text-xs mt-0.5 truncate" style={{ color: 'var(--muted-foreground)' }}>{plugin.description}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-5 py-4 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-                  {PLUGIN_CATEGORIES.find(c => c.value === plugin.category)?.label}
-                </td>
-                <td className="px-5 py-4">
-                  {isActive && (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 dark:text-green-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-400" />
-                      Active
-                    </span>
-                  )}
-                  {status === 'inactive' && (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                      Inactive
-                    </span>
-                  )}
-                  {status === 'available' && (
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      {plugin.isImplemented ? 'Available' : 'Coming soon'}
-                    </span>
-                  )}
-                </td>
-                <td className="px-5 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    {plugin.isImplemented ? (
-                      <button
-                        onClick={() => onToggle(plugin)}
-                        className="px-3 py-1.5 rounded text-xs font-medium transition-all hover:shadow-sm"
-                        style={{
-                          background: isActive ? 'var(--muted)' : 'var(--primary)',
-                          color: isActive ? 'var(--foreground)' : '#fff',
-                        }}
+    <div className="space-y-2 md:border md:rounded-xl md:overflow-hidden md:animate-fade-in" 
+      style={{ borderColor: 'var(--border)', background: 'var(--card)' }}>
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b" style={{ borderColor: 'var(--border)', background: 'var(--muted)' }}>
+              <th className="text-left px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Plugin</th>
+              <th className="text-left px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Category</th>
+              <th className="text-left px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Status</th>
+              <th className="text-right px-5 py-3 text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {plugins.map((plugin: Plugin) => {
+              const status = getStatus(plugin);
+              const IconComponent = getPluginIcon(plugin.key);
+              const isActive = status === 'active';
+              
+              return (
+                <tr key={plugin.key} className="border-b transition-colors hover:bg-slate-50 dark:hover:bg-slate-900" style={{ borderColor: 'var(--border)' }}>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-10 h-10 rounded-lg border flex items-center justify-center flex-shrink-0"
+                        style={{ borderColor: 'var(--border)', background: 'var(--background)' }}
                       >
-                        {isActive ? 'Disable' : 'Enable'}
-                      </button>
-                    ) : (
-                      <button
-                        disabled
-                        className="px-3 py-1.5 rounded text-xs font-medium cursor-not-allowed"
-                        style={{
-                          background: '#8B4513',
-                          color: '#ffffff',
-                          opacity: 0.9,
-                          border: 'none',
-                        }}
-                        title="This plugin is under development"
-                      >
-                        Coming Soon
-                      </button>
+                        <IconComponent size={20} className="text-slate-700 dark:text-slate-300" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{plugin.name}</div>
+                        <div className="text-xs mt-0.5 truncate" style={{ color: 'var(--muted-foreground)' }}>{plugin.description}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                    {PLUGIN_CATEGORIES.find(c => c.value === plugin.category)?.label}
+                  </td>
+                  <td className="px-5 py-4">
+                    {isActive && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 dark:text-green-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+                        Active
+                      </span>
                     )}
+                    {status === 'inactive' && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                        Inactive
+                      </span>
+                    )}
+                    {status === 'available' && (
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {plugin.isImplemented ? 'Available' : 'Coming soon'}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {plugin.isImplemented ? (
+                        <button
+                          onClick={() => onToggle(plugin)}
+                          className="px-3 py-1.5 rounded text-xs font-medium transition-all hover:shadow-sm"
+                          style={{
+                            background: isActive ? 'var(--muted)' : 'var(--primary)',
+                            color: isActive ? 'var(--foreground)' : '#fff',
+                          }}
+                        >
+                          {isActive ? 'Disable' : 'Enable'}
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="px-3 py-1.5 rounded text-xs font-medium cursor-not-allowed"
+                          style={{
+                            background: '#8B4513',
+                            color: '#ffffff',
+                            opacity: 0.9,
+                            border: 'none',
+                          }}
+                          title="This plugin is under development"
+                        >
+                          Coming Soon
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onDetails(plugin)}
+                        className="p-1.5 rounded transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                        title="Details"
+                      >
+                        <Info className="w-4 h-4" style={{ color: 'var(--foreground)' }} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-2">
+        {plugins.map((plugin: Plugin, index: number) => {
+          const status = getStatus(plugin);
+          const IconComponent = getPluginIcon(plugin.key);
+          const isActive = status === 'active';
+
+          return (
+            <div
+              key={plugin.key}
+              className="border rounded-lg p-4 animate-fade-in"
+              style={{
+                borderColor: 'var(--border)',
+                background: 'var(--card)',
+                animationDelay: `${100 + index * 30}ms`,
+              }}
+            >
+              <div className="flex items-start gap-3 mb-3">
+                <div 
+                  className="w-10 h-10 rounded-lg border flex items-center justify-center flex-shrink-0"
+                  style={{ borderColor: 'var(--border)', background: 'var(--background)' }}
+                >
+                  <IconComponent size={20} className="text-slate-700 dark:text-slate-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold line-clamp-1" style={{ color: 'var(--foreground)' }}>{plugin.name}</div>
+                  <div className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--muted-foreground)' }}>{plugin.description}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mb-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                <span>{PLUGIN_CATEGORIES.find(c => c.value === plugin.category)?.label}</span>
+                {isActive && (
+                  <span className="inline-flex items-center gap-1 text-green-700 dark:text-green-400 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+                    Active
+                  </span>
+                )}
+                {status === 'inactive' && (
+                  <span className="inline-flex items-center gap-1 text-slate-600 dark:text-slate-400 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                    Inactive
+                  </span>
+                )}
+                {status === 'available' && (
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">
+                    {plugin.isImplemented ? 'Available' : 'Coming soon'}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                {plugin.isImplemented ? (
+                  <>
+                    <button
+                      onClick={() => onToggle(plugin)}
+                      className="flex-1 px-3 py-2 rounded text-sm font-medium transition-all hover:shadow-sm"
+                      style={{
+                        background: isActive ? 'var(--muted)' : 'var(--primary)',
+                        color: isActive ? 'var(--foreground)' : '#fff',
+                      }}
+                    >
+                      {isActive ? 'Disable' : 'Enable'}
+                    </button>
                     <button
                       onClick={() => onDetails(plugin)}
-                      className="p-1.5 rounded transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                      className="px-2 py-2 rounded border transition-colors"
+                      style={{ borderColor: 'var(--border)' }}
                       title="Details"
                     >
-                      <Info className="w-4 h-4" style={{ color: 'var(--foreground)' }} />
+                      <Info className="w-5 h-5" style={{ color: 'var(--foreground)' }} />
                     </button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  </>
+                ) : (
+                  <button
+                    disabled
+                    className="flex-1 px-3 py-2 rounded text-sm font-medium cursor-not-allowed"
+                    style={{
+                      background: '#8B4513',
+                      color: '#ffffff',
+                      opacity: 0.9,
+                      border: 'none',
+                    }}
+                    title="This plugin is under development"
+                  >
+                    Coming Soon
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-// Drawer - with smooth animation
+// Drawer - with smooth animation and mobile full-screen
 function PluginDrawer({ plugin, status, onClose, onToggle }: any) {
   const IconComponent = getPluginIcon(plugin.key);
   const isActive = status === 'active';
@@ -826,30 +999,30 @@ function PluginDrawer({ plugin, status, onClose, onToggle }: any) {
       />
       
       <div 
-        className="fixed right-0 top-0 h-full w-full max-w-md shadow-2xl z-50 overflow-y-auto drawer-slide-in"
+        className="fixed right-0 top-0 h-full w-full md:max-w-md md:shadow-2xl z-50 overflow-y-auto drawer-slide-in"
         style={{ background: 'var(--background)' }}
       >
-        <div className="p-6">
-          <div className="flex items-start justify-between mb-6">
-            <h2 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+        <div className="p-4 md:p-6">
+          <div className="flex items-start justify-between mb-4 md:mb-6">
+            <h2 className="text-base md:text-lg font-semibold pr-2" style={{ color: 'var(--foreground)' }}>
               Plugin Details
             </h2>
             <button
               onClick={onClose}
-              className="p-1 rounded transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-1 rounded transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 flex-shrink-0"
             >
               <X className="w-5 h-5" style={{ color: 'var(--foreground)' }} />
             </button>
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4 md:mb-6">
             <div 
-              className="w-16 h-16 rounded-xl border flex items-center justify-center mb-4"
+              className="w-12 h-12 md:w-16 md:h-16 rounded-xl border flex items-center justify-center mb-3 md:mb-4"
               style={{ borderColor: 'var(--border)', background: 'var(--card)' }}
             >
-              <IconComponent size={32} className="text-slate-700 dark:text-slate-300" />
+              <IconComponent size={28} className="text-slate-700 dark:text-slate-300 md:w-8 md:h-8" />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+            <h3 className="text-lg md:text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
               {plugin.name}
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
@@ -857,7 +1030,7 @@ function PluginDrawer({ plugin, status, onClose, onToggle }: any) {
             </p>
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4 md:mb-6">
             {isActive && (
               <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300">
                 <span className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-400 animate-pulse" />
@@ -878,8 +1051,8 @@ function PluginDrawer({ plugin, status, onClose, onToggle }: any) {
           </div>
 
           {plugin.features.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+            <div className="mb-4 md:mb-6">
+              <h4 className="text-sm font-semibold mb-2 md:mb-3" style={{ color: 'var(--foreground)' }}>
                 Features
               </h4>
               <ul className="space-y-2">
@@ -894,8 +1067,8 @@ function PluginDrawer({ plugin, status, onClose, onToggle }: any) {
           )}
 
           {plugin.requirements && plugin.requirements.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+            <div className="mb-4 md:mb-6">
+              <h4 className="text-sm font-semibold mb-2 md:mb-3" style={{ color: 'var(--foreground)' }}>
                 Requirements
               </h4>
               <ul className="space-y-2">
@@ -912,7 +1085,7 @@ function PluginDrawer({ plugin, status, onClose, onToggle }: any) {
           {plugin.isImplemented ? (
             <button
               onClick={onToggle}
-              className="w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:shadow-sm"
+              className="w-full px-4 py-2 md:py-2.5 rounded-lg text-sm font-medium transition-all hover:shadow-sm"
               style={{
                 background: isActive ? 'var(--muted)' : 'var(--primary)',
                 color: isActive ? 'var(--foreground)' : '#fff',
@@ -923,7 +1096,7 @@ function PluginDrawer({ plugin, status, onClose, onToggle }: any) {
           ) : (
             <button
               disabled
-              className="w-full px-4 py-2.5 rounded-lg text-sm font-medium cursor-not-allowed"
+              className="w-full px-4 py-2 md:py-2.5 rounded-lg text-sm font-medium cursor-not-allowed"
               style={{
                 background: '#8B4513',
                 color: '#ffffff',
@@ -936,8 +1109,8 @@ function PluginDrawer({ plugin, status, onClose, onToggle }: any) {
             </button>
           )}
 
-          <div className="mt-6 pt-6 border-t space-y-3" style={{ borderColor: 'var(--border)' }}>
-            <h4 className="text-sm font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+          <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t space-y-3" style={{ borderColor: 'var(--border)' }}>
+            <h4 className="text-sm font-semibold mb-2 md:mb-3" style={{ color: 'var(--foreground)' }}>
               Plugin Information
             </h4>
             <div className="flex justify-between text-sm">
