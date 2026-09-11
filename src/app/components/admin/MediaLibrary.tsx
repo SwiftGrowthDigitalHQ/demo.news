@@ -18,7 +18,7 @@ import {
   type DriveConnectionStatus
 } from '../../lib/googleDrive';
 import { useIsMobile } from '../ui/use-mobile';
-import { compressImage, formatFileSize, getMimeType } from '../../lib/imageCompression';
+import { compressImage, formatFileSize } from '../../lib/imageCompression';
 
 type MediaForm = {
   id?: string;
