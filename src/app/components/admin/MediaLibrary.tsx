@@ -18,6 +18,7 @@ import {
   type DriveConnectionStatus
 } from '../../lib/googleDrive';
 import { useIsMobile } from '../ui/use-mobile';
+import { compressImage, formatFileSize, getMimeType } from '../../lib/imageCompression';
 
 type MediaForm = {
   id?: string;
@@ -220,6 +221,46 @@ export function MediaLibrary() {
     if (!file) return;
     setSaving(true);
     try {
+      let fileToUpload = file;
+      let originalSize = file.size;
+      let compressedSize = file.size;
+      
+      // Compress image before upload
+      if (file.type.startsWith('image/')) {
+        try {
+          toast.loading('Optimizing image...');
+          
+          const compressionResult = await compressImage(file, {
+            onProgress: (progress) => {
+              if (progress > 0) {
+                // Update toast with progress
+              }
+            },
+          });
+          
+          fileToUpload = new File(
+            [compressionResult.blob],
+            file.name.replace(/\.[^.]+$/, `.${compressionResult.blob.type === 'image/png' ? 'png' : 'webp'}`),
+            { type: compressionResult.blob.type }
+          );
+          
+          originalSize = compressionResult.originalSize;
+          compressedSize = compressionResult.compressedSize;
+          
+          // Dismiss loading toast
+          toast.dismiss();
+          
+          // Show compression result
+          const ratio = compressionResult.compressionRatio.toFixed(1);
+          toast.info(`Optimized: ${formatFileSize(originalSize)} → ${formatFileSize(compressedSize)} (${ratio}% smaller)`);
+        } catch (compressionError) {
+          console.error('Image compression failed:', compressionError);
+          toast.dismiss();
+          toast.warning('Could not optimize image, uploading original: ' + (compressionError instanceof Error ? compressionError.message : 'Unknown error'));
+          // Continue with original file
+        }
+      }
+      
       let uploaded: any;
       
       if (storageProvider === 'google_drive') {
@@ -227,20 +268,35 @@ export function MediaLibrary() {
           throw new Error('Google Drive not connected. Please connect Google Drive first.');
         }
         
-        uploaded = await uploadToGoogleDrive(file);
+        toast.loading('Uploading optimized image...');
+        uploaded = await uploadToGoogleDrive(fileToUpload);
+        toast.dismiss();
+        
         await markAuditLog({
           action: 'google_drive.upload_success',
           entity_type: 'media',
           entity_id: uploaded.id,
-          metadata: { file_name: uploaded.file_name, drive_file_id: uploaded.drive_file_id },
+          metadata: { 
+            file_name: uploaded.file_name, 
+            drive_file_id: uploaded.drive_file_id,
+            original_size: originalSize,
+            compressed_size: compressedSize,
+          },
         });
       } else {
-        uploaded = await uploadAdminMedia(file);
+        toast.loading('Uploading optimized image...');
+        uploaded = await uploadAdminMedia(fileToUpload);
+        toast.dismiss();
+        
         await markAuditLog({
           action: 'media.uploaded',
           entity_type: 'media',
           entity_id: uploaded.id,
-          metadata: { file_name: uploaded.file_name },
+          metadata: { 
+            file_name: uploaded.file_name,
+            original_size: originalSize,
+            compressed_size: compressedSize,
+          },
         });
       }
       
@@ -248,6 +304,7 @@ export function MediaLibrary() {
       await load();
     } catch (uploadError) {
       console.error('Upload error:', uploadError);
+      toast.dismiss();
       toast.error(uploadError instanceof Error ? uploadError.message : 'Failed to upload media.');
     } finally {
       setSaving(false);

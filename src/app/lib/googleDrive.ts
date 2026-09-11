@@ -177,6 +177,10 @@ export async function disconnectGoogleDrive(): Promise<void> {
 
 /**
  * Upload file to Google Drive
+ * 
+ * Accepts pre-compressed File/Blob from browser-image-compression.
+ * File should already be optimized before calling this function.
+ * The Edge Function uploads the file as-is to Google Drive.
  */
 export async function uploadToGoogleDrive(
   file: File,
@@ -204,9 +208,9 @@ export async function uploadToGoogleDrive(
   // Validate file
   validateFile(file);
   
-  // Create form data
+  // Create form data with pre-compressed file
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', file); // Pre-compressed File from browser-image-compression
   formData.append('tenant_id', tenantId);
   if (options?.alt_text) formData.append('alt_text', options.alt_text);
   if (options?.caption) formData.append('caption', options.caption);
