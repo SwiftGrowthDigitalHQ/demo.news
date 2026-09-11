@@ -181,12 +181,24 @@ serve(async (req: Request) => {
       if (articles && articles.length > 0) {
         tenantId = articles[0].tenant_id;
       } else {
-        // Not in articles - check if it's in site_settings (logo or favicon)
-        const { data: settings } = await supabase
-          .from('site_settings')
-          .select('tenant_id, logo_url, theme_config')
+        // Not in articles - check if it's in advertisements (ad images)
+        const { data: ads } = await supabase
+          .from('advertisements')
+          .select('tenant_id')
+          .like('banner_url', `%${fileId}%`)
+          .eq('is_active', true)
           .is('deleted_at', null)
-          .limit(1000);
+          .limit(1);
+        
+        if (ads && ads.length > 0) {
+          tenantId = ads[0].tenant_id;
+        } else {
+          // Not in ads - check if it's in site_settings (logo or favicon)
+          const { data: settings } = await supabase
+            .from('site_settings')
+            .select('tenant_id, logo_url, theme_config')
+            .is('deleted_at', null)
+            .limit(1000);
         
         // Find tenant where this fileId is used in logo_url or favicon_url
         let foundTenantId: string | null = null;
@@ -234,6 +246,7 @@ serve(async (req: Request) => {
         }
         
         tenantId = foundTenantId;
+        }
       }
     }
     
