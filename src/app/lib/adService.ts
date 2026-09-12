@@ -139,14 +139,55 @@ export async function trackClick(adId: string): Promise<void> {
 }
 
 /**
- * Get ad analytics stats (admin)
+ * Get ad analytics stats for current tenant (admin dashboard)
+ * Aggregates real impression/click tracking data from advertisements table
+ * TENANT ISOLATION: Queries only advertisements for the authenticated tenant
+ * 
+ * @param tenantId - The tenant ID to get stats for
+ * @returns AdStats with real tracking data or null if error
  */
-export async function getAdStats(): Promise<AdStats | null> {
+export async function getAdStats(tenantId?: string): Promise<AdStats | null> {
   const client = getSupabaseClient();
   if (!client) return null;
-  const { data, error } = await client.rpc('get_ad_stats');
-  if (error) return null;
-  return data as AdStats;
+
+  // SECURITY: Require tenantId to prevent accidental cross-tenant data leakage
+  if (!tenantId) {
+    console.warn('[AdService] getAdStats called without tenantId - returning null for safety');
+    return null;
+  }
+
+  try {
+    // Query real tracking data from advertisements table
+    // Sum all impression_count and click_count for ads belonging to this tenant
+    const { data, error } = await client
+      .from('advertisements')
+      .select('impression_count, click_count')
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null);
+
+    if (error) {
+      console.error('[AdService] Failed to get ad stats:', error);
+      return null;
+    }
+
+    // Calculate aggregates from real tracking data
+    const totalImpressions = (data ?? []).reduce((sum: number, ad: any) => sum + (ad.impression_count ?? 0), 0);
+    const totalClicks = (data ?? []).reduce((sum: number, ad: any) => sum + (ad.click_count ?? 0), 0);
+
+    // Get active ads count
+    const activeAdsCount = (data ?? []).length;
+
+    return {
+      total_ads: activeAdsCount,
+      active_ads: activeAdsCount,
+      total_impressions: totalImpressions,
+      total_clicks: totalClicks,
+      ctr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
+    };
+  } catch (err) {
+    console.error('[AdService] Error getting ad stats:', err);
+    return null;
+  }
 }
 
 /**
