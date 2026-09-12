@@ -93,11 +93,11 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
     
     // Mobile-responsive height: tall on mobile, normal on tablet/desktop
     // Desktop (lg:) uses h-auto to preserve original height behavior
-    // Mobile: 120px minimum (was 80px, now 120px for better visibility)
-    // Tablet: 180px (md: breakpoint)
+    // Mobile: 100px minimum (balanced height for visibility without taking too much space)
+    // Tablet: 160px (md: breakpoint)
     // Desktop: auto (lg: preserves original)
     const mobileHeightClass = isHomepageBanner 
-      ? 'min-h-[120px] md:min-h-[180px] lg:h-auto'
+      ? 'min-h-[100px] md:min-h-[160px] lg:h-auto'
       : '';
     
     return (
