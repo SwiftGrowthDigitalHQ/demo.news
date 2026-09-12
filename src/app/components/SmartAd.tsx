@@ -83,8 +83,6 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
 
   // Direct banner WITH image
   if (currentAd.banner_url) {
-    const isGoogleDrive = currentAd.banner_url.includes('drive.google.com');
-    
     // Determine if this is a homepage banner placement (needs mobile height boost)
     const isHomepageBanner = placement.includes('homepage_top_banner') || 
                              placement.includes('homepage_mid_banner') || 
@@ -111,37 +109,23 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
         {showLabel && <AdLabel />}
         <a href={currentAd.target_url || '#'} target="_blank" rel="noopener noreferrer sponsored" onClick={handleClick}
           className={`block w-full rounded-lg overflow-hidden hover:shadow-lg hover:scale-[1.005] transition-all duration-300 ${mobileHeightClass}`}>
-          {isGoogleDrive ? (
-            <PublicGoogleDriveImage 
-              url={desktopImageUrl} 
+          {/* Render responsive image when mobile image exists */}
+          {supportsResponsiveImage && mobileImageUrl ? (
+            <ResponsiveAdImage 
+              desktopUrl={desktopImageUrl}
+              mobileUrl={mobileImageUrl}
               alt={currentAd.title}
               className="w-full h-full lg:h-full rounded-lg object-fill lg:object-cover"
               style={{ objectPosition: 'center' }}
             />
           ) : (
-            // Use responsive image for non-Google Drive images with mobile support
-            supportsResponsiveImage && mobileImageUrl ? (
-              <picture>
-                <source media="(max-width: 1023px)" srcSet={mobileImageUrl} />
-                <img 
-                  src={desktopImageUrl} 
-                  alt={currentAd.title} 
-                  loading="lazy" 
-                  decoding="async"
-                  className="w-full h-full lg:h-full rounded-lg object-fill lg:object-cover"
-                  style={{ objectPosition: 'center' }}
-                />
-              </picture>
-            ) : (
-              <img 
-                src={desktopImageUrl} 
-                alt={currentAd.title} 
-                loading="lazy" 
-                decoding="async"
-                className="w-full h-full lg:h-full rounded-lg object-fill lg:object-cover"
-                style={{ objectPosition: 'center' }}
-              />
-            )
+            /* Fallback to desktop image only */
+            <AdImage 
+              url={desktopImageUrl}
+              alt={currentAd.title}
+              className="w-full h-full lg:h-full rounded-lg object-fill lg:object-cover"
+              style={{ objectPosition: 'center' }}
+            />
           )}
         </a>
         {ads.length > 1 && (
@@ -333,5 +317,122 @@ function FooterPromo() {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE AD IMAGE COMPONENT
+   Handles both Google Drive and regular URLs
+   Renders <picture> for responsive images
+   ═══════════════════════════════════════ */
+
+interface AdImageProps {
+  url: string;
+  alt: string;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+/**
+ * Single ad image (desktop-only fallback)
+ * Works with both Google Drive and regular URLs
+ */
+function AdImage({ url, alt, className, style }: AdImageProps) {
+  const isGoogleDrive = url.includes('drive.google.com');
+
+  if (isGoogleDrive) {
+    return (
+      <PublicGoogleDriveImage 
+        url={url}
+        alt={alt}
+        className={className}
+        style={style}
+      />
+    );
+  }
+
+  return (
+    <img 
+      src={url}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={className}
+      style={style}
+    />
+  );
+}
+
+/**
+ * Responsive ad image component
+ * Renders <picture> element for responsive image selection
+ * Supports both Google Drive and regular URLs for desktop and mobile
+ * 
+ * Browser's native <picture> media query determines which image loads:
+ * - Mobile (≤1023px): loads mobileUrl
+ * - Desktop (>1023px): loads desktopUrl
+ */
+function ResponsiveAdImage({ 
+  desktopUrl, 
+  mobileUrl, 
+  alt, 
+  className, 
+  style 
+}: AdImageProps & { desktopUrl: string; mobileUrl: string }) {
+  const mobileIsGoogleDrive = mobileUrl.includes('drive.google.com');
+  const desktopIsGoogleDrive = desktopUrl.includes('drive.google.com');
+
+  // If both are Google Drive, use <picture> with both rendered as GoogleDriveImage components
+  // The img element renders with the desktop version as fallback
+  if (desktopIsGoogleDrive || mobileIsGoogleDrive) {
+    return (
+      <picture>
+        {/* Mobile source: show mobile image on small screens */}
+        <source 
+          media="(max-width: 1023px)" 
+          srcSet={
+            mobileIsGoogleDrive
+              ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-proxy/${mobileUrl.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1] || mobileUrl}`
+              : mobileUrl
+          }
+        />
+        {/* Desktop fallback: rendered on large screens or when source condition doesn't match */}
+        {desktopIsGoogleDrive ? (
+          <PublicGoogleDriveImage 
+            url={desktopUrl}
+            alt={alt}
+            className={className}
+            style={style}
+          />
+        ) : (
+          <img 
+            src={desktopUrl}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            className={className}
+            style={style}
+          />
+        )}
+      </picture>
+    );
+  }
+
+  // Both are regular URLs - use native HTML picture element
+  return (
+    <picture>
+      <source 
+        media="(max-width: 1023px)" 
+        srcSet={mobileUrl}
+      />
+      <img 
+        src={desktopUrl}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className={className}
+        style={style}
+      />
+    </picture>
   );
 }
