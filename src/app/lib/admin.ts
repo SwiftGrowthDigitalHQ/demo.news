@@ -173,6 +173,7 @@ export type AdminAd = {
   title: string;
   target_url: string | null;
   banner_url: string | null;
+  mobile_banner_url: string | null;
   position: string | null;
   start_date: string | null;
   end_date: string | null;
@@ -789,6 +790,7 @@ export async function upsertAdminAd(payload: Partial<AdminAd> & {
     title: payload.title,
     target_url: payload.target_url ?? null,
     banner_url: payload.banner_url ?? null,
+    mobile_banner_url: payload.mobile_banner_url ?? null,
     position: payload.position ?? null,
     start_date: payload.start_date ?? null,
     end_date: payload.end_date ?? null,
