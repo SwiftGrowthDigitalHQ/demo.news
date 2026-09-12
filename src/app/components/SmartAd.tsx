@@ -104,7 +104,7 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
       <div ref={containerRef} className={className}>
         {showLabel && <AdLabel />}
         <a href={currentAd.target_url || '#'} target="_blank" rel="noopener noreferrer sponsored" onClick={handleClick}
-          className={`block rounded-lg overflow-hidden hover:shadow-lg hover:scale-[1.005] transition-all duration-300 ${mobileHeightClass}`}>
+          className={`block w-full rounded-lg overflow-hidden hover:shadow-lg hover:scale-[1.005] transition-all duration-300 ${mobileHeightClass}`}>
           {isGoogleDrive ? (
             <PublicGoogleDriveImage 
               url={currentAd.banner_url} 
