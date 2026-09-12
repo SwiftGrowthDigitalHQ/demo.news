@@ -91,9 +91,10 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
                              placement.includes('homepage_footer_banner') ||
                              placement.includes('hero');
     
-    // Mobile-responsive height: tall on mobile (md:), normal on desktop
+    // Mobile-responsive height: tall on mobile, normal on tablet/desktop
+    // Desktop (lg:) uses h-auto to preserve original height behavior
     const mobileHeightClass = isHomepageBanner 
-      ? 'min-h-[180px] md:min-h-[220px] lg:min-h-[280px]'
+      ? 'min-h-[180px] md:min-h-[220px] lg:h-auto'
       : '';
     
     return (
@@ -105,12 +106,12 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
             <PublicGoogleDriveImage 
               url={currentAd.banner_url} 
               alt={currentAd.title}
-              className="w-full h-full rounded-lg"
+              className="w-full h-full lg:h-auto rounded-lg"
               style={{ objectFit: 'cover' }}
             />
           ) : (
             <img src={currentAd.banner_url} alt={currentAd.title} loading="lazy" decoding="async"
-              className="w-full h-full rounded-lg" style={{ objectFit: 'cover' }} />
+              className="w-full h-full lg:h-auto rounded-lg" style={{ objectFit: 'cover' }} />
           )}
         </a>
         {ads.length > 1 && (
