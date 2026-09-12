@@ -92,12 +92,12 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
                              placement.includes('hero');
     
     // Mobile-responsive height: tall on mobile, normal on tablet/desktop
-    // Desktop (lg:) uses h-auto to preserve original height behavior
-    // Mobile: 100px minimum (balanced height for visibility without taking too much space)
+    // Mobile: 100px minimum (balanced height for visibility)
     // Tablet: 160px (md: breakpoint)
-    // Desktop: auto (lg: preserves original)
+    // Desktop: 1444×94 aspect ratio (lg: breakpoint)
+    // Aspect ratio calculation: 94/1444 ≈ 6.51% (or 1444:94 ≈ 15.36:1)
     const mobileHeightClass = isHomepageBanner 
-      ? 'min-h-[100px] md:min-h-[160px] lg:h-auto'
+      ? 'min-h-[100px] md:min-h-[160px] lg:aspect-[1444/94]'
       : '';
     
     return (
@@ -109,12 +109,12 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
             <PublicGoogleDriveImage 
               url={currentAd.banner_url} 
               alt={currentAd.title}
-              className="w-full h-full lg:h-auto rounded-lg"
+              className="w-full h-full lg:h-full rounded-lg"
               style={{ objectFit: 'cover' }}
             />
           ) : (
             <img src={currentAd.banner_url} alt={currentAd.title} loading="lazy" decoding="async"
-              className="w-full h-full lg:h-auto rounded-lg" style={{ objectFit: 'cover' }} />
+              className="w-full h-full lg:h-full rounded-lg" style={{ objectFit: 'cover' }} />
           )}
         </a>
         {ads.length > 1 && (
