@@ -97,7 +97,7 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
     // Desktop: 1444×94 aspect ratio (lg: breakpoint)
     // Aspect ratio calculation: 94/1444 ≈ 6.51% (or 1444:94 ≈ 15.36:1)
     const mobileHeightClass = isHomepageBanner 
-      ? 'min-h-[100px] md:min-h-[160px] lg:aspect-[1444/94]'
+      ? 'h-[150px] md:min-h-[160px] lg:aspect-[1444/94]'
       : '';
     
     return (
