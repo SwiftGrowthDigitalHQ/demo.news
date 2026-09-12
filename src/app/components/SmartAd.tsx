@@ -85,21 +85,32 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
   if (currentAd.banner_url) {
     const isGoogleDrive = currentAd.banner_url.includes('drive.google.com');
     
+    // Determine if this is a homepage banner placement (needs mobile height boost)
+    const isHomepageBanner = placement.includes('homepage_top_banner') || 
+                             placement.includes('homepage_mid_banner') || 
+                             placement.includes('homepage_footer_banner') ||
+                             placement.includes('hero');
+    
+    // Mobile-responsive height: tall on mobile (md:), normal on desktop
+    const mobileHeightClass = isHomepageBanner 
+      ? 'min-h-[180px] md:min-h-[220px] lg:min-h-[280px]'
+      : '';
+    
     return (
       <div ref={containerRef} className={className}>
         {showLabel && <AdLabel />}
         <a href={currentAd.target_url || '#'} target="_blank" rel="noopener noreferrer sponsored" onClick={handleClick}
-          className="block rounded-lg overflow-hidden hover:shadow-lg hover:scale-[1.005] transition-all duration-300">
+          className={`block rounded-lg overflow-hidden hover:shadow-lg hover:scale-[1.005] transition-all duration-300 ${mobileHeightClass}`}>
           {isGoogleDrive ? (
             <PublicGoogleDriveImage 
               url={currentAd.banner_url} 
               alt={currentAd.title}
-              className="w-full h-auto rounded-lg"
-              style={{ objectFit: 'contain' }}
+              className="w-full h-full rounded-lg"
+              style={{ objectFit: 'cover' }}
             />
           ) : (
             <img src={currentAd.banner_url} alt={currentAd.title} loading="lazy" decoding="async"
-              className="w-full h-auto rounded-lg" style={{ objectFit: 'contain' }} />
+              className="w-full h-full rounded-lg" style={{ objectFit: 'cover' }} />
           )}
         </a>
         {ads.length > 1 && (
