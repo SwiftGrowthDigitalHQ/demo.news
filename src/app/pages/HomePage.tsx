@@ -884,14 +884,13 @@ function HomeSkeleton() {
 
 /* ─── FEATURED STORY GRID (2+4 layout) ─── */
 function FeaturedStoryGrid({ articles, tenantSlug }: { articles: PublicArticle[]; tenantSlug: string }) {
-  if (articles.length < 2) return null;
+  if (articles.length < 3) return null;
   const [main, second, ...rest] = articles;
   return (
     <section>
       <SectionHeader title="Featured Stories" href="/search?q=featured" icon={<TrendingUp className="h-4 w-4 text-orange-600" />} />
-      {/* 2-image layout: 2 equal columns on desktop, 1 on mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* First featured */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-4">
+        {/* Main featured */}
         <AppLink to={getArticleUrl(main.slug, tenantSlug)} className="group relative rounded-xl overflow-hidden shadow-md">
           <div className="aspect-[16/9] overflow-hidden">
             <ImageWithFallback src={thumb(main)} alt={main.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -908,23 +907,32 @@ function FeaturedStoryGrid({ articles, tenantSlug }: { articles: PublicArticle[]
             </div>
           </div>
         </AppLink>
-        {/* Second featured */}
-        <AppLink to={getArticleUrl(second.slug, tenantSlug)} className="group relative rounded-xl overflow-hidden shadow-md">
-          <div className="aspect-[16/9] overflow-hidden">
-            <ImageWithFallback src={thumb(second)} alt={second.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-5">
-            <span className="inline-block bg-red-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded mb-2">{second.category_name}</span>
-            <h3 className="text-xl font-bold text-white line-clamp-2 group-hover:underline leading-snug">{second.title}</h3>
-            <p className="text-xs text-white/70 line-clamp-2 mt-2">{second.excerpt}</p>
-            <div className="flex items-center gap-3 text-[11px] text-white/60 mt-3">
-              <span className="flex items-center gap-1"><User className="h-3 w-3" />{second.author_name}</span>
-              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{getRelativeTime(second.publish_at)}</span>
-              <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{formatViews(second.views_count)}</span>
+        {/* Right column */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+          <AppLink to={getArticleUrl(second.slug, tenantSlug)} className="group relative rounded-xl overflow-hidden shadow-sm">
+            <div className="aspect-[16/9] lg:aspect-[16/7] overflow-hidden">
+              <ImageWithFallback src={thumb(second)} alt={second.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
             </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-3">
+              <span className="inline-block bg-red-600 text-white text-[8px] font-bold uppercase px-1.5 py-0.5 rounded mb-1">{second.category_name}</span>
+              <h4 className="text-sm font-bold text-white line-clamp-2 group-hover:underline">{second.title}</h4>
+            </div>
+          </AppLink>
+          <div className="space-y-2">
+            {rest.slice(0, 3).map(a => (
+              <AppLink key={a.id} to={getArticleUrl(a.slug, tenantSlug)} className="flex gap-3 group bg-white rounded-lg border border-gray-100 p-2.5 hover:shadow-sm transition-shadow">
+                <div className="w-20 h-14 shrink-0 rounded overflow-hidden">
+                  <ImageWithFallback src={thumb(a)} alt={a.title} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-[12px] font-semibold text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors leading-tight">{a.title}</h4>
+                  <span className="text-[10px] text-gray-400 mt-0.5 block">{getRelativeTime(a.publish_at)}</span>
+                </div>
+              </AppLink>
+            ))}
           </div>
-        </AppLink>
+        </div>
       </div>
     </section>
   );
