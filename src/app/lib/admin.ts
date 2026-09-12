@@ -33,7 +33,7 @@ function isDemoMode(): boolean {
  * SECURITY: Never use "first tenant from database".
  * SECURITY: All queries are protected by RLS at database level.
  */
-export async function getCurrentUserTenantId(): Promise<string> {
+async function getCurrentUserTenantId(): Promise<string> {
   const supabase = client();
   
   // Get current authenticated user

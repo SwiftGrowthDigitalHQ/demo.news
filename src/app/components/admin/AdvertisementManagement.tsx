@@ -24,7 +24,6 @@ import {
   CampaignRow,
   deleteAdminAd,
   deleteCampaign,
-  getCurrentUserTenantId,
   listAdminAds,
   listCampaigns,
   loadSiteSettings,
@@ -35,7 +34,6 @@ import {
 } from '../../lib/admin';
 import { PublicGoogleDriveImage } from '../PublicGoogleDriveImage';
 import { Pagination, usePagination } from './Pagination';
-import { getAdStats } from '../../lib/adService';
 
 type AdForm = {
   id?: string;
@@ -111,7 +109,6 @@ function formatPercent(clicks: number, impressions: number) {
 export function AdvertisementManagement() {
   const [ads, setAds] = useState<AdminAd[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
-  const [realAdStats, setRealAdStats] = useState<{ totalImpressions: number; totalClicks: number }>({ totalImpressions: 0, totalClicks: 0 });
   const [siteName, setSiteName] = useState('');
   const [publisherId, setPublisherId] = useState('');
   const [adClient, setAdClient] = useState('');
@@ -130,24 +127,13 @@ export function AdvertisementManagement() {
   const load = async () => {
     setLoading(true);
     try {
-      const [adRows, campaignRows, settings, tenantId] = await Promise.all([
+      const [adRows, campaignRows, settings] = await Promise.all([
         listAdminAds(),
         listCampaigns(),
         loadSiteSettings(),
-        getCurrentUserTenantId(),
       ]);
       setAds(adRows);
       setCampaigns(campaignRows);
-      
-      // Fetch real ad stats from tracking data
-      const stats = await getAdStats(tenantId);
-      if (stats) {
-        setRealAdStats({
-          totalImpressions: stats.total_impressions,
-          totalClicks: stats.total_clicks,
-        });
-      }
-      
       const adConfig = (settings?.theme_config as Record<string, unknown> | undefined)?.ads as Record<string, unknown> | undefined;
       setSiteName(settings?.site_name ?? '');
       setPublisherId(String(adConfig?.publisher_id ?? ''));
@@ -168,17 +154,12 @@ export function AdvertisementManagement() {
   }, []);
 
   const adStats = useMemo(() => {
-    // Use REAL tracking data from advertisements table (tenant-scoped)
     const totalRevenue = campaigns.reduce((sum, campaign) => sum + Number(campaign.spent ?? 0), 0);
     const activeCampaigns = campaigns.filter(campaign => campaign.status === 'Active' || campaign.status === 'active').length;
-    // Use real impression and click counts from adService (fetched from tracking)
-    return { 
-      totalRevenue, 
-      activeCampaigns, 
-      totalClicks: realAdStats.totalClicks, 
-      totalImpressions: realAdStats.totalImpressions 
-    };
-  }, [campaigns, realAdStats]);
+    const totalClicks = campaigns.reduce((sum, campaign) => sum + Number(campaign.clicks ?? 0), 0);
+    const totalImpressions = campaigns.reduce((sum, campaign) => sum + Number(campaign.impressions ?? 0), 0);
+    return { totalRevenue, activeCampaigns, totalClicks, totalImpressions };
+  }, [campaigns]);
 
   const revenueSeries = useMemo(() => {
     const buckets = new Map<string, { month: string; sortKey: number; value: number }>();
