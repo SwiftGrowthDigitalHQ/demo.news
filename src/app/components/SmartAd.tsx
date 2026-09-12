@@ -109,12 +109,12 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
             <PublicGoogleDriveImage 
               url={currentAd.banner_url} 
               alt={currentAd.title}
-              className="w-full h-auto lg:h-full rounded-lg lg:object-cover"
-              style={{ objectFit: 'cover' }}
+              className="w-full h-full lg:h-full rounded-lg object-fill lg:object-cover"
+              style={{}}
             />
           ) : (
             <img src={currentAd.banner_url} alt={currentAd.title} loading="lazy" decoding="async"
-              className="w-full h-auto lg:h-full rounded-lg lg:object-cover" style={{ objectFit: 'cover' }} />
+              className="w-full h-full lg:h-full rounded-lg object-fill lg:object-cover" />
           )}
         </a>
         {ads.length > 1 && (
