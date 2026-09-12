@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { getActiveAds, trackImpression, trackClick, type AdPlacement, type AdRecord } from '../lib/adService';
+import { useCms } from '../lib/cms';
 import { PublicGoogleDriveImage } from './PublicGoogleDriveImage';
 import { Phone, ArrowRight, Sparkles, BookOpen, Globe } from 'lucide-react';
 
@@ -10,6 +11,7 @@ interface SmartAdProps {
 }
 
 export function SmartAd({ placement, className = '', showLabel = true }: SmartAdProps) {
+  const { tenantId } = useCms();
   const [ads, setAds] = useState<AdRecord[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -21,13 +23,14 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
     const timeout = setTimeout(() => {
       if (!cancelled) setLoaded(true); // force show fallback if ads take too long
     }, 3000);
-    getActiveAds(placement, 5).then(result => {
+    // TENANT ISOLATION: Pass tenantId to getActiveAds for strict tenant scoping
+    getActiveAds(placement, 5, tenantId ?? undefined).then(result => {
       if (!cancelled) { setAds(result); setLoaded(true); }
     }).catch(() => {
       if (!cancelled) setLoaded(true);
     }).finally(() => clearTimeout(timeout));
     return () => { cancelled = true; clearTimeout(timeout); };
-  }, [placement]);
+  }, [placement, tenantId]);
 
   useEffect(() => {
     if (ads.length <= 1) return;

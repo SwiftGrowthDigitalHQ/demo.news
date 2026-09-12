@@ -34,10 +34,23 @@ export type AdStats = {
 /**
  * Fetch active ads for a specific slot.
  * Checks placement column against multiple name variants for backward compatibility.
+ * TENANT ISOLATION: Filters by tenantId to ensure strict multi-tenant ad isolation.
+ * 
+ * @param slot - The ad placement/slot name
+ * @param limit - Maximum number of ads to fetch (default 3)
+ * @param tenantId - Required: The tenant ID to filter ads by. Ensures ads belong only to the current tenant.
+ * @returns Array of ads matching slot and tenant, or empty array if tenantId missing or no ads found
  */
-export async function getActiveAds(slot: AdPlacement, limit = 3): Promise<AdRecord[]> {
+export async function getActiveAds(slot: AdPlacement, limit = 3, tenantId?: string): Promise<AdRecord[]> {
   const client = getSupabaseClient();
   if (!client) return [];
+
+  // SECURITY: If tenantId is not provided, return empty array (safe default)
+  // This prevents accidental display of ads from undefined tenants
+  if (!tenantId) {
+    console.warn('[AdService] getActiveAds called without tenantId - returning empty for safety');
+    return [];
+  }
 
   // Build list of names to search for
   const names: string[] = [slot];
@@ -70,9 +83,11 @@ export async function getActiveAds(slot: AdPlacement, limit = 3): Promise<AdReco
 
   try {
     // Query: find ads where placement is in our list of names
+    // TENANT ISOLATION: Add .eq('tenant_id', tenantId) to enforce strict tenant scoping
     const { data, error } = await client
       .from('advertisements')
       .select('*')
+      .eq('tenant_id', tenantId)  // TENANT FILTER: Only ads for this tenant
       .in('placement', names)
       .eq('is_active', true)
       .is('deleted_at', null)
@@ -91,6 +106,7 @@ export async function getActiveAds(slot: AdPlacement, limit = 3): Promise<AdReco
     const { data: posData } = await client
       .from('advertisements')
       .select('*')
+      .eq('tenant_id', tenantId)  // TENANT FILTER: Only ads for this tenant
       .in('position', names)
       .eq('is_active', true)
       .is('deleted_at', null)
