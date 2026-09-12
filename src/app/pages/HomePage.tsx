@@ -1082,7 +1082,7 @@ export function HomePage() {
         {/* ════ HERO + RIGHT SIDEBAR ════ */}
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5">
           {/* Left Main Column */}
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             {/* Hero + Trending row */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-4">
               <Hero articles={heroArticles} tenantSlug={tenantSlug} />
