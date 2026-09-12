@@ -143,11 +143,24 @@ CREATE POLICY "tenant_read_own_advertisements" ON public.advertisements
   TO authenticated
   USING (tenant_id IN (SELECT tenant_id FROM public.get_user_tenant_ids()));
 
--- Authenticated write policy: Allow authenticated users to manage their tenant's ads
-CREATE POLICY "tenant_manage_own_advertisements" ON public.advertisements
-  FOR INSERT, UPDATE, DELETE
+-- Authenticated insert policy: Allow authenticated users to create ads for their tenant
+CREATE POLICY "tenant_create_own_advertisements" ON public.advertisements
+  FOR INSERT
   TO authenticated
   WITH CHECK (tenant_id IN (SELECT tenant_id FROM public.get_user_tenant_ids()));
+
+-- Authenticated update policy: Allow authenticated users to update their tenant's ads
+CREATE POLICY "tenant_update_own_advertisements" ON public.advertisements
+  FOR UPDATE
+  TO authenticated
+  USING (tenant_id IN (SELECT tenant_id FROM public.get_user_tenant_ids()))
+  WITH CHECK (tenant_id IN (SELECT tenant_id FROM public.get_user_tenant_ids()));
+
+-- Authenticated delete policy: Allow authenticated users to delete their tenant's ads
+CREATE POLICY "tenant_delete_own_advertisements" ON public.advertisements
+  FOR DELETE
+  TO authenticated
+  USING (tenant_id IN (SELECT tenant_id FROM public.get_user_tenant_ids()));
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- STEP 7: UPDATE RLS POLICIES FOR campaigns TABLE
@@ -168,11 +181,24 @@ CREATE POLICY "tenant_read_own_campaigns" ON public.campaigns
   TO authenticated
   USING (tenant_id IN (SELECT tenant_id FROM public.get_user_tenant_ids()));
 
--- Authenticated write policy: Allow authenticated users to manage their tenant's campaigns
-CREATE POLICY "tenant_manage_own_campaigns" ON public.campaigns
-  FOR INSERT, UPDATE, DELETE
+-- Authenticated insert policy: Allow authenticated users to create campaigns for their tenant
+CREATE POLICY "tenant_create_own_campaigns" ON public.campaigns
+  FOR INSERT
   TO authenticated
   WITH CHECK (tenant_id IN (SELECT tenant_id FROM public.get_user_tenant_ids()));
+
+-- Authenticated update policy: Allow authenticated users to update their tenant's campaigns
+CREATE POLICY "tenant_update_own_campaigns" ON public.campaigns
+  FOR UPDATE
+  TO authenticated
+  USING (tenant_id IN (SELECT tenant_id FROM public.get_user_tenant_ids()))
+  WITH CHECK (tenant_id IN (SELECT tenant_id FROM public.get_user_tenant_ids()));
+
+-- Authenticated delete policy: Allow authenticated users to delete their tenant's campaigns
+CREATE POLICY "tenant_delete_own_campaigns" ON public.campaigns
+  FOR DELETE
+  TO authenticated
+  USING (tenant_id IN (SELECT tenant_id FROM public.get_user_tenant_ids()));
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- STEP 8: DOCUMENTATION
