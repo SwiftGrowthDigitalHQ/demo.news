@@ -1152,18 +1152,19 @@ export function HomePage() {
               {/* Google AdSense - Sidebar */}
               <GoogleAdSense placement="sidebar" className="mb-4" />
               
-              <SmartAd placement="sidebar_top" />
-              <SmartAd placement="sidebar_top_2" showLabel={true} />
+              <SmartAd placement="sidebar_1" />
+              <SmartAd placement="sidebar_2" showLabel={true} />
               <AdvertiseHereBox />
               <MarketWidget />
               <WeatherWidget />
               <MostReadSidebar articles={mostReadArticles} tenantSlug={tenantSlug} />
               <NewsletterSidebar />
               <SocialFollowers />
-              <SmartAd placement="sidebar_middle" />
+              <SmartAd placement="sidebar_3" />
+              <SmartAd placement="sidebar_4" />
               <PollWidget />
               <TrendingTopics />
-              <SmartAd placement="sidebar_bottom" />
+              <SmartAd placement="sidebar_5" />
             </div>
           </aside>
         </div>

@@ -674,9 +674,11 @@ export function AdvertisementManagement() {
                 'homepage-header-banner': 'homepage_top_banner',
                 'hero': 'homepage_mid_banner',
                 'homepage-footer-banner': 'homepage_footer_banner',
-                'sidebar': 'sidebar_top',
-                'sidebar-middle': 'sidebar_middle',
-                'sidebar-bottom': 'sidebar_bottom',
+                'sidebar-1': 'sidebar_1',
+                'sidebar-2': 'sidebar_2',
+                'sidebar-3': 'sidebar_3',
+                'sidebar-4': 'sidebar_4',
+                'sidebar-5': 'sidebar_5',
                 'article-top': 'article_top',
                 'article-middle': 'article_middle',
                 'article-sidebar': 'article_sidebar',
@@ -690,9 +692,11 @@ export function AdvertisementManagement() {
                 <option value="homepage-footer-banner">Homepage — Footer Banner</option>
               </optgroup>
               <optgroup label="Sidebar">
-                <option value="sidebar">Sidebar — Top</option>
-                <option value="sidebar-middle">Sidebar — Middle</option>
-                <option value="sidebar-bottom">Sidebar — Bottom</option>
+                <option value="sidebar-1">Sidebar 1 — Top</option>
+                <option value="sidebar-2">Sidebar 2 — Upper Middle</option>
+                <option value="sidebar-3">Sidebar 3 — Middle</option>
+                <option value="sidebar-4">Sidebar 4 — Lower Middle</option>
+                <option value="sidebar-5">Sidebar 5 — Bottom</option>
               </optgroup>
               <optgroup label="Article Page">
                 <option value="article-top">Article — Top Banner</option>

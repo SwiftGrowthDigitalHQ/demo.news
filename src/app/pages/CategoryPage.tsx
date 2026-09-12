@@ -503,16 +503,18 @@ export function CategoryPage({ slug }: { slug: string }) {
           {/* RIGHT SIDEBAR */}
           <aside className="hidden xl:block self-start">
             <div className="sticky top-[72px] space-y-4 pb-6">
-              <SmartAd placement="sidebar_top" />
+              <SmartAd placement="sidebar_1" />
               <WeatherWidget />
               <MarketWidget />
               <LiveTVWidget />
               <MostReadWidget articles={mostRead} tenantSlug={tenantSlug} />
-              <SmartAd placement="sidebar_middle" />
+              <SmartAd placement="sidebar_2" />
+              <SmartAd placement="sidebar_3" />
               <NewsletterWidget />
               <TrendingTagsWidget />
               <SocialWidget />
-              <SmartAd placement="sidebar_bottom" />
+              <SmartAd placement="sidebar_4" />
+              <SmartAd placement="sidebar_5" />
             </div>
           </aside>
 

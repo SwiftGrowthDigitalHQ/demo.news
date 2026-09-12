@@ -55,27 +55,24 @@ export async function getActiveAds(slot: AdPlacement, limit = 3, tenantId?: stri
   // Build list of names to search for
   const names: string[] = [slot];
   
-  // Map new underscore names to old hyphen/legacy names
+  // Map new underscore names to old hyphen/legacy names for backward compatibility
   const legacyMap: Record<string, string[]> = {
     'homepage_top_banner': ['homepage-header-banner'],
     'homepage_mid_banner': ['hero'],
     'homepage_footer_banner': ['footer', 'category', 'homepage-footer-banner'],
-    'sidebar_top': ['sidebar', 'sidebar-top'],
-    'sidebar_top_2': ['sidebar-top-2'],
-    'sidebar_middle': ['sidebar-middle'],
-    'sidebar_bottom': ['sidebar-bottom'],
+    'sidebar_1': ['sidebar', 'sidebar-top'],
+    'sidebar_2': ['sidebar-2', 'sidebar-upper-middle'],
+    'sidebar_3': ['sidebar-middle'],
+    'sidebar_4': ['sidebar-4', 'sidebar-lower-middle'],
+    'sidebar_5': ['sidebar-bottom'],
     'article_top': ['article-top'],
     'article_middle': ['article-middle'],
     'article_sidebar': ['article-sidebar'],
     'article_bottom': ['article-bottom'],
   };
 
-  // For sidebar slots, determine offset to pick different ads
-  let offset = 0;
-  if (slot === 'sidebar_top_2') offset = 1;
-  if (slot === 'sidebar_middle') offset = 2;
-  if (slot === 'sidebar_bottom') offset = 3;
-  
+  // For 5 explicit sidebar placements, query directly without offset
+  // Each placement has its own distinct slot identity
   if (legacyMap[slot]) names.push(...legacyMap[slot]);
   const hyphenated = slot.replace(/_/g, '-');
   if (!names.includes(hyphenated)) names.push(hyphenated);
@@ -92,13 +89,12 @@ export async function getActiveAds(slot: AdPlacement, limit = 3, tenantId?: stri
       .eq('is_active', true)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
-      .limit(limit + offset + 2);
+      .limit(limit + 2);
 
     if (!error && data && data.length > 0) {
       // Filter out ads with no content (no banner image and no adsense code)
       const usable = data.filter((ad: AdRecord) => ad.banner_url || ad.adsense_code);
-      // Use offset to pick different ads for different sidebar positions
-      if (usable.length > offset) return [usable[offset]];
+      // Return first available ad for this explicit placement
       if (usable.length > 0) return [usable[0]];
     }
 
@@ -111,11 +107,10 @@ export async function getActiveAds(slot: AdPlacement, limit = 3, tenantId?: stri
       .eq('is_active', true)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
-      .limit(limit + offset + 2);
+      .limit(limit + 2);
 
     if (posData && posData.length > 0) {
       const usable = posData.filter((ad: AdRecord) => ad.banner_url || ad.adsense_code);
-      if (usable.length > offset) return [usable[offset]];
       if (usable.length > 0) return [usable[0]];
     }
 
