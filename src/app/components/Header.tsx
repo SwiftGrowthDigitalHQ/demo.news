@@ -107,8 +107,8 @@ export function Header() {
       {/* === MAIN HEADER === */}
       <div className="bg-white border-b border-gray-100 shadow-sm">
         <div className="mx-auto max-w-[1400px] px-4 h-16 flex items-center justify-between gap-3">
-          {/* Mobile hamburger */}
-          <button type="button" className="lg:hidden p-2 text-gray-700" onClick={() => setMobileMenuOpen(true)} aria-label="Menu">
+          {/* Mobile hamburger - always rendered, lg:hidden ensures it only shows on mobile */}
+          <button type="button" className="lg:hidden p-2 text-gray-700 flex items-center justify-center" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu" title="Open menu">
             <Menu className="h-6 w-6" />
           </button>
 
