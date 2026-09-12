@@ -736,8 +736,16 @@ export function AdvertisementManagement() {
             <Input value={adForm.target_url} onChange={event => setAdForm(current => ({ ...current, target_url: event.target.value }))} placeholder="Target URL" />
             {supportsMobileImage(adForm.placement) ? (
               <>
-                <Input value={adForm.banner_url} onChange={event => setAdForm(current => ({ ...current, banner_url: event.target.value }))} placeholder="Desktop Image URL" />
-                <Input value={adForm.mobile_banner_url || ''} onChange={event => setAdForm(current => ({ ...current, mobile_banner_url: event.target.value }))} placeholder="Mobile Image URL (optional, falls back to desktop)" />
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Desktop Image URL</label>
+                  <Input value={adForm.banner_url} onChange={event => setAdForm(current => ({ ...current, banner_url: event.target.value }))} placeholder="https://..." />
+                  <div className="text-xs text-gray-500">Recommended: 1444 × 94 px (16:1 aspect ratio)</div>
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Mobile Image URL</label>
+                  <Input value={adForm.mobile_banner_url || ''} onChange={event => setAdForm(current => ({ ...current, mobile_banner_url: event.target.value }))} placeholder="https://... (optional, falls back to desktop)" />
+                  <div className="text-xs text-gray-500">Recommended: 750 × 300 px (5:2 aspect ratio)</div>
+                </div>
               </>
             ) : (
               <Input value={adForm.banner_url} onChange={event => setAdForm(current => ({ ...current, banner_url: event.target.value }))} placeholder="Image URL" />
