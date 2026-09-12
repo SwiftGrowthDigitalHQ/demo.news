@@ -28,13 +28,16 @@ COMMENT ON COLUMN public.campaigns.tenant_id IS
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- STEP 3: BACKFILL tenant_id FOR EXISTING RECORDS
--- Assigns all existing advertisements to the first tenant (backward compatibility)
+-- CRITICAL: Backfill ALL NULL values (including soft-deleted records)
+-- This ensures the NOT NULL constraint can be applied safely
 -- ─────────────────────────────────────────────────────────────────────────────
 
 -- Get the first tenant (for backfill)
 DO $$
 DECLARE
   v_first_tenant_id uuid;
+  v_null_count_ads integer;
+  v_null_count_campaigns integer;
 BEGIN
   -- Find the first active tenant
   SELECT id INTO v_first_tenant_id
@@ -43,17 +46,41 @@ BEGIN
   ORDER BY created_at ASC
   LIMIT 1;
 
-  -- Backfill advertisements
-  IF v_first_tenant_id IS NOT NULL THEN
-    UPDATE public.advertisements
-    SET tenant_id = v_first_tenant_id
-    WHERE tenant_id IS NULL AND deleted_at IS NULL;
-    
-    -- Backfill campaigns
-    UPDATE public.campaigns
-    SET tenant_id = v_first_tenant_id
-    WHERE tenant_id IS NULL AND deleted_at IS NULL;
+  IF v_first_tenant_id IS NULL THEN
+    RAISE EXCEPTION 'No active tenants found. Cannot backfill tenant_id. Migration will not proceed.';
   END IF;
+
+  -- Count NULL values in advertisements BEFORE backfill
+  SELECT COUNT(*) INTO v_null_count_ads
+  FROM public.advertisements
+  WHERE tenant_id IS NULL;
+
+  -- Backfill advertisements - CRITICAL: backfill ALL NULL rows regardless of deleted_at
+  -- This ensures no NULL values remain for the NOT NULL constraint
+  UPDATE public.advertisements
+  SET tenant_id = v_first_tenant_id
+  WHERE tenant_id IS NULL;
+
+  -- Count NULL values in campaigns BEFORE backfill
+  SELECT COUNT(*) INTO v_null_count_campaigns
+  FROM public.campaigns
+  WHERE tenant_id IS NULL;
+
+  -- Backfill campaigns - CRITICAL: backfill ALL NULL rows regardless of deleted_at
+  UPDATE public.campaigns
+  SET tenant_id = v_first_tenant_id
+  WHERE tenant_id IS NULL;
+
+  -- Verify backfill succeeded
+  IF (SELECT COUNT(*) FROM public.advertisements WHERE tenant_id IS NULL) > 0 THEN
+    RAISE EXCEPTION 'Backfill failed: advertisements still contains NULL tenant_id values after backfill';
+  END IF;
+
+  IF (SELECT COUNT(*) FROM public.campaigns WHERE tenant_id IS NULL) > 0 THEN
+    RAISE EXCEPTION 'Backfill failed: campaigns still contains NULL tenant_id values after backfill';
+  END IF;
+
+  RAISE NOTICE 'Backfill complete: advertisements (% NULL rows), campaigns (% NULL rows)', v_null_count_ads, v_null_count_campaigns;
 END $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
