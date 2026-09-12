@@ -11,6 +11,7 @@ export type AdRecord = {
   title: string;
   target_url: string | null;
   banner_url: string | null;
+  mobile_banner_url?: string | null;
   adsense_code: string | null;
   position: string | null;
   priority: number;

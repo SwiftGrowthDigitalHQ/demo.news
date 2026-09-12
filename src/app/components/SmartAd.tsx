@@ -92,13 +92,19 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
                              placement.includes('hero');
     
     // Mobile-responsive height: tall on mobile, normal on tablet/desktop
-    // Mobile: 100px minimum (balanced height for visibility)
+    // Mobile: 150px
     // Tablet: 160px (md: breakpoint)
     // Desktop: 1444×94 aspect ratio (lg: breakpoint)
-    // Aspect ratio calculation: 94/1444 ≈ 6.51% (or 1444:94 ≈ 15.36:1)
     const mobileHeightClass = isHomepageBanner 
       ? 'h-[150px] md:min-h-[160px] lg:aspect-[1444/94]'
       : '';
+
+    // Determine image URLs for responsive source
+    const supportsResponsiveImage = supportsMobileImage(placement);
+    const mobileImageUrl = supportsResponsiveImage && currentAd.mobile_banner_url 
+      ? currentAd.mobile_banner_url 
+      : currentAd.banner_url;
+    const desktopImageUrl = currentAd.banner_url;
     
     return (
       <div ref={containerRef} className={className}>
@@ -107,14 +113,35 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
           className={`block w-full rounded-lg overflow-hidden hover:shadow-lg hover:scale-[1.005] transition-all duration-300 ${mobileHeightClass}`}>
           {isGoogleDrive ? (
             <PublicGoogleDriveImage 
-              url={currentAd.banner_url} 
+              url={desktopImageUrl} 
               alt={currentAd.title}
               className="w-full h-full lg:h-full rounded-lg object-fill lg:object-cover"
-              style={{}}
+              style={{ objectPosition: 'center' }}
             />
           ) : (
-            <img src={currentAd.banner_url} alt={currentAd.title} loading="lazy" decoding="async"
-              className="w-full h-full lg:h-full rounded-lg object-fill lg:object-cover" />
+            // Use responsive image for non-Google Drive images
+            supportsResponsiveImage && mobileImageUrl !== desktopImageUrl ? (
+              <picture>
+                <source media="(max-width: 1023px)" srcSet={mobileImageUrl} />
+                <img 
+                  src={desktopImageUrl} 
+                  alt={currentAd.title} 
+                  loading="lazy" 
+                  decoding="async"
+                  className="w-full h-full lg:h-full rounded-lg object-fill lg:object-cover"
+                  style={{ objectPosition: 'center' }}
+                />
+              </picture>
+            ) : (
+              <img 
+                src={desktopImageUrl} 
+                alt={currentAd.title} 
+                loading="lazy" 
+                decoding="async"
+                className="w-full h-full lg:h-full rounded-lg object-fill lg:object-cover"
+                style={{ objectPosition: 'center' }}
+              />
+            )
           )}
         </a>
         {ads.length > 1 && (
@@ -137,6 +164,13 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
 
 function AdLabel() {
   return <div className="text-center mb-1"><span className="text-[7px] font-bold text-gray-400 uppercase tracking-[0.2em]">Advertisement</span></div>;
+}
+
+// Helper: Check if placement supports mobile image URL
+function supportsMobileImage(placement: string): boolean {
+  const homepagePlacements = ['homepage_top_banner', 'homepage_mid_banner', 'homepage_footer_banner'];
+  const articlePlacements = ['article_top', 'article_middle', 'article_sidebar'];
+  return [...homepagePlacements, ...articlePlacements].includes(placement);
 }
 
 /* ═══════════════════════════════════════

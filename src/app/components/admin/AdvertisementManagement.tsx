@@ -45,6 +45,7 @@ type AdForm = {
   title: string;
   target_url: string;
   banner_url: string;
+  mobile_banner_url?: string;
   position: string;
   start_date: string;
   end_date: string;
@@ -76,6 +77,7 @@ const emptyAd: AdForm = {
   title: '',
   target_url: '',
   banner_url: '',
+  mobile_banner_url: '',
   position: '',
   start_date: '',
   end_date: '',
@@ -106,6 +108,13 @@ function formatMoney(value: number) {
 function formatPercent(clicks: number, impressions: number) {
   if (impressions <= 0) return '0.0% CTR';
   return `${((clicks / impressions) * 100).toFixed(1)}% CTR`;
+}
+
+// Helper: Check if placement supports mobile image URL
+function supportsMobileImage(placement: string): boolean {
+  const homepagePlacements = ['homepage-header-banner', 'hero', 'homepage-footer-banner'];
+  const articlePlacements = ['article-top', 'article-middle', 'article-sidebar'];
+  return [...homepagePlacements, ...articlePlacements].includes(placement);
 }
 
 export function AdvertisementManagement() {
@@ -725,13 +734,22 @@ export function AdvertisementManagement() {
             </select>
             <Input value={adForm.ad_type} onChange={event => setAdForm(current => ({ ...current, ad_type: event.target.value as AdForm['ad_type'] }))} placeholder="Ad Type" />
             <Input value={adForm.target_url} onChange={event => setAdForm(current => ({ ...current, target_url: event.target.value }))} placeholder="Target URL" />
-            <Input value={adForm.banner_url} onChange={event => setAdForm(current => ({ ...current, banner_url: event.target.value }))} placeholder="Banner URL" />
+            {supportsMobileImage(adForm.placement) ? (
+              <>
+                <Input value={adForm.banner_url} onChange={event => setAdForm(current => ({ ...current, banner_url: event.target.value }))} placeholder="Desktop Image URL" />
+                <Input value={adForm.mobile_banner_url || ''} onChange={event => setAdForm(current => ({ ...current, mobile_banner_url: event.target.value }))} placeholder="Mobile Image URL (optional, falls back to desktop)" />
+              </>
+            ) : (
+              <Input value={adForm.banner_url} onChange={event => setAdForm(current => ({ ...current, banner_url: event.target.value }))} placeholder="Image URL" />
+            )}
           </div>
 
           {/* Banner Image Preview */}
           {adForm.banner_url && (
             <div className="rounded-xl border border-gray-200 p-4 space-y-2">
-              <div className="text-sm font-medium text-gray-900">Image Preview</div>
+              <div className="text-sm font-medium text-gray-900">
+                {supportsMobileImage(adForm.placement) ? 'Desktop Image Preview' : 'Image Preview'}
+              </div>
               <div className="rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center" style={{ maxHeight: '200px' }}>
                 {adForm.banner_url.includes('drive.google.com') ? (
                   <PublicGoogleDriveImage 
@@ -746,6 +764,31 @@ export function AdvertisementManagement() {
                     style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
                     onError={() => {
                       toast.error('Image URL invalid or not accessible');
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Mobile Image Preview */}
+          {supportsMobileImage(adForm.placement) && adForm.mobile_banner_url && (
+            <div className="rounded-xl border border-gray-200 p-4 space-y-2">
+              <div className="text-sm font-medium text-gray-900">Mobile Image Preview</div>
+              <div className="rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center" style={{ maxHeight: '200px' }}>
+                {adForm.mobile_banner_url.includes('drive.google.com') ? (
+                  <PublicGoogleDriveImage 
+                    url={adForm.mobile_banner_url} 
+                    alt={adForm.title || 'Advertisement'}
+                    style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                  />
+                ) : (
+                  <img 
+                    src={adForm.mobile_banner_url} 
+                    alt={adForm.title || 'Advertisement'} 
+                    style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                    onError={() => {
+                      toast.error('Mobile image URL invalid or not accessible');
                     }}
                   />
                 )}
