@@ -101,10 +101,10 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
 
     // Determine image URLs for responsive source
     const supportsResponsiveImage = supportsMobileImage(placement);
+    const desktopImageUrl = currentAd.banner_url;
     const mobileImageUrl = supportsResponsiveImage && currentAd.mobile_banner_url 
       ? currentAd.mobile_banner_url 
-      : currentAd.banner_url;
-    const desktopImageUrl = currentAd.banner_url;
+      : null;
     
     return (
       <div ref={containerRef} className={className}>
@@ -119,8 +119,8 @@ export function SmartAd({ placement, className = '', showLabel = true }: SmartAd
               style={{ objectPosition: 'center' }}
             />
           ) : (
-            // Use responsive image for non-Google Drive images
-            supportsResponsiveImage && mobileImageUrl !== desktopImageUrl ? (
+            // Use responsive image for non-Google Drive images with mobile support
+            supportsResponsiveImage && mobileImageUrl ? (
               <picture>
                 <source media="(max-width: 1023px)" srcSet={mobileImageUrl} />
                 <img 
