@@ -629,6 +629,9 @@ function CategorySection({ title, articles, href, tenantSlug }: { title: string;
 
 /* ─── PHOTO GALLERY ─── */
 function PhotoGallery({ articles, tenantSlug }: { articles: PublicArticle[]; tenantSlug: string }) {
+  // Only render if we have articles to display
+  if (!articles || articles.length === 0) return null;
+  
   return (
     <section>
       <SectionHeader title="Photo Gallery" href="/search?q=photos" />
@@ -651,6 +654,9 @@ function PhotoGallery({ articles, tenantSlug }: { articles: PublicArticle[]; ten
 
 /* ─── OPINION SECTION ─── */
 function OpinionSection({ articles, tenantSlug }: { articles: PublicArticle[]; tenantSlug: string }) {
+  // Only render if we have articles to display
+  if (!articles || articles.length === 0) return null;
+  
   return (
     <section className="bg-gray-900 rounded-xl p-6 shadow-lg">
       <SectionHeader title="Opinion & Editorial" href="/search?q=opinion" dark />
