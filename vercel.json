@@ -34,7 +34,7 @@
       ]
     },
     {
-      "source": "/(robots.txt|sitemap.xml|privacy-policy.html|site.webmanifest|firebase-messaging-sw.js)",
+      "source": "/(robots.txt|sitemap.xml|privacy-policy.html|site.webmanifest|firebase-messaging-sw.js|ads.txt)",
       "headers": [
         {
           "key": "Cache-Control",
