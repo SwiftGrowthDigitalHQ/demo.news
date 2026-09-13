@@ -8,20 +8,7 @@ import { useCms } from '../lib/cms';
 import { useAuth } from '../lib/auth';
 import { resolveLogoUrl } from '../lib/assetResolver';
 import { PublicGoogleDriveImage } from './PublicGoogleDriveImage';
-
-const NAV_ITEMS = [
-  { label: 'Home', path: '/' },
-  { label: 'Politics', path: '/category/politics' },
-  { label: 'Bihar', path: '/category/bihar' },
-  { label: 'National', path: '/category/sitamarhi' },
-  { label: 'Crime', path: '/category/crime' },
-  { label: 'Business', path: '/search?q=business' },
-  { label: 'Sports', path: '/search?q=sports' },
-  { label: 'Technology', path: '/search?q=technology' },
-  { label: 'Education', path: '/category/education' },
-  { label: 'Entertainment', path: '/search?q=entertainment' },
-  { label: 'Video News', path: '/search?q=video' },
-];
+import { Category } from '../lib/categoriesApi';
 
 export function Header() {
   const { navigate, pathname } = useAppNavigation();
@@ -31,8 +18,33 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
+  const [navCategories, setNavCategories] = useState<Category[]>([]);
   const profileRef = useRef<HTMLDivElement>(null);
   const socialLinks = (siteSettings?.social_links ?? {}) as Record<string, string>;
+
+  // Load navbar categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const { getNavbarCategories } = await import('../lib/categoriesApi');
+        const categories = await getNavbarCategories();
+        setNavCategories(categories);
+      } catch {
+        // Fallback: show Home link if categories fail to load
+        setNavCategories([]);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Build navigation items: Home + dynamic categories
+  const NAV_ITEMS = [
+    { label: 'Home', path: '/' },
+    ...navCategories.map(cat => ({
+      label: cat.name,
+      path: `/category/${cat.slug}`,
+    })),
+  ];
 
   const brandName = siteSettings?.site_name ?? 'News Portal';
   const tagline = (siteSettings?.theme_config as Record<string, unknown> | undefined)?.tagline as string | undefined ?? 'Fast. Accurate. Trusted.';

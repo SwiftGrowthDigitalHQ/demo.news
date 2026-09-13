@@ -205,6 +205,9 @@ export function PageMetadata(props: PageMetadataProps) {
     structuredData,
   } = props;
   
+  // seoDefaults is not passed as prop, so use undefined (handled in resolveSEOImage)
+  const seoDefaults = undefined;
+  
   return (
     <Helmet>
       {/* Basic Meta Tags */}

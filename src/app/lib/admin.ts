@@ -539,7 +539,12 @@ export async function listAdminCategories() {
   
   const tenantId = await getCurrentUserTenantId();
   const supabase = client();
-  const { data, error } = await supabase.from('categories').select('*').eq('tenant_id', tenantId).is('deleted_at', null).order('sort_order', { ascending: true });
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .is('deleted_at', null)
+    .order('sort_order', { ascending: true });
   if (error) throw error;
   return (data ?? []) as AdminCategory[];
 }
@@ -558,16 +563,24 @@ export async function upsertAdminCategory(payload: Partial<AdminCategory> & { na
     name: payload.name,
     slug: payload.slug,
     description: payload.description ?? null,
+    icon: payload.icon ?? null,
+    color: payload.color ?? '#dc2626',
+    cover_image_url: payload.cover_image_url ?? null,
+    show_in_navbar: Boolean(payload.show_in_navbar ?? true),
+    show_on_homepage: Boolean(payload.show_on_homepage ?? true),
+    status: payload.status ?? 'published',
+    is_featured: Boolean(payload.is_featured ?? false),
     sort_order: payload.sort_order ?? 0,
-    is_featured: Boolean(payload.is_featured),
     seo_title: payload.seo_title ?? null,
     seo_description: payload.seo_description ?? null,
+    og_image_url: payload.og_image_url ?? null,
+    canonical_url: payload.canonical_url ?? null,
   };
   const result = payload.id
-    ? await supabase.from('categories').update(body).eq('id', payload.id).select('*').single()
+    ? await supabase.from('categories').update(body).eq('id', payload.id).eq('tenant_id', tenantId).select('*').single()
     : await supabase.from('categories').insert(body).select('*').single();
   if (result.error) throw result.error;
-  return result.data;
+  return result.data as AdminCategory;
 }
 
 export async function deleteAdminCategory(id: string) {
@@ -579,8 +592,149 @@ export async function deleteAdminCategory(id: string) {
   
   const tenantId = await getCurrentUserTenantId();
   const supabase = client();
-  const { error } = await supabase.from('categories').update({ deleted_at: new Date().toISOString() }).eq('id', id).eq('tenant_id', tenantId);
+  const { error } = await supabase
+    .from('categories')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('tenant_id', tenantId);
   if (error) throw error;
+}
+
+/**
+ * Get category by slug (published only)
+ */
+export async function getAdminCategoryBySlug(slug: string) {
+  const tenantId = await getCurrentUserTenantId();
+  const supabase = client();
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .is('deleted_at', null)
+    .single();
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as AdminCategory | null;
+}
+
+/**
+ * Restore deleted category
+ */
+export async function restoreAdminCategory(id: string) {
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Category restoration');
+  }
+
+  const tenantId = await getCurrentUserTenantId();
+  const supabase = client();
+  const { data, error } = await supabase
+    .from('categories')
+    .update({ deleted_at: null })
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as AdminCategory;
+}
+
+/**
+ * Bulk delete categories
+ */
+export async function bulkDeleteAdminCategories(ids: string[]) {
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Bulk category deletion');
+  }
+
+  const tenantId = await getCurrentUserTenantId();
+  const supabase = client();
+  const { error } = await supabase
+    .from('categories')
+    .update({ deleted_at: new Date().toISOString() })
+    .in('id', ids)
+    .eq('tenant_id', tenantId);
+  if (error) throw error;
+}
+
+/**
+ * Bulk update category status
+ */
+export async function bulkUpdateAdminCategoryStatus(ids: string[], status: 'published' | 'draft') {
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Bulk category status update');
+  }
+
+  const tenantId = await getCurrentUserTenantId();
+  const supabase = client();
+  const { error } = await supabase
+    .from('categories')
+    .update({ status, updated_at: new Date().toISOString() })
+    .in('id', ids)
+    .eq('tenant_id', tenantId);
+  if (error) throw error;
+}
+
+/**
+ * Get categories for navbar (show_in_navbar=true, published)
+ */
+export async function getNavbarAdminCategories() {
+  const tenantId = await getCurrentUserTenantId();
+  const supabase = client();
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('show_in_navbar', true)
+    .eq('status', 'published')
+    .is('deleted_at', null)
+    .order('sort_order', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as AdminCategory[];
+}
+
+/**
+ * Get categories for homepage (show_on_homepage=true, published)
+ */
+export async function getHomepageAdminCategories() {
+  const tenantId = await getCurrentUserTenantId();
+  const supabase = client();
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('show_on_homepage', true)
+    .eq('status', 'published')
+    .is('deleted_at', null)
+    .order('sort_order', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as AdminCategory[];
+}
+
+/**
+ * Update category sort order (drag & drop)
+ */
+export async function updateAdminCategorySort(sortUpdates: Array<{ id: string; sort_order: number }>): Promise<void> {
+  if (isDemoMode()) {
+    const { rejectDemoMutation } = await import('./demoTenant');
+    rejectDemoMutation('Category sort update');
+  }
+
+  const tenantId = await getCurrentUserTenantId();
+  const supabase = client();
+
+  for (const update of sortUpdates) {
+    const { error } = await supabase
+      .from('categories')
+      .update({ sort_order: update.sort_order, updated_at: new Date().toISOString() })
+      .eq('id', update.id)
+      .eq('tenant_id', tenantId);
+
+    if (error) throw error;
+  }
 }
 
 export async function listAdminMedia() {

@@ -15,10 +15,19 @@ export type PublicCategory = {
   name: string;
   slug: string;
   description: string | null;
-  sort_order: number;
+  icon: string | null;
+  color: string | null;
+  cover_image_url: string | null;
+  show_in_navbar: boolean;
+  show_on_homepage: boolean;
+  status: 'published' | 'draft';
   is_featured: boolean;
+  sort_order: number;
   seo_title: string | null;
   seo_description: string | null;
+  og_image_url: string | null;
+  canonical_url: string | null;
+  article_count: number;
 };
 
 export type PublicArticle = {

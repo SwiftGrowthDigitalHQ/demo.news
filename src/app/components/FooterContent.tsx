@@ -165,7 +165,7 @@ export function FooterPresentation({
         </p>
 
         {/* Social icons */}
-        {socialLinks.length > 0 && (
+        {false && socialLinks.length > 0 && (
           <div className="flex gap-2.5 mb-5 flex-wrap">
             {socialLinks.map((link) => {
               const Icon = socialIcons[link.platform] || MessageCircle;
@@ -243,7 +243,7 @@ export function FooterPresentation({
               </p>
 
               {/* Social Links */}
-              {socialLinks.length > 0 && (
+              {false && socialLinks.length > 0 && (
                 <div className="flex gap-2.5 mb-6 flex-wrap">
                   {socialLinks.map((link) => {
                     const Icon = socialIcons[link.platform] || MessageCircle;

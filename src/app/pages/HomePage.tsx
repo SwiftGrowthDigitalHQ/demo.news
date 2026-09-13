@@ -984,14 +984,21 @@ export function HomePage() {
   const latestArticles = useMemo(() => articles.slice(0, 12), [articles]);
   const videoArticles = useMemo(() => articles.filter(a => a.media_type === 'video').slice(0, 4), [articles]);
 
-  const biharNews = useMemo(() => articles.filter(a => a.category_name === 'बिहार').slice(0, 5), [articles]);
-  const politicsNews = useMemo(() => articles.filter(a => a.category_name === 'राजनीति').slice(0, 5), [articles]);
-  const sportsNews = useMemo(() => articles.filter(a => a.category_name === 'खेल').slice(0, 5), [articles]);
-  const businessNews = useMemo(() => articles.filter(a => a.category_name === 'व्यापार').slice(0, 5), [articles]);
-  const techNews = useMemo(() => articles.filter(a => a.category_name === 'टेक्नोलॉजी').slice(0, 5), [articles]);
-  const educationNews = useMemo(() => articles.filter(a => a.category_name === 'शिक्षा').slice(0, 5), [articles]);
-  const crimeNews = useMemo(() => articles.filter(a => a.category_name === 'क्राइम').slice(0, 5), [articles]);
-  const nationalNews = useMemo(() => articles.filter(a => a.category_name === 'सीतामढ़ी' || a.category_name === 'बिहार').slice(0, 5), [articles]);
+  // Dynamic category sections - filter by show_on_homepage=true
+  const _homepageCategories = useMemo(() => {
+    return categories.filter(c => c.show_on_homepage && c.status === 'published').sort((a, b) => a.sort_order - b.sort_order);
+  }, [categories]);
+
+  const getCategoryArticles = useMemo(() => (categorySlug: string) => articles.filter(a => a.category_slug === categorySlug).slice(0, 5), [articles]);
+
+  const biharNews = useMemo(() => getCategoryArticles('bihar'), [getCategoryArticles]);
+  const politicsNews = useMemo(() => getCategoryArticles('politics'), [getCategoryArticles]);
+  const sportsNews = useMemo(() => getCategoryArticles('sports'), [getCategoryArticles]);
+  const businessNews = useMemo(() => getCategoryArticles('business'), [getCategoryArticles]);
+  const techNews = useMemo(() => getCategoryArticles('technology'), [getCategoryArticles]);
+  const educationNews = useMemo(() => getCategoryArticles('education'), [getCategoryArticles]);
+  const crimeNews = useMemo(() => getCategoryArticles('crime'), [getCategoryArticles]);
+  const nationalNews = useMemo(() => getCategoryArticles('national'), [getCategoryArticles]);
   const opinionArticles = useMemo(() => articles.slice(10, 13), [articles]);
   const galleryArticles = useMemo(() => articles.filter(a => a.featured_image || a.video_url).slice(0, 8), [articles]);
 

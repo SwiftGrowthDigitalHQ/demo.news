@@ -216,11 +216,11 @@ export function ArticlePage({ slug }: { slug: string }) {
             <div className="rounded-xl overflow-hidden mb-4">
               {isYouTubeUrl(article.featured_image) ? (
                 <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                  <iframe src={getYouTubeEmbedUrl(article.featured_image!)} title={article.title} className="absolute inset-0 w-full h-full rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy" />
+                  <iframe src={getYouTubeEmbedUrl(article.featured_image!)} title={article.title} className="absolute inset-0 w-full h-full rounded-xl" allow="autoplay; fullscreen" loading="lazy" />
                 </div>
               ) : isYouTubeUrl(article.video_url) ? (
                 <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                  <iframe src={getYouTubeEmbedUrl(article.video_url!)} title={article.title} className="absolute inset-0 w-full h-full rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy" />
+                  <iframe src={getYouTubeEmbedUrl(article.video_url!)} title={article.title} className="absolute inset-0 w-full h-full rounded-xl" allow="autoplay; fullscreen" loading="lazy" />
                 </div>
               ) : getArticleThumbnail(article.featured_image, article.video_url) ? (
                 <ImageWithFallback src={getArticleThumbnail(article.featured_image, article.video_url)} alt={article.title} className="w-full h-auto rounded-xl" />
