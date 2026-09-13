@@ -87,27 +87,48 @@ EXECUTE FUNCTION public.trigger_update_category_count();
 -- RLS Policies for categories
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can view published categories of their tenant
-CREATE POLICY "categories_view_published" ON public.categories
+-- Drop old incorrect policies if they exist
+DROP POLICY IF EXISTS "categories_view_published" ON public.categories CASCADE;
+DROP POLICY IF EXISTS "categories_manage_admin" ON public.categories CASCADE;
+DROP POLICY IF EXISTS "categories_read_own_tenant" ON public.categories CASCADE;
+DROP POLICY IF EXISTS "categories_insert_own_tenant" ON public.categories CASCADE;
+DROP POLICY IF EXISTS "categories_update_delete_own_tenant" ON public.categories CASCADE;
+DROP POLICY IF EXISTS "categories_delete_own_tenant" ON public.categories CASCADE;
+DROP POLICY IF EXISTS "categories_manage_own_tenant" ON public.categories CASCADE;
+
+-- Policy: Users can view published categories or any categories of their tenant if admin
+CREATE POLICY "categories_read_own_tenant" ON public.categories
 FOR SELECT
 USING (
-  tenant_id = auth.jwt() ->> 'tenant_id' AND
-  (status = 'published' OR auth.uid() IN (
-    SELECT user_id FROM public.tenant_members
-    WHERE tenant_id = public.categories.tenant_id
-  ))
+  deleted_at IS NULL AND
+  (
+    (status = 'published') OR
+    (tenant_id IN (SELECT public.get_user_tenant_ids()) OR public.is_super_admin())
+  )
 );
 
--- Policy: Admins can manage all categories in their tenant
-CREATE POLICY "categories_manage_admin" ON public.categories
-FOR ALL
+-- Policy: Admins can insert categories in their tenant
+CREATE POLICY "categories_insert_own_tenant" ON public.categories
+FOR INSERT
+WITH CHECK (
+  tenant_id IN (SELECT public.get_user_tenant_ids()) OR public.is_super_admin()
+);
+
+-- Policy: Admins can update and delete categories in their tenant
+CREATE POLICY "categories_update_delete_own_tenant" ON public.categories
+FOR UPDATE
 USING (
-  tenant_id = auth.jwt() ->> 'tenant_id' AND
-  auth.uid() IN (
-    SELECT user_id FROM public.tenant_members
-    WHERE tenant_id = public.categories.tenant_id
-    AND role IN ('admin', 'owner')
-  )
+  tenant_id IN (SELECT public.get_user_tenant_ids()) OR public.is_super_admin()
+)
+WITH CHECK (
+  tenant_id IN (SELECT public.get_user_tenant_ids()) OR public.is_super_admin()
+);
+
+-- Policy: Admins can delete categories in their tenant
+CREATE POLICY "categories_delete_own_tenant" ON public.categories
+FOR DELETE
+USING (
+  tenant_id IN (SELECT public.get_user_tenant_ids()) OR public.is_super_admin()
 );
 
 -- Grant execute permission on functions
