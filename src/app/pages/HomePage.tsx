@@ -6,6 +6,7 @@ import { useCms, type PublicArticle } from '../lib/cms';
 import { createNewsletterSubscription, trackAnalyticsEvent } from '../lib/admin';
 import { getSupabaseClient } from '../../lib/supabase';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { resolveAssetUrl } from '../lib/assetResolver';
 import {
   TrendingUp, Flame, Clock, Play, Eye, User, ChevronRight,
   ChevronLeft, BarChart3, CloudSun, Facebook, Twitter, Instagram,
@@ -652,6 +653,50 @@ function PhotoGallery({ articles, tenantSlug }: { articles: PublicArticle[]; ten
   );
 }
 
+/* ─── OLDER CONTENT ─── */
+function OlderContent({ articles, tenantSlug }: { articles: PublicArticle[]; tenantSlug: string }) {
+  // Only render if we have articles to display
+  if (!articles || articles.length === 0) return null;
+
+  return (
+    <section>
+      <SectionHeader title="Older Content" href="/search?q=archive" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {articles.slice(0, 8).map(a => (
+          <AppLink key={a.id} to={getArticleUrl(a.slug, tenantSlug)} className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md hover:border-red-200 transition-all group">
+            {/* Image */}
+            <div className="relative w-full overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+              <ImageWithFallback
+                src={thumb(a)}
+                alt={a.title}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+            {/* Content */}
+            <div className="p-3">
+              {a.category && (
+                <div className="text-[10px] font-bold text-red-600 uppercase tracking-wide mb-1">
+                  {a.category}
+                </div>
+              )}
+              <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors mb-2">
+                {a.title}
+              </h3>
+              <div className="flex items-center justify-between text-[10px] text-gray-500">
+                <span>{getRelativeTime(a.published_at)}</span>
+                <span className="flex items-center gap-1">
+                  <Eye className="h-3 w-3" />
+                  {formatViews(a.views_count ?? 0)}
+                </span>
+              </div>
+            </div>
+          </AppLink>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 /* ─── OPINION SECTION ─── */
 function OpinionSection({ articles, tenantSlug }: { articles: PublicArticle[]; tenantSlug: string }) {
   // Only render if we have articles to display
@@ -802,16 +847,21 @@ function ReporterShowcase() {
         {reporters.map(r => (
           <AppLink key={r.slug || r.name} to={`/reporter/${r.slug}`} className="bg-white rounded-xl border border-gray-100 p-4 text-center hover:shadow-md hover:border-red-200 transition-all group cursor-pointer block">
             {r.avatar_url ? (
-              <img
-                src={r.avatar_url}
+              <ImageWithFallback
+                src={resolveAssetUrl(r.avatar_url)}
                 alt={r.name}
                 className="w-14 h-14 rounded-full object-cover mx-auto mb-2 group-hover:scale-110 transition-transform"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
               />
-            ) : (
+            ) : null}
+            {!r.avatar_url || !(typeof r.avatar_url === 'string') ? (
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-lg font-bold mx-auto mb-2 group-hover:scale-110 transition-transform">
                 {r.avatar}
               </div>
-            )}
+            ) : null}
             <h4 className="text-xs font-bold text-gray-900 truncate">{r.name}</h4>
             <p className="text-[10px] text-gray-500 truncate">{r.role}</p>
             <div className="mt-2 text-[10px] font-semibold text-red-600">{r.stories} Stories</div>
@@ -1008,6 +1058,30 @@ export function HomePage() {
   const opinionArticles = useMemo(() => articles.slice(10, 13), [articles]);
   const galleryArticles = useMemo(() => articles.filter(a => a.featured_image || a.video_url).slice(0, 8), [articles]);
 
+  // Older Content: Exclude articles already displayed in main sections
+  const olderArticles = useMemo(() => {
+    const usedIds = new Set<string>();
+    
+    // Collect IDs from all sections
+    heroArticles.forEach(a => usedIds.add(a.id));
+    featuredArticles.forEach(a => usedIds.add(a.id));
+    breakingArticles.forEach(a => usedIds.add(a.id));
+    latestArticles.forEach(a => usedIds.add(a.id));
+    videoArticles.forEach(a => usedIds.add(a.id));
+    galleryArticles.forEach(a => usedIds.add(a.id));
+    opinionArticles.forEach(a => usedIds.add(a.id));
+    
+    // Filter articles not already shown, sort by published_at descending
+    return articles
+      .filter(a => !usedIds.has(a.id))
+      .sort((a, b) => {
+        const dateA = new Date(a.published_at || a.created_at || 0).getTime();
+        const dateB = new Date(b.published_at || b.created_at || 0).getTime();
+        return dateB - dateA;
+      })
+      .slice(0, 8);
+  }, [articles, heroArticles, featuredArticles, breakingArticles, latestArticles, videoArticles, galleryArticles, opinionArticles]);
+
   const tickerItems = useMemo(() => breakingNews.slice(0, 8).map(b => ({
     headline: b.headline,
     href: b.link_url || `/search?q=${encodeURIComponent(b.headline)}`,
@@ -1149,14 +1223,17 @@ export function HomePage() {
             {/* Photo Gallery */}
             <PhotoGallery articles={galleryArticles} />
 
+            {/* Older Content */}
+            <OlderContent articles={olderArticles} tenantSlug={tenantSlug} />
+
             {/* Reporter Showcase */}
             <ReporterShowcase />
 
-            {/* Opinion */}
-            <OpinionSection articles={opinionArticles} />
-
             {/* Trending Tags */}
             <TrendingTags categories={categories} />
+
+            {/* Opinion */}
+            <OpinionSection articles={opinionArticles} />
           </div>
 
           {/* ════ RIGHT SIDEBAR ════ */}
