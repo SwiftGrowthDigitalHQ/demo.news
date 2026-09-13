@@ -1192,12 +1192,16 @@ export async function markAuditLog(payload: {
   
   try {
     const supabase = client();
+    // Get current user's tenant ID for audit log context
+    const tenantId = await getCurrentUserTenantId().catch(() => null);
+    
     const { error } = await supabase.from('audit_logs').insert({
       action: payload.action,
       entity_type: payload.entity_type,
       entity_id: payload.entity_id ?? null,
       metadata: payload.metadata ?? {},
       ip_address: payload.ip_address ?? null,
+      tenant_id: tenantId,
     });
     if (error) {
       return;
