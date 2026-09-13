@@ -114,7 +114,6 @@ export const TENANT_ADMIN_SECTIONS: AdminSection[] = [
   'breaking',
   'media',
   'journalists',
-  'roles',
   'ads',
   'subscriptions',
   'my-subscription',
