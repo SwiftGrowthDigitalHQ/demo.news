@@ -99,6 +99,7 @@ export const SUPER_ADMIN_ONLY_SECTIONS: AdminSection[] = [
   'security',
   'reports',
   'roles', // SECURITY: Only Super Admin can manage platform roles
+  'users', // SECURITY: Only Super Admin can manage users
 ];
 
 /**
@@ -113,7 +114,6 @@ export const TENANT_ADMIN_SECTIONS: AdminSection[] = [
   'breaking',
   'media',
   'journalists',
-  'users',
   'roles',
   'ads',
   'subscriptions',

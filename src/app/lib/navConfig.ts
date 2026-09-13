@@ -117,7 +117,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     label: 'Users',
     icon: Shield,
     category: 'TEAM',
-    tenantOnly: true,
+    superAdminOnly: true, // SECURITY: Only Super Admin can manage users
   },
   {
     id: 'roles',
