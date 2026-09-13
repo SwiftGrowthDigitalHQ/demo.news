@@ -1316,6 +1316,45 @@ export async function upsertAdminUser(payload: Partial<AdminUser> & { full_name:
   }
   
   const supabase = client();
+  
+  // ────────────────────────────────────────────────────────────────────────────
+  // SECURITY CHECK: Prevent privilege escalation to super_admin
+  // Only users with super_admin role can assign super_admin role
+  // ────────────────────────────────────────────────────────────────────────────
+  if (payload.role_id) {
+    // Check if the role being assigned is super_admin
+    const { data: targetRole, error: roleError } = await supabase
+      .from('roles')
+      .select('id, slug')
+      .eq('id', payload.role_id)
+      .single();
+    
+    if (roleError || !targetRole) {
+      throw new Error('Invalid role specified');
+    }
+    
+    // If trying to assign super_admin role, verify current user is super_admin
+    if (targetRole.slug === 'super_admin') {
+      const { data: currentUser, error: userError } = await supabase
+        .from('users')
+        .select('role_id, roles(slug)')
+        .is('deleted_at', null)
+        .single();
+      
+      const currentRoleSlug = 
+        currentUser?.roles && typeof currentUser.roles === 'object' && 'slug' in currentUser.roles
+          ? (currentUser.roles as { slug: string }).slug
+          : null;
+      
+      if (currentRoleSlug !== 'super_admin') {
+        throw new Error(
+          'Unauthorized: Only Super Admin users can assign the Super Admin role. ' +
+          'This action is logged and monitored.'
+        );
+      }
+    }
+  }
+  
   const body = {
     full_name: payload.full_name,
     email: payload.email,
