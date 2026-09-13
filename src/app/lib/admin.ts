@@ -1244,6 +1244,29 @@ export async function upsertAdminRole(payload: Partial<AdminRole> & { name: stri
   }
   
   const supabase = client();
+  
+  // ────────────────────────────────────────────────────────────────────────────
+  // SECURITY CHECK: Only Super Admin can create/edit/delete roles
+  // Prevent Tenant Admins from modifying role definitions
+  // ────────────────────────────────────────────────────────────────────────────
+  const { data: currentUser, error: userError } = await supabase
+    .from('users')
+    .select('role_id, roles(slug)')
+    .is('deleted_at', null)
+    .single();
+  
+  const currentRoleSlug = 
+    currentUser?.roles && typeof currentUser.roles === 'object' && 'slug' in currentUser.roles
+      ? (currentUser.roles as { slug: string }).slug
+      : null;
+  
+  if (currentRoleSlug !== 'super_admin') {
+    throw new Error(
+      'Unauthorized: Only Super Admin can manage roles. ' +
+      'Tenant Admins cannot create, edit, or delete roles.'
+    );
+  }
+  
   const tenantId = await getCurrentUserTenantId();
   const body = {
     tenant_id: tenantId,
@@ -1267,6 +1290,29 @@ export async function deleteAdminRole(id: string) {
   }
   
   const supabase = client();
+  
+  // ────────────────────────────────────────────────────────────────────────────
+  // SECURITY CHECK: Only Super Admin can delete roles
+  // Prevent Tenant Admins from deleting role definitions
+  // ────────────────────────────────────────────────────────────────────────────
+  const { data: currentUser, error: userError } = await supabase
+    .from('users')
+    .select('role_id, roles(slug)')
+    .is('deleted_at', null)
+    .single();
+  
+  const currentRoleSlug = 
+    currentUser?.roles && typeof currentUser.roles === 'object' && 'slug' in currentUser.roles
+      ? (currentUser.roles as { slug: string }).slug
+      : null;
+  
+  if (currentRoleSlug !== 'super_admin') {
+    throw new Error(
+      'Unauthorized: Only Super Admin can delete roles. ' +
+      'Tenant Admins cannot delete role definitions.'
+    );
+  }
+  
   const { error } = await supabase.from('roles').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }

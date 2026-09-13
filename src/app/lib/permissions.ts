@@ -98,6 +98,7 @@ export const SUPER_ADMIN_ONLY_SECTIONS: AdminSection[] = [
   'tenant-payments',
   'security',
   'reports',
+  'roles', // SECURITY: Only Super Admin can manage platform roles
 ];
 
 /**
@@ -371,7 +372,6 @@ export function canAccessSection(
       'media': 'canManageMedia',
       'journalists': 'canManageUsers',
       'users': 'canManageUsers',
-      'roles': 'canManageUsers',
       'ads': 'canManageAdvertisements',
       'subscriptions': 'canManageNewsletter',
       'my-subscription': 'canViewAnalytics',
@@ -392,6 +392,7 @@ export function canAccessSection(
       'tenants': 'canManageTenants',
       'security': 'canManagePlatformSecurity',
       'reports': 'canViewPlatformReports',
+      'roles': 'canManagePlatformSecurity', // SECURITY: Only Super Admin can manage roles (dummy value, access denied above)
     };
     
     const requiredPermission = sectionPermissionMap[section];
