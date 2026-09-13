@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 import { cn } from "./utils";
 import { useIsMobile } from "./use-mobile";
@@ -68,14 +69,13 @@ function DialogContent({
         )}
         {...props}
       >
-        {/* Ensure DialogTitle exists for accessibility - visually hidden */}
-        <DialogPrimitive.Title className="sr-only">
-          Dialog
-        </DialogPrimitive.Title>
-        {/* Ensure DialogDescription exists for accessibility - visually hidden */}
-        <DialogPrimitive.Description className="sr-only">
-          Dialog content
-        </DialogPrimitive.Description>
+        {/* Hidden title and description for screen reader accessibility */}
+        <VisuallyHidden asChild>
+          <DialogPrimitive.Title>Dialog</DialogPrimitive.Title>
+        </VisuallyHidden>
+        <VisuallyHidden asChild>
+          <DialogPrimitive.Description>Dialog content</DialogPrimitive.Description>
+        </VisuallyHidden>
         {children}
         <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
           <XIcon />
