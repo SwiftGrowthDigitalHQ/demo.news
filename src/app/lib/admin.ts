@@ -395,25 +395,51 @@ export async function listAdminArticles() {
   
   const supabase = client();
   const tenantId = await getCurrentUserTenantId();
-  const { data, error } = await supabase
+  
+  // Try to fetch with reporter_id, fall back to without if column doesn't exist
+  let { data, error } = await supabase
     .from('articles')
     .select(`
       id, slug, title, excerpt, content, category_id, featured_image, media_type, video_url,
       seo_title, seo_description, status, featured, trending, breaking, publish_at, read_time,
-      views_count, created_at, updated_at, deleted_at,
+      views_count, created_at, updated_at, deleted_at, reporter_id,
       category:categories!articles_category_id_fkey(id, name, slug),
       author:users!articles_author_id_fkey(id, full_name, role:roles(slug, name)),
+      reporter:reporters!articles_reporter_id_fkey(id, full_name),
       tags:article_tags(tag)
     `)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  // If error, try without reporter_id (for backward compatibility during migration)
+  if (error) {
+    const retryResult = await supabase
+      .from('articles')
+      .select(`
+        id, slug, title, excerpt, content, category_id, featured_image, media_type, video_url,
+        seo_title, seo_description, status, featured, trending, breaking, publish_at, read_time,
+        views_count, created_at, updated_at, deleted_at,
+        category:categories!articles_category_id_fkey(id, name, slug),
+        author:users!articles_author_id_fkey(id, full_name, role:roles(slug, name)),
+        tags:article_tags(tag)
+      `)
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false });
+    
+    if (retryResult.error) throw retryResult.error;
+    data = retryResult.data;
+    error = null;
+  }
 
   return (data ?? []).map((row: Record<string, unknown>) => {
     const category = Array.isArray(row.category) ? row.category[0] : asRecord(row.category);
     const author = Array.isArray(row.author) ? row.author[0] : asRecord(row.author);
+    const reporter = Array.isArray(row.reporter) ? row.reporter[0] : asRecord(row.reporter);
     const role = Array.isArray(author.role) ? author.role[0] : asRecord(author.role);
+    
+    // Prefer reporter name if available, fall back to author name
+    const displayName = reporter && reporter.full_name ? String(reporter.full_name) : String(author.full_name ?? '');
+    
     return {
       id: String(row.id),
       slug: String(row.slug),
@@ -423,7 +449,7 @@ export async function listAdminArticles() {
       category_id: String(row.category_id),
       category_name: String(category.name ?? ''),
       category_slug: String(category.slug ?? ''),
-      author_name: String(author.full_name ?? ''),
+      author_name: displayName,
       author_role: String(role.name ?? 'Reporter'),
       publish_at: typeof row.publish_at === 'string' ? row.publish_at : null,
       read_time: typeof row.read_time === 'string' ? row.read_time : null,
@@ -453,6 +479,7 @@ export async function upsertAdminArticle(payload: Partial<AdminArticle> & {
   category_id: string;
   status: AdminArticle['status'];
   author_id?: string | null;
+  reporter_id?: string | null;
 }) {
   // Demo mode: reject mutations
   if (isDemoMode()) {
@@ -471,6 +498,7 @@ export async function upsertAdminArticle(payload: Partial<AdminArticle> & {
     content: rest.content,
     category_id: rest.category_id,
     author_id: rest.author_id || null,
+    reporter_id: rest.reporter_id || null,
     seo_title: rest.seo_title || null,
     seo_description: rest.seo_description || null,
     featured_image: rest.featured_image || null,

@@ -24,10 +24,12 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import {
   AdminArticle,
   AdminUser,
+  AdminReporter,
   deleteAdminArticle,
   listAdminArticles,
   listAdminCategories,
   listAdminUsers,
+  listAdminReporters,
   markAuditLog,
   setArticleStatus,
   upsertAdminArticle,
@@ -50,6 +52,7 @@ type ArticleFormState = {
   content: string;
   category_id: string;
   author_id: string;
+  reporter_id: string;
   status: AdminArticle['status'];
   featured_image: string;
   media_type: string;
@@ -71,6 +74,7 @@ const emptyForm: ArticleFormState = {
   content: '',
   category_id: '',
   author_id: '',
+  reporter_id: '',
   status: 'draft',
   featured_image: '',
   media_type: 'article',
@@ -94,6 +98,7 @@ function toFormState(article: AdminArticle): ArticleFormState {
     content: article.content.join('\n\n'),
     category_id: article.category_id,
     author_id: '',
+    reporter_id: '',
     status: article.status,
     featured_image: article.featured_image ?? '',
     media_type: article.media_type ?? 'article',
@@ -252,6 +257,7 @@ export function NewsManagement() {
   const [articles, setArticles] = useState<AdminArticle[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [reporters, setReporters] = useState<AdminReporter[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -268,14 +274,16 @@ export function NewsManagement() {
     setLoading(true);
     setError(null);
     try {
-      const [articleRows, categoryRows, userRows] = await Promise.all([
+      const [articleRows, categoryRows, userRows, reporterRows] = await Promise.all([
         listAdminArticles(),
         listAdminCategories(),
         listAdminUsers(),
+        listAdminReporters(),
       ]);
       setArticles(articleRows);
       setCategories(categoryRows);
       setUsers(userRows);
+      setReporters(reporterRows);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Failed to load articles.');
     } finally {
@@ -341,6 +349,7 @@ export function NewsManagement() {
           .filter(Boolean),
         category_id: editor.category_id,
         author_id: editor.author_id || null,
+        reporter_id: editor.reporter_id || null,
         status: editor.status,
         featured_image: editor.featured_image || null,
         media_type: editor.media_type,
@@ -569,7 +578,7 @@ export function NewsManagement() {
                       onChange={() => setSelected(selected.length === filtered.length ? [] : filtered.map(article => article.id))}
                     />
                   </th>
-                  {['Title', 'Category', 'Author', 'Status', 'Views', 'Updated', 'Actions'].map(label => (
+                  {['Title', 'Category', 'Reporter', 'Status', 'Views', 'Updated', 'Actions'].map(label => (
                     <th key={label} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#64748b', letterSpacing: '0.05em' }}>
                       {label.toUpperCase()}
                     </th>
@@ -690,13 +699,17 @@ export function NewsManagement() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={editor.author_id} onValueChange={value => setEditor(current => ({ ...current, author_id: value }))}>
-              <SelectTrigger className="h-10 sm:h-9"><SelectValue placeholder="Author" /></SelectTrigger>
+            <Select value={editor.reporter_id} onValueChange={value => setEditor(current => ({ ...current, reporter_id: value }))}>
+              <SelectTrigger className="h-10 sm:h-9"><SelectValue placeholder="Reporter" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No author</SelectItem>
-                {users.map(user => (
-                  <SelectItem key={user.id} value={user.id}>{user.full_name}</SelectItem>
-                ))}
+                <SelectItem value="">No reporter</SelectItem>
+                {reporters.length === 0 ? (
+                  <SelectItem value="" disabled>No reporters available</SelectItem>
+                ) : (
+                  reporters.map(reporter => (
+                    <SelectItem key={reporter.id} value={reporter.id}>{reporter.full_name}</SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
             <Select value={editor.status} onValueChange={value => setEditor(current => ({ ...current, status: value as AdminArticle['status'] }))}>
