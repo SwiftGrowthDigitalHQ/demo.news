@@ -90,46 +90,15 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 -- Drop old incorrect policies if they exist
 DROP POLICY IF EXISTS "categories_view_published" ON public.categories CASCADE;
 DROP POLICY IF EXISTS "categories_manage_admin" ON public.categories CASCADE;
-DROP POLICY IF EXISTS "categories_read_own_tenant" ON public.categories CASCADE;
-DROP POLICY IF EXISTS "categories_insert_own_tenant" ON public.categories CASCADE;
-DROP POLICY IF EXISTS "categories_update_delete_own_tenant" ON public.categories CASCADE;
 DROP POLICY IF EXISTS "categories_delete_own_tenant" ON public.categories CASCADE;
 DROP POLICY IF EXISTS "categories_manage_own_tenant" ON public.categories CASCADE;
 
--- Policy: Users can view published categories or any categories of their tenant if admin
-CREATE POLICY "categories_read_own_tenant" ON public.categories
-FOR SELECT
-USING (
-  deleted_at IS NULL AND
-  (
-    (status = 'published') OR
-    (tenant_id IN (SELECT public.get_user_tenant_ids()) OR public.is_super_admin())
-  )
-);
+-- NOTE: categories_read_own_tenant, categories_insert_own_tenant, categories_update_delete_own_tenant
+-- are recreated below in this migration and will be replaced by migration 20260915000001
+-- which creates improved versions with deleted_at checks
 
--- Policy: Admins can insert categories in their tenant
-CREATE POLICY "categories_insert_own_tenant" ON public.categories
-FOR INSERT
-WITH CHECK (
-  tenant_id IN (SELECT public.get_user_tenant_ids()) OR public.is_super_admin()
-);
-
--- Policy: Admins can update and delete categories in their tenant
-CREATE POLICY "categories_update_delete_own_tenant" ON public.categories
-FOR UPDATE
-USING (
-  tenant_id IN (SELECT public.get_user_tenant_ids()) OR public.is_super_admin()
-)
-WITH CHECK (
-  tenant_id IN (SELECT public.get_user_tenant_ids()) OR public.is_super_admin()
-);
-
--- Policy: Admins can delete categories in their tenant
-CREATE POLICY "categories_delete_own_tenant" ON public.categories
-FOR DELETE
-USING (
-  tenant_id IN (SELECT public.get_user_tenant_ids()) OR public.is_super_admin()
-);
+-- RLS policies will be created by migration 20260915000001_fix_categories_crud_complete.sql
+-- This ensures a single source of truth for RLS policies across CREATE, READ, UPDATE, DELETE operations
 
 -- Grant execute permission on functions
 GRANT EXECUTE ON FUNCTION public.generate_category_slug(text) TO authenticated;
