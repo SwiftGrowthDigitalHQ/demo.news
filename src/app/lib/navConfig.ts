@@ -124,7 +124,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     label: 'Roles',
     icon: Shield,
     category: 'TEAM',
-    tenantOnly: true,
+    superAdminOnly: true, // SECURITY: Only Super Admin can manage roles
   },
 
   // ─────────────────────────────────────────────────────────────────────────
