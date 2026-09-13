@@ -209,7 +209,7 @@ export function UserManagement() {
                   >
                     <option value="">— Select Role —</option>
                     {roles
-                      .filter(role => role.slug !== 'super-admin')
+                      .filter(role => role.slug !== 'super_admin')
                       .map(role => (
                         <option key={role.id} value={role.id}>{role.name}</option>
                       ))}
