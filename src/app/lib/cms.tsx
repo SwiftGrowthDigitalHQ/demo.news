@@ -262,12 +262,6 @@ async function loadPublicContent(tenantSlug: string | null) {
 
   const tenantId = tenantInfo.tenant_id;
 
-  // TEMPORARY DEBUG: Log tenant resolution
-  console.log('[CMS] Tenant resolution:', {
-    tenantSlug,
-    tenantId,
-  });
-
   // SECURITY: ALL queries filtered by tenant_id
   const [
     categoriesResult,
@@ -379,24 +373,8 @@ async function loadPublicContent(tenantSlug: string | null) {
   const liveBreakingNews = (breakingNewsResult.data ?? []) as BreakingHeadline[];
   const liveAdvertisements = (advertisementsResult.data ?? []) as AdvertisementPlacement[];
 
-  // Process reporters and calculate article counts
+  // Process reporters
   const reporterRows = reportersResult.data ?? [];
-  const articleCountByUserId = new Map<string, number>();
-  
-  // TEMPORARY DEBUG: Enhanced logging to trace complete chain
-  console.log('[CMS] Query execution:', {
-    tenantSlug,
-    resolvedTenantId: tenantId,
-    reporterQueryTenantId: tenantId,  // The tenantId used in the .eq('tenant_id', tenantId) filter
-    reporterCount: reporterRows.length,
-    reporters: reporterRows.map((r: any) => ({
-      id: r.id,
-      name: r.full_name,
-      slug: r.slug,
-      tenant_id: r.tenant_id,  // THIS SHOULD MATCH resolvedTenantId
-      status: r.status,
-    })),
-  });
   
   // Count articles by author_id (which maps to reporter's user_id)
   liveArticles.forEach(article => {
