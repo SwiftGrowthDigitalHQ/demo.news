@@ -318,12 +318,7 @@ async function loadPublicContent(tenantSlug: string | null) {
       .order('publish_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false }),
     client
-      .from('reporters')
-      .select('id, full_name, slug, bio, specialty, avatar_url, user_id, status, tenant_id')  // ADD tenant_id to SELECT
-      .eq('tenant_id', tenantId)  // TENANT FILTER
-      .eq('status', 'active')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false }),
+      .rpc('get_tenant_reporters', { p_tenant_slug: tenantSlug }),
     client
       .from('breaking_news')
       .select('id, headline, link_url, sort_order')
