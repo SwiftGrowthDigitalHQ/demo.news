@@ -34,16 +34,22 @@ DROP CONSTRAINT IF EXISTS categories_slug_key;
 -- Step 3: Create a unique index instead (allows partial uniqueness)
 -- This ensures (tenant_id, slug) is unique ONLY for non-deleted rows
 -- Allows same slug to exist in different tenants and allows slug reuse after soft delete
+
+-- Clean up any existing indexes
 DROP INDEX IF EXISTS categories_slug_key;
 DROP INDEX IF EXISTS idx_categories_slug;
 DROP INDEX IF EXISTS idx_categories_tenant_slug;
+DROP INDEX IF EXISTS categories_tenant_slug_unique;
+DROP INDEX IF EXISTS idx_categories_tenant_slug_all;
 
+-- Create new tenant-scoped unique index
 CREATE UNIQUE INDEX categories_tenant_slug_unique 
 ON public.categories(tenant_id, slug)
 WHERE deleted_at IS NULL;
 
--- Step 4: Create regular index for query performance
-CREATE INDEX IF NOT EXISTS idx_categories_tenant_slug_all 
+-- Create regular index for query performance
+CREATE INDEX idx_categories_tenant_slug_all 
 ON public.categories(tenant_id, slug);
 
 COMMIT;
+
