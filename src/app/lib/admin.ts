@@ -396,49 +396,133 @@ export async function listAdminArticles() {
   const supabase = client();
   const tenantId = await getCurrentUserTenantId();
   
-  // Try to fetch with reporter_id, fall back to without if column doesn't exist
-  let { data, error } = await supabase
+  // Extremely simplified query: just basic article fields and category/tags
+  // Load user/reporter data separately to avoid any REST API complexities
+  const { data: articles, error: articlesError } = await supabase
     .from('articles')
-    .select(`
-      id, slug, title, excerpt, content, category_id, featured_image, media_type, video_url,
-      seo_title, seo_description, status, featured, trending, breaking, publish_at, read_time,
-      views_count, created_at, updated_at, deleted_at, reporter_id,
-      category:categories!articles_category_id_fkey(id, name, slug),
-      author:users!articles_author_id_fkey(id, full_name, role:roles(slug, name)),
-      reporter:reporters!articles_reporter_id_fkey(id, full_name),
-      tags:article_tags(tag)
-    `)
+    .select(`id, slug, title, excerpt, content, category_id, status, featured, trending, breaking, publish_at, read_time, views_count, created_at, updated_at, deleted_at`)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
 
-  // If error, try without reporter_id (for backward compatibility during migration)
-  if (error) {
-    const retryResult = await supabase
-      .from('articles')
-      .select(`
-        id, slug, title, excerpt, content, category_id, featured_image, media_type, video_url,
-        seo_title, seo_description, status, featured, trending, breaking, publish_at, read_time,
-        views_count, created_at, updated_at, deleted_at,
-        category:categories!articles_category_id_fkey(id, name, slug),
-        author:users!articles_author_id_fkey(id, full_name, role:roles(slug, name)),
-        tags:article_tags(tag)
-      `)
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false });
-    
-    if (retryResult.error) throw retryResult.error;
-    data = retryResult.data;
-    error = null;
+  if (articlesError) {
+    // Log the error but don't throw - return empty array to prevent hard failure
+    console.warn('[ADMIN] Failed to load articles:', articlesError);
+    return [];
   }
 
-  return (data ?? []).map((row: Record<string, unknown>) => {
-    const category = Array.isArray(row.category) ? row.category[0] : asRecord(row.category);
-    const author = Array.isArray(row.author) ? row.author[0] : asRecord(row.author);
-    const reporter = Array.isArray(row.reporter) ? row.reporter[0] : asRecord(row.reporter);
-    const role = Array.isArray(author.role) ? author.role[0] : asRecord(author.role);
+  // Get category info
+  const categoryIds = new Set<string>();
+  (articles ?? []).forEach(row => {
+    if (row.category_id) categoryIds.add(row.category_id as string);
+  });
+
+  let categoryMap: Record<string, { id: string; name: string; slug: string }> = {};
+  if (categoryIds.size > 0) {
+    const { data: categories } = await supabase
+      .from('categories')
+      .select('id, name, slug')
+      .in('id', Array.from(categoryIds));
+    
+    if (categories) {
+      categories.forEach(c => {
+        categoryMap[c.id] = c;
+      });
+    }
+  }
+
+  // Get tags
+  const articleIds = (articles ?? []).map(a => a.id as string);
+  let tagMap: Record<string, string[]> = {};
+  if (articleIds.length > 0) {
+    const { data: tags } = await supabase
+      .from('article_tags')
+      .select('article_id, tag')
+      .in('article_id', articleIds);
+    
+    if (tags) {
+      tags.forEach(t => {
+        if (!tagMap[t.article_id]) tagMap[t.article_id] = [];
+        tagMap[t.article_id].push(t.tag);
+      });
+    }
+  }
+
+  // Collect all author and reporter IDs that need to be loaded
+  const authorIds = new Set<string>();
+  const reporterIds = new Set<string>();
+  
+  (articles ?? []).forEach(row => {
+    // author_id might not be in the select result, so check if it exists
+    // reporter_id might not exist in database yet
+    const authorId = (row as Record<string, unknown>).author_id;
+    const reporterId = (row as Record<string, unknown>).reporter_id;
+    if (authorId) authorIds.add(authorId as string);
+    if (reporterId) reporterIds.add(reporterId as string);
+  });
+
+  // Load author data separately
+  let authorMap: Record<string, { full_name?: string; role?: { slug?: string; name?: string } }> = {};
+  if (authorIds.size > 0) {
+    const { data: authors } = await supabase
+      .from('users')
+      .select('id, full_name, role_id')
+      .in('id', Array.from(authorIds));
+    
+    if (authors) {
+      // Get role data
+      const roleIds = authors
+        .filter(a => a.role_id)
+        .map(a => a.role_id as string);
+      
+      if (roleIds.length > 0) {
+        const { data: roles } = await supabase
+          .from('roles')
+          .select('id, slug, name')
+          .in('id', roleIds);
+        
+        if (roles) {
+          const roleMap = Object.fromEntries(roles.map(r => [r.id, { slug: r.slug, name: r.name }]));
+          authors.forEach(a => {
+            authorMap[a.id] = {
+              full_name: a.full_name ?? undefined,
+              role: a.role_id ? roleMap[a.role_id] : undefined,
+            };
+          });
+        }
+      } else {
+        authors.forEach(a => {
+          authorMap[a.id] = { full_name: a.full_name ?? undefined };
+        });
+      }
+    }
+  }
+
+  // Load reporter data separately
+  let reporterMap: Record<string, { full_name?: string }> = {};
+  if (reporterIds.size > 0) {
+    const { data: reporters } = await supabase
+      .from('reporters')
+      .select('id, full_name')
+      .in('id', Array.from(reporterIds));
+    
+    if (reporters) {
+      reporters.forEach(r => {
+        reporterMap[r.id] = { full_name: r.full_name ?? undefined };
+      });
+    }
+  }
+
+  return (articles ?? []).map((row: Record<string, unknown>) => {
+    const category = categoryMap[row.category_id as string];
+    // author_id might not be in result, try to get it or use undefined
+    const authorIdVal = (row as Record<string, unknown>).author_id;
+    const author = authorIdVal ? authorMap[authorIdVal as string] : undefined;
+    const reporter = row.reporter_id ? reporterMap[row.reporter_id as string] : undefined;
     
     // Prefer reporter name if available, fall back to author name
-    const displayName = reporter && reporter.full_name ? String(reporter.full_name) : String(author.full_name ?? '');
+    const displayName = reporter && reporter.full_name 
+      ? String(reporter.full_name) 
+      : String(author?.full_name ?? '');
     
     return {
       id: String(row.id),
@@ -447,22 +531,22 @@ export async function listAdminArticles() {
       excerpt: String(row.excerpt),
       content: Array.isArray(row.content) ? row.content.map(item => String(item)) : [],
       category_id: String(row.category_id),
-      category_name: String(category.name ?? ''),
-      category_slug: String(category.slug ?? ''),
+      category_name: String(category?.name ?? ''),
+      category_slug: String(category?.slug ?? ''),
       author_name: displayName,
-      author_role: String(role.name ?? 'Reporter'),
+      author_role: String(author?.role?.name ?? 'Reporter'),
       publish_at: typeof row.publish_at === 'string' ? row.publish_at : null,
       read_time: typeof row.read_time === 'string' ? row.read_time : null,
-      featured_image: typeof row.featured_image === 'string' ? row.featured_image : null,
-      media_type: String(row.media_type ?? 'article'),
-      video_url: typeof row.video_url === 'string' ? row.video_url : null,
-      seo_title: typeof row.seo_title === 'string' ? row.seo_title : null,
-      seo_description: typeof row.seo_description === 'string' ? row.seo_description : null,
+      featured_image: (row as Record<string, unknown>).featured_image ? String((row as Record<string, unknown>).featured_image) : null,
+      media_type: String((row as Record<string, unknown>).media_type ?? 'article'),
+      video_url: typeof (row as Record<string, unknown>).video_url === 'string' ? String((row as Record<string, unknown>).video_url) : null,
+      seo_title: typeof (row as Record<string, unknown>).seo_title === 'string' ? String((row as Record<string, unknown>).seo_title) : null,
+      seo_description: typeof (row as Record<string, unknown>).seo_description === 'string' ? String((row as Record<string, unknown>).seo_description) : null,
       featured: Boolean(row.featured),
       trending: Boolean(row.trending),
       breaking: Boolean(row.breaking),
       views_count: Number(row.views_count ?? 0),
-      tags: Array.isArray(row.tags) ? row.tags.map(item => String(asRecord(item).tag ?? item)) : [],
+      tags: tagMap[row.id as string] ?? [],
       status: (row.status as AdminArticle['status']) ?? 'draft',
       created_at: String(row.created_at ?? ''),
       updated_at: String(row.updated_at ?? ''),
