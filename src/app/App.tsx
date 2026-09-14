@@ -317,10 +317,7 @@ function AppRouter() {
     let mounted = true;
     setRouteLoading(true);
     
-    console.log('[AppRouter] Resolving route for pathname:', pathname);
-    
     resolveRoute(pathname).then((resolved) => {
-      console.log('[AppRouter] Route resolved:', resolved);
       if (mounted) {
         setRoute(resolved);
         setRouteLoading(false);

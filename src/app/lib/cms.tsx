@@ -55,6 +55,16 @@ export type PublicArticle = {
   tags: string[];
 };
 
+export type PublicReporter = {
+  id: string;
+  full_name: string;
+  slug: string;
+  bio: string | null;
+  specialty: string | null;
+  avatar_url: string | null;
+  article_count: number;
+};
+
 export type BreakingHeadline = {
   id: string;
   headline: string;
@@ -115,6 +125,7 @@ type CmsContextValue = {
   error: string | null;
   categories: PublicCategory[];
   articles: PublicArticle[];
+  reporters: PublicReporter[];
   breakingNews: BreakingHeadline[];
   siteSettings: SiteSettings | null;
   advertisements: AdvertisementPlacement[];
@@ -255,6 +266,7 @@ async function loadPublicContent(tenantSlug: string | null) {
   const [
     categoriesResult,
     articlesResult,
+    reportersResult,
     breakingNewsResult,
     advertisementsResult,
   ] = await Promise.all([
@@ -300,6 +312,13 @@ async function loadPublicContent(tenantSlug: string | null) {
       .order('publish_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false }),
     client
+      .from('reporters')
+      .select('id, full_name, slug, bio, specialty, avatar_url, user_id, status')
+      .eq('tenant_id', tenantId)  // TENANT FILTER
+      .eq('status', 'active')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false }),
+    client
       .from('breaking_news')
       .select('id, headline, link_url, sort_order')
       .eq('tenant_id', tenantId)  // TENANT FILTER
@@ -318,6 +337,7 @@ async function loadPublicContent(tenantSlug: string | null) {
 
   if (categoriesResult.error) throw categoriesResult.error;
   if (articlesResult.error) throw articlesResult.error;
+  if (reportersResult.error) throw reportersResult.error;
   if (breakingNewsResult.error) throw breakingNewsResult.error;
   if (advertisementsResult.error) throw advertisementsResult.error;
 
@@ -358,6 +378,29 @@ async function loadPublicContent(tenantSlug: string | null) {
   const liveBreakingNews = (breakingNewsResult.data ?? []) as BreakingHeadline[];
   const liveAdvertisements = (advertisementsResult.data ?? []) as AdvertisementPlacement[];
 
+  // Process reporters and calculate article counts
+  const reporterRows = reportersResult.data ?? [];
+  const articleCountByUserId = new Map<string, number>();
+  
+  // Count articles by author_id (which maps to reporter's user_id)
+  liveArticles.forEach(article => {
+    // Articles already filtered by tenantId above, so counts are tenant-specific
+    const authorId = (articlesResult.data ?? []).find((a: any) => a.id === article.id)?.author_id;
+    if (authorId) {
+      articleCountByUserId.set(authorId, (articleCountByUserId.get(authorId) ?? 0) + 1);
+    }
+  });
+
+  const liveReporters: PublicReporter[] = reporterRows.map((row: any) => ({
+    id: String(row.id),
+    full_name: String(row.full_name),
+    slug: String(row.slug),
+    bio: typeof row.bio === 'string' ? row.bio : null,
+    specialty: typeof row.specialty === 'string' ? row.specialty : null,
+    avatar_url: typeof row.avatar_url === 'string' ? row.avatar_url : null,
+    article_count: row.user_id ? (articleCountByUserId.get(row.user_id) ?? 0) : 0,
+  }));
+
   // Build site settings from RPC result (only safe public fields)
   const liveSiteSettings: SiteSettings = {
     site_name: tenantInfo.site_name || 'News Portal',
@@ -384,6 +427,7 @@ async function loadPublicContent(tenantSlug: string | null) {
     tenantId,
     categories: liveCategories,
     articles: liveArticles,
+    reporters: liveReporters,
     breakingNews: liveBreakingNews,
     siteSettings: liveSiteSettings,
     advertisements: liveAdvertisements,
@@ -400,6 +444,7 @@ export function CmsProvider({ children, tenantSlug }: { children: React.ReactNod
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<PublicCategory[]>([]);
   const [articles, setArticles] = useState<PublicArticle[]>([]);
+  const [reporters, setReporters] = useState<PublicReporter[]>([]);
   const [breakingNews, setBreakingNews] = useState<BreakingHeadline[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [advertisements, setAdvertisements] = useState<AdvertisementPlacement[]>([]);
@@ -408,19 +453,12 @@ export function CmsProvider({ children, tenantSlug }: { children: React.ReactNod
     setLoading(true);
     setError(null);
 
-    console.log('[CmsProvider] Refreshing with tenantSlug:', tenantSlug);
-
     try {
       const data = await loadPublicContent(tenantSlug ?? null);
-      console.log('[CmsProvider] Loaded content for tenant:', {
-        tenantSlug,
-        tenantId: data.tenantId,
-        articlesCount: data.articles.length,
-        categoriesCount: data.categories.length,
-      });
       setTenantId(data.tenantId);
       setCategories(data.categories);
       setArticles(data.articles);
+      setReporters(data.reporters);
       setBreakingNews(data.breakingNews);
       setSiteSettings(data.siteSettings);
       setAdvertisements(data.advertisements);
@@ -501,6 +539,7 @@ export function CmsProvider({ children, tenantSlug }: { children: React.ReactNod
       error,
       categories,
       articles,
+      reporters,
       breakingNews,
       siteSettings,
       advertisements,
@@ -509,7 +548,7 @@ export function CmsProvider({ children, tenantSlug }: { children: React.ReactNod
       getCategoryBySlug,
       searchArticles,
     };
-  }, [tenantId, tenantSlug, advertisements, articles, breakingNews, categories, error, loading, ready, siteSettings]);
+  }, [tenantId, tenantSlug, advertisements, articles, reporters, breakingNews, categories, error, loading, ready, siteSettings]);
 
   return <CmsContext.Provider value={value}>{children}</CmsContext.Provider>;
 }

@@ -787,115 +787,8 @@ function TrendingTags({ categories }: { categories: Array<{ name: string; slug: 
 
 /* ─── REPORTER SHOWCASE ─── */
 function ReporterShowcase() {
-  const { articles, tenantId, tenantSlug } = useCms();
-  const [reporters, setReporters] = useState<{ name: string; role: string; stories: number; avatar: string; avatar_url: string | null; slug: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // TEMPORARY DEBUG: Log tenant context
-  useEffect(() => {
-    console.log('[ReporterShowcase] Tenant context:', {
-      tenantSlug,
-      tenantId,
-      pathname: window.location.pathname,
-      hostname: window.location.hostname,
-    });
-  }, [tenantSlug, tenantId]);
-
-  useEffect(() => {
-    async function fetchReporters() {
-      try {
-        if (!tenantId) {
-          console.log('[ReporterShowcase] No tenantId available');
-          setReporters([]);
-          setLoading(false);
-          return;
-        }
-
-        const client = getSupabaseClient();
-        if (!client) {
-          console.log('[ReporterShowcase] No Supabase client');
-          setReporters([]);
-          setLoading(false);
-          return;
-        }
-
-        console.log('[ReporterShowcase] Fetching reporters for tenant:', tenantId);
-
-        // Fetch reporters - MUST filter by tenant_id for multi-tenant isolation
-        const { data: reporterRows, error: repError } = await client
-          .from('reporters')
-          .select('id, full_name, specialty, slug, avatar_url, user_id, status')
-          .eq('tenant_id', tenantId)
-          .eq('status', 'active')
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false });
-
-        if (repError) throw repError;
-
-        console.log('[ReporterShowcase] Query result:', {
-          tenantId,
-          reporterCount: reporterRows?.length ?? 0,
-          reporterNames: (reporterRows ?? []).map(r => r.full_name),
-        });
-
-        // Count stories from CMS articles by matching author_name with reporter full_name
-        const storyCountByName = new Map<string, number>();
-        articles.forEach(article => {
-          const authorName = article.author_name.toLowerCase().trim();
-          if (authorName && authorName !== 'editorial desk') {
-            storyCountByName.set(authorName, (storyCountByName.get(authorName) ?? 0) + 1);
-          }
-        });
-
-        // Also count by author_id matching reporter's user_id (direct from articles table)
-        // IMPORTANT: Must also filter by tenant_id for multi-tenant isolation
-        const storyCountByUserId = new Map<string, number>();
-        const reporterUserIds = (reporterRows ?? []).map(r => r.user_id).filter(Boolean) as string[];
-
-        if (reporterUserIds.length > 0) {
-          const { data: articlesByAuthor } = await client
-            .from('articles')
-            .select('author_id')
-            .eq('tenant_id', tenantId)
-            .in('author_id', reporterUserIds)
-            .eq('status', 'published')
-            .is('deleted_at', null);
-
-          if (articlesByAuthor) {
-            articlesByAuthor.forEach((a: { author_id: string | null }) => {
-              if (a.author_id) {
-                storyCountByUserId.set(a.author_id, (storyCountByUserId.get(a.author_id) ?? 0) + 1);
-              }
-            });
-          }
-        }
-
-        const mapped = (reporterRows ?? []).map(r => {
-          // Try both: name match from CMS data + user_id match from articles table
-          const nameCount = storyCountByName.get(r.full_name.toLowerCase().trim()) ?? 0;
-          const userIdCount = r.user_id ? (storyCountByUserId.get(r.user_id) ?? 0) : 0;
-          const totalStories = Math.max(nameCount, userIdCount);
-
-          return {
-            name: r.full_name,
-            role: r.specialty ?? 'Reporter',
-            stories: totalStories,
-            avatar: r.full_name.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase(),
-            avatar_url: typeof r.avatar_url === 'string' && r.avatar_url ? r.avatar_url : null,
-            slug: r.slug ?? '',
-          };
-        });
-
-        setReporters(mapped);
-      } catch {
-        setReporters([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void fetchReporters();
-  }, [articles, tenantId]);
+  // Use the CMS context - reporters are loaded centrally with the same tenant context
+  const { reporters, loading } = useCms();
 
   if (loading || reporters.length === 0) return null;
 
@@ -903,29 +796,38 @@ function ReporterShowcase() {
     <section>
       <SectionHeader title="Our Reporters" href="/reporters" icon={<User className="h-4 w-4 text-indigo-600" />} />
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {reporters.map(r => (
-          <AppLink key={r.slug || r.name} to={`/reporter/${r.slug}`} className="bg-white rounded-xl border border-gray-100 p-4 text-center hover:shadow-md hover:border-red-200 transition-all group cursor-pointer block">
-            {r.avatar_url ? (
-              <ImageWithFallback
-                src={resolveAssetUrl(r.avatar_url)}
-                alt={r.name}
-                className="w-14 h-14 rounded-full object-cover mx-auto mb-2 group-hover:scale-110 transition-transform"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                }}
-              />
-            ) : null}
-            {!r.avatar_url || !(typeof r.avatar_url === 'string') ? (
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-lg font-bold mx-auto mb-2 group-hover:scale-110 transition-transform">
-                {r.avatar}
-              </div>
-            ) : null}
-            <h4 className="text-xs font-bold text-gray-900 truncate">{r.name}</h4>
-            <p className="text-[10px] text-gray-500 truncate">{r.role}</p>
-            <div className="mt-2 text-[10px] font-semibold text-red-600">{r.stories} Stories</div>
-          </AppLink>
-        ))}
+        {reporters.map(r => {
+          const initials = r.full_name
+            .split(' ')
+            .map((w: string) => w[0] ?? '')
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
+
+          return (
+            <AppLink key={r.slug || r.full_name} to={`/reporter/${r.slug}`} className="bg-white rounded-xl border border-gray-100 p-4 text-center hover:shadow-md hover:border-red-200 transition-all group cursor-pointer block">
+              {r.avatar_url ? (
+                <ImageWithFallback
+                  src={resolveAssetUrl(r.avatar_url)}
+                  alt={r.full_name}
+                  className="w-14 h-14 rounded-full object-cover mx-auto mb-2 group-hover:scale-110 transition-transform"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+              ) : null}
+              {!r.avatar_url || !(typeof r.avatar_url === 'string') ? (
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-lg font-bold mx-auto mb-2 group-hover:scale-110 transition-transform">
+                  {initials}
+                </div>
+              ) : null}
+              <h4 className="text-xs font-bold text-gray-900 truncate">{r.full_name}</h4>
+              <p className="text-[10px] text-gray-500 truncate">{r.specialty ?? 'Reporter'}</p>
+              <div className="mt-2 text-[10px] font-semibold text-red-600">{r.article_count} Stories</div>
+            </AppLink>
+          );
+        })}
       </div>
     </section>
   );

@@ -1,95 +1,11 @@
-import { useEffect, useState } from 'react';
-import { getSupabaseClient } from '../../lib/supabase';
 import { useCms } from '../lib/cms';
 import { AppLink } from '../lib/navigation';
 import { ImageWithFallback } from '../components/ImageWithFallback';
-import { User, Mail } from 'lucide-react';
-
-type Reporter = {
-  id: string;
-  full_name: string;
-  slug: string;
-  bio: string | null;
-  specialty: string | null;
-  avatar_url: string | null;
-  article_count: number;
-};
+import { User } from 'lucide-react';
 
 export function ReportersPage() {
-  const { tenantId } = useCms();
-  const [reporters, setReporters] = useState<Reporter[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchReporters() {
-      if (!tenantId) {
-        setReporters([]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const client = getSupabaseClient();
-        if (!client) {
-          setReporters([]);
-          setLoading(false);
-          return;
-        }
-
-        // Fetch reporters - MUST filter by tenant_id for multi-tenant isolation
-        const { data: reporterRows, error: repError } = await client
-          .from('reporters')
-          .select('id, full_name, slug, bio, specialty, avatar_url, user_id, status')
-          .eq('tenant_id', tenantId)
-          .eq('status', 'active')
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false });
-
-        if (repError) throw repError;
-
-        // Get article counts for each reporter - MUST filter by tenant_id
-        const reporterUserIds = (reporterRows ?? []).map(r => r.user_id).filter(Boolean) as string[];
-        const articleCounts = new Map<string, number>();
-
-        if (reporterUserIds.length > 0) {
-          const { data: articles } = await client
-            .from('articles')
-            .select('author_id')
-            .eq('tenant_id', tenantId)
-            .in('author_id', reporterUserIds)
-            .eq('status', 'published')
-            .is('deleted_at', null);
-
-          if (articles) {
-            articles.forEach((a: { author_id: string | null }) => {
-              if (a.author_id) {
-                articleCounts.set(a.author_id, (articleCounts.get(a.author_id) ?? 0) + 1);
-              }
-            });
-          }
-        }
-
-        const mapped = (reporterRows ?? []).map(r => ({
-          id: r.id,
-          full_name: r.full_name,
-          slug: r.slug ?? '',
-          bio: r.bio,
-          specialty: r.specialty,
-          avatar_url: r.avatar_url,
-          article_count: r.user_id ? (articleCounts.get(r.user_id) ?? 0) : 0,
-        }));
-
-        setReporters(mapped);
-      } catch (error) {
-        console.error('[ReportersPage] Error fetching reporters:', error);
-        setReporters([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void fetchReporters();
-  }, [tenantId]);
+  // Use reporters from CMS context - already tenant-scoped
+  const { reporters, loading } = useCms();
 
   if (loading) {
     return (
@@ -178,7 +94,6 @@ export function ReportersPage() {
                   {/* Stats */}
                   <div className="pt-4 border-t border-gray-100">
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                      <Mail size={16} />
                       <span className="font-semibold text-gray-900">
                         {reporter.article_count}
                       </span>
