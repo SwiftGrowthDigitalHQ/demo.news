@@ -46,7 +46,79 @@ export function useOlderPosts(limit: number = 8, recentArticleIds?: Set<string>)
         setLoading(true);
         setError(null);
 
-        // Fetch all published posts for this tenant, sorted by publish_at DESC
+        console.log('[useOlderPosts] === TEST A: Fetch ALL published articles (no filters) ===');
+        
+        // TEST A: Fetch published articles WITHOUT exclusion
+        const testQueryA = client
+          .from('articles')
+          .select('id, title, publish_at, status, tenant_id')
+          .eq('tenant_id', tenantId)
+          .eq('status', 'published')
+          .is('deleted_at', null)
+          .order('publish_at', { ascending: false, nullsFirst: false })
+          .limit(20);
+
+        const { data: testDataA, error: testErrorA } = await testQueryA;
+
+        if (testErrorA) {
+          console.error('[useOlderPosts] TEST A ERROR:', {
+            message: testErrorA.message,
+            code: testErrorA.code,
+            details: testErrorA.details,
+            hint: testErrorA.hint,
+          });
+        } else {
+          console.log(`[useOlderPosts] TEST A: Found ${testDataA?.length || 0} total articles`);
+          if (testDataA && testDataA.length > 0) {
+            console.log('[useOlderPosts] TEST A: First 5 articles:', testDataA.slice(0, 5).map((a: any) => ({
+              id: a.id,
+              title: a.title?.substring(0, 50),
+              publish_at: a.publish_at,
+              status: a.status,
+              tenant_id: a.tenant_id,
+            })));
+          }
+        }
+
+        console.log('[useOlderPosts] === TEST B: With exclusion of', excludeIds.length, 'IDs ===');
+        console.log('[useOlderPosts] Excluded IDs:', excludeIds);
+
+        // TEST B: Same query but with exclusion
+        let testQueryB = client
+          .from('articles')
+          .select('id, title, publish_at, status, tenant_id')
+          .eq('tenant_id', tenantId)
+          .eq('status', 'published')
+          .is('deleted_at', null)
+          .order('publish_at', { ascending: false, nullsFirst: false });
+
+        if (excludeIds.length > 0) {
+          testQueryB = testQueryB.not('id', 'in', `(${excludeIds.join(',')})`);
+        }
+
+        const { data: testDataB, error: testErrorB } = await testQueryB.limit(20);
+
+        if (testErrorB) {
+          console.error('[useOlderPosts] TEST B ERROR:', {
+            message: testErrorB.message,
+            code: testErrorB.code,
+            details: testErrorB.details,
+            hint: testErrorB.hint,
+          });
+        } else {
+          console.log(`[useOlderPosts] TEST B: Found ${testDataB?.length || 0} articles after exclusion`);
+          if (testDataB && testDataB.length > 0) {
+            console.log('[useOlderPosts] TEST B: Remaining articles:', testDataB.map((a: any) => ({
+              id: a.id,
+              title: a.title?.substring(0, 50),
+              publish_at: a.publish_at,
+            })));
+          }
+        }
+
+        console.log('[useOlderPosts] === MAIN QUERY: Full data fetch ===');
+
+        // Main query with full select for transformation
         let query = client
           .from('articles')
           .select(`
@@ -89,7 +161,12 @@ export function useOlderPosts(limit: number = 8, recentArticleIds?: Set<string>)
         const { data, error: queryError } = await query.limit(limit);
 
         if (queryError) {
-          console.error('[useOlderPosts] Query error:', queryError);
+          console.error('[useOlderPosts] MAIN QUERY ERROR:', {
+            message: queryError.message,
+            code: queryError.code,
+            details: queryError.details,
+            hint: queryError.hint,
+          });
           throw queryError;
         }
 
