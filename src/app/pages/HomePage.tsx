@@ -787,13 +787,19 @@ function TrendingTags({ categories }: { categories: Array<{ name: string; slug: 
 
 /* ─── REPORTER SHOWCASE ─── */
 function ReporterShowcase() {
-  const { articles } = useCms();
+  const { articles, tenantId } = useCms();
   const [reporters, setReporters] = useState<{ name: string; role: string; stories: number; avatar: string; avatar_url: string | null; slug: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchReporters() {
       try {
+        if (!tenantId) {
+          setReporters([]);
+          setLoading(false);
+          return;
+        }
+
         const client = getSupabaseClient();
         if (!client) {
           setReporters([]);
@@ -801,10 +807,11 @@ function ReporterShowcase() {
           return;
         }
 
-        // Fetch reporters
+        // Fetch reporters - MUST filter by tenant_id for multi-tenant isolation
         const { data: reporterRows, error: repError } = await client
           .from('reporters')
           .select('id, full_name, specialty, slug, avatar_url, user_id, status')
+          .eq('tenant_id', tenantId)
           .eq('status', 'active')
           .is('deleted_at', null)
           .order('created_at', { ascending: false });
@@ -821,6 +828,7 @@ function ReporterShowcase() {
         });
 
         // Also count by author_id matching reporter's user_id (direct from articles table)
+        // IMPORTANT: Must also filter by tenant_id for multi-tenant isolation
         const storyCountByUserId = new Map<string, number>();
         const reporterUserIds = (reporterRows ?? []).map(r => r.user_id).filter(Boolean) as string[];
 
@@ -828,6 +836,7 @@ function ReporterShowcase() {
           const { data: articlesByAuthor } = await client
             .from('articles')
             .select('author_id')
+            .eq('tenant_id', tenantId)
             .in('author_id', reporterUserIds)
             .eq('status', 'published')
             .is('deleted_at', null);
@@ -866,7 +875,7 @@ function ReporterShowcase() {
     }
 
     void fetchReporters();
-  }, [articles]);
+  }, [articles, tenantId]);
 
   if (loading || reporters.length === 0) return null;
 

@@ -236,6 +236,14 @@ function TenantRouter({ tenantPath }: { tenantPath: string }) {
   if (tenantPath.startsWith('/article/')) {
     return <ArticlePage slug={decodeURIComponent(tenantPath.replace('/article/', ''))} />;
   }
+  if (tenantPath.startsWith('/reporter/')) {
+    const ReporterPage = lazy(() => import('./pages/ReporterPage').then(m => ({ default: m.ReporterPage })));
+    return (
+      <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
+        <ReporterPage />
+      </Suspense>
+    );
+  }
   if (tenantPath.startsWith('/category/')) {
     return <CategoryPage slug={decodeURIComponent(tenantPath.replace('/category/', ''))} />;
   }
@@ -244,6 +252,14 @@ function TenantRouter({ tenantPath }: { tenantPath: string }) {
   }
   if (tenantPath.startsWith('/older-posts')) {
     return <OlderPostsPage />;
+  }
+  if (tenantPath === '/reporters') {
+    const ReportersPage = lazy(() => import('./pages/ReportersPage').then(m => ({ default: m.ReportersPage })));
+    return (
+      <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
+        <ReportersPage />
+      </Suspense>
+    );
   }
 
   // Tenant home
