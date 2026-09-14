@@ -408,8 +408,16 @@ export function CmsProvider({ children, tenantSlug }: { children: React.ReactNod
     setLoading(true);
     setError(null);
 
+    console.log('[CmsProvider] Refreshing with tenantSlug:', tenantSlug);
+
     try {
       const data = await loadPublicContent(tenantSlug ?? null);
+      console.log('[CmsProvider] Loaded content for tenant:', {
+        tenantSlug,
+        tenantId: data.tenantId,
+        articlesCount: data.articles.length,
+        categoriesCount: data.categories.length,
+      });
       setTenantId(data.tenantId);
       setCategories(data.categories);
       setArticles(data.articles);

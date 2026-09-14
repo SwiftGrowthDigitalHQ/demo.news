@@ -787,14 +787,25 @@ function TrendingTags({ categories }: { categories: Array<{ name: string; slug: 
 
 /* ─── REPORTER SHOWCASE ─── */
 function ReporterShowcase() {
-  const { articles, tenantId } = useCms();
+  const { articles, tenantId, tenantSlug } = useCms();
   const [reporters, setReporters] = useState<{ name: string; role: string; stories: number; avatar: string; avatar_url: string | null; slug: string }[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // TEMPORARY DEBUG: Log tenant context
+  useEffect(() => {
+    console.log('[ReporterShowcase] Tenant context:', {
+      tenantSlug,
+      tenantId,
+      pathname: window.location.pathname,
+      hostname: window.location.hostname,
+    });
+  }, [tenantSlug, tenantId]);
 
   useEffect(() => {
     async function fetchReporters() {
       try {
         if (!tenantId) {
+          console.log('[ReporterShowcase] No tenantId available');
           setReporters([]);
           setLoading(false);
           return;
@@ -802,10 +813,13 @@ function ReporterShowcase() {
 
         const client = getSupabaseClient();
         if (!client) {
+          console.log('[ReporterShowcase] No Supabase client');
           setReporters([]);
           setLoading(false);
           return;
         }
+
+        console.log('[ReporterShowcase] Fetching reporters for tenant:', tenantId);
 
         // Fetch reporters - MUST filter by tenant_id for multi-tenant isolation
         const { data: reporterRows, error: repError } = await client
@@ -817,6 +831,12 @@ function ReporterShowcase() {
           .order('created_at', { ascending: false });
 
         if (repError) throw repError;
+
+        console.log('[ReporterShowcase] Query result:', {
+          tenantId,
+          reporterCount: reporterRows?.length ?? 0,
+          reporterNames: (reporterRows ?? []).map(r => r.full_name),
+        });
 
         // Count stories from CMS articles by matching author_name with reporter full_name
         const storyCountByName = new Map<string, number>();
