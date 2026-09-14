@@ -26,7 +26,10 @@ export function useOlderPosts(limit: number = 8, recentArticleIds?: Set<string>)
 
   useEffect(() => {
     async function fetchOlderPosts() {
+      console.log('[useOlderPosts] Starting fetch, tenantId:', tenantId, 'limit:', limit, 'excludeIds count:', excludeIds.length);
+      
       if (!tenantId) {
+        console.log('[useOlderPosts] No tenantId, returning empty');
         setOlderPosts([]);
         setLoading(false);
         return;
@@ -34,6 +37,7 @@ export function useOlderPosts(limit: number = 8, recentArticleIds?: Set<string>)
 
       const client = getSupabaseClient();
       if (!client) {
+        console.log('[useOlderPosts] No Supabase client, returning empty');
         setOlderPosts([]);
         setLoading(false);
         return;
@@ -47,6 +51,8 @@ export function useOlderPosts(limit: number = 8, recentArticleIds?: Set<string>)
         const threeDaysAgo = new Date();
         threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
         const threeDaysAgoISO = threeDaysAgo.toISOString();
+        
+        console.log('[useOlderPosts] Fetching posts older than:', threeDaysAgoISO);
 
         // First, try to fetch posts older than 3 days
         let query = client
