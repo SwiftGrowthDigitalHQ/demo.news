@@ -866,16 +866,52 @@ export async function listAdminReporters() {
   
   const tenantId = await getCurrentUserTenantId();
   const supabase = client();
-  const { data, error } = await supabase
+  
+  // Simplified query: avoid nested joins to prevent REST API CORS/timeout issues
+  // Load reporters without nested user/role joins - these can cause 504 errors
+  const { data: reporters, error: reporterError } = await supabase
     .from('reporters')
-    .select('*, user:users(id, email, role:roles(slug, name))')
+    .select('id, full_name, slug, bio, specialty, avatar_url, status, social_links, user_id, created_at, updated_at, deleted_at')
     .eq('tenant_id', tenantId)
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map((row: Record<string, unknown>) => {
-    const user = asRecord(row.user);
-    const role = Array.isArray(user.role) ? user.role[0] : asRecord(user.role);
+  if (reporterError) throw reporterError;
+  
+  // If we need user/role info, load it separately for reporters that have user_id
+  const reporterIds = (reporters ?? []).filter(r => r.user_id).map(r => r.user_id as string);
+  let userMap: Record<string, { email?: string; role_slug?: string }> = {};
+  
+  if (reporterIds.length > 0) {
+    const { data: users, error: userError } = await supabase
+      .from('users')
+      .select('id, email, role_id')
+      .in('id', reporterIds);
+    if (!userError && users) {
+      // Get role info for users that have roles
+      const userIds = users.map(u => u.id);
+      const { data: roles, error: roleError } = await supabase
+        .from('roles')
+        .select('id, slug');
+      
+      if (!roleError && roles) {
+        const roleMap = Object.fromEntries(roles.map(r => [r.id, r.slug]));
+        users.forEach(u => {
+          userMap[u.id] = {
+            email: u.email ?? undefined,
+            role_slug: u.role_id ? roleMap[u.role_id] : undefined,
+          };
+        });
+      } else {
+        // Still map users even if we couldn't get roles
+        users.forEach(u => {
+          userMap[u.id] = { email: u.email ?? undefined };
+        });
+      }
+    }
+  }
+  
+  return (reporters ?? []).map((row: Record<string, unknown>) => {
+    const userInfo = row.user_id ? userMap[row.user_id as string] : {};
     return {
       id: String(row.id),
       full_name: String(row.full_name ?? ''),
@@ -889,8 +925,8 @@ export async function listAdminReporters() {
       created_at: String(row.created_at ?? ''),
       updated_at: String(row.updated_at ?? ''),
       deleted_at: typeof row.deleted_at === 'string' ? row.deleted_at : null,
-      email: typeof user.email === 'string' ? user.email : null,
-      role_slug: typeof role.slug === 'string' ? role.slug : null,
+      email: typeof userInfo?.email === 'string' ? userInfo.email : null,
+      role_slug: typeof userInfo?.role_slug === 'string' ? userInfo.role_slug : null,
     } satisfies AdminReporter;
   });
 }
