@@ -319,7 +319,7 @@ async function loadPublicContent(tenantSlug: string | null) {
       .order('created_at', { ascending: false }),
     client
       .from('reporters')
-      .select('id, full_name, slug, bio, specialty, avatar_url, user_id, status')
+      .select('id, full_name, slug, bio, specialty, avatar_url, user_id, status, tenant_id')  // ADD tenant_id to SELECT
       .eq('tenant_id', tenantId)  // TENANT FILTER
       .eq('status', 'active')
       .is('deleted_at', null)
@@ -388,11 +388,19 @@ async function loadPublicContent(tenantSlug: string | null) {
   const reporterRows = reportersResult.data ?? [];
   const articleCountByUserId = new Map<string, number>();
   
-  // TEMPORARY DEBUG: Log reporters query result
-  console.log('[CMS] Reporters query result:', {
-    tenantId,
+  // TEMPORARY DEBUG: Enhanced logging to trace complete chain
+  console.log('[CMS] Query execution:', {
+    tenantSlug,
+    resolvedTenantId: tenantId,
+    reporterQueryTenantId: tenantId,  // The tenantId used in the .eq('tenant_id', tenantId) filter
     reporterCount: reporterRows.length,
-    reporterNames: reporterRows.map((r: any) => r.full_name),
+    reporters: reporterRows.map((r: any) => ({
+      id: r.id,
+      name: r.full_name,
+      slug: r.slug,
+      tenant_id: r.tenant_id,  // THIS SHOULD MATCH resolvedTenantId
+      status: r.status,
+    })),
   });
   
   // Count articles by author_id (which maps to reporter's user_id)
