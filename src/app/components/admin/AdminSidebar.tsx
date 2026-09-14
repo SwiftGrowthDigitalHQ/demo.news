@@ -72,7 +72,7 @@ export function AdminSidebar({ activeSection, onNavigate, collapsed, onClose, on
         const blob = await response.blob();
         const objectUrl = URL.createObjectURL(blob);
         setLogoBlob(objectUrl);
-      } catch (err) {
+      } catch {
         setLogoBlob('');
       }
     })();

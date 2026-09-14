@@ -84,7 +84,6 @@ export function GoogleAdSense({ placement, format, className = '' }: GoogleAdSen
           .maybeSingle();
 
         if (error) {
-          console.error('[AdSense] Failed to load config:', error);
           tenantConfigCache.set(tenant.id, null);
           return;
         }
@@ -99,8 +98,7 @@ export function GoogleAdSense({ placement, format, className = '' }: GoogleAdSen
           setConfig(null);
           setEnabled(false);
         }
-      } catch (err) {
-        console.error('[AdSense] Error loading config:', err);
+      } catch {
         tenantConfigCache.set(tenant.id, null);
       }
     };
@@ -130,7 +128,6 @@ export function GoogleAdSense({ placement, format, className = '' }: GoogleAdSen
     };
 
     script.onerror = () => {
-      console.error('[AdSense] Failed to load script');
       adsenseScriptLoading = false;
     };
 
@@ -156,8 +153,8 @@ export function GoogleAdSense({ placement, format, className = '' }: GoogleAdSen
       if (adsbygoogle) {
         adsbygoogle.push({});
       }
-    } catch (err) {
-      console.error('[AdSense] Error pushing ad:', err);
+    } catch {
+      // Silently fail if ad push fails
     }
   }, [scriptReady, enabled, config, placement]);
 
@@ -233,13 +230,11 @@ export function useAdSenseEnabled(): boolean {
           .maybeSingle();
 
         if (error) {
-          console.error('[AdSense] Failed to check enabled status:', error);
           return;
         }
 
         setEnabled(data?.enabled ?? false);
-      } catch (err) {
-        console.error('[AdSense] Error checking enabled status:', err);
+      } catch {
       }
     };
 

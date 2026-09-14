@@ -14,7 +14,7 @@ import { SangTXAuthPage } from './pages/SangTXAuthPage';
 import { getSavedLanguage } from './lib/i18n';
 import { DemoPortalV2 as DemoPortal } from './pages/DemoPortalV2';
 import { isTenantSlug, getTenantSlugs } from './lib/tenantRegistry';
-import { getTenantByDomain, isCustomDomain, normalizeDomain } from './lib/domainResolver';
+import { getTenantByDomain, isCustomDomain } from './lib/domainResolver';
 
 /* MARKER-MAKE-KIT-INVOKED */
 
@@ -84,8 +84,8 @@ async function getDefaultTenant(): Promise<string | null> {
     defaultTenantCacheTime = now;
     
     return firstSlug;
-  } catch (err) {
-    console.error('[App] Failed to get default tenant:', err);
+  } catch {
+    // Silently fall back if default tenant lookup fails
     return null;
   }
 }
@@ -493,11 +493,6 @@ function AppRouter() {
     
     if (!isSuperAdmin) {
       // Not authorized - redirect to SaaS login
-      console.error('[SUPER ADMIN] Access DENIED:', {
-        hasProfile: !!auth.profile,
-        roleSlug: auth.profile?.role_slug ?? null,
-        isSuperAdmin,
-      });
       return <SangTXAuthPage mode="login" />;
     }
     

@@ -5,7 +5,6 @@ import { useTenant } from '../../lib/useTenant';
 import { useSubscriptionAccess } from '../../lib/useSubscriptionAccess';
 import { getStatusMessage, getStatusColor } from '../../lib/subscriptionService';
 import { resolveAssetUrl } from '../../lib/assetResolver';
-import { useIsMobile } from '../ui/use-mobile';
 import { Sheet, SheetContent } from '../ui/sheet';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Input } from '../ui/input';
@@ -52,7 +51,6 @@ const sectionTitles: Record<string, { title: string; breadcrumb: string }> = {
 };
 
 export function AdminHeader({ section, darkMode, onToggleDark, onToggleNotifications, onToggleSidebar }: Props) {
-  const isMobile = useIsMobile();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const info = sectionTitles[section] || { title: 'Dashboard', breadcrumb: 'Home' };

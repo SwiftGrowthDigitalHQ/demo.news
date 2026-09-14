@@ -46,20 +46,17 @@ export function GoogleAnalytics() {
         const result = await getGA4Config(tenant.id);
 
         if (!result.success) {
-          console.error('[GA4] Failed to load configuration:', result.error);
           return;
         }
 
         // Only set measurement ID if tracking is active
         if (!cancelled && result.data?.tracking_active && result.data?.measurement_id) {
-          console.log('[GA4] Configuration loaded - Tracking active:', result.data.measurement_id);
           setMeasurementId(result.data.measurement_id);
         } else if (!cancelled) {
-          // GA4 not configured - normal state, don't log
+          // GA4 not configured - normal state
           setMeasurementId(null);
         }
-      } catch (err) {
-        console.error('[GA4] Error loading configuration:', err);
+      } catch {
       }
     }
 
@@ -92,13 +89,10 @@ export function GoogleAnalytics() {
     script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
     script.async = true;
     script.onerror = () => {
-      console.error('[GA4] Failed to load gtag.js script');
     };
 
     document.head.appendChild(script);
     scriptLoadedRef.current = true;
-
-    console.log('[GA4] Tracking initialized with ID:', measurementId);
   }, [measurementId]);
 
   // Track pageviews on route change
@@ -112,8 +106,6 @@ export function GoogleAnalytics() {
       page_location: window.location.href,
       page_title: document.title,
     });
-
-    console.log('[GA4] Pageview tracked:', page_path);
   }, [pathname, measurementId]);
 
   // This component renders nothing
