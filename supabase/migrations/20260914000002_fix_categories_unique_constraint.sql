@@ -27,14 +27,23 @@ ALTER TABLE public.categories
 DROP CONSTRAINT IF EXISTS categories_slug_key;
 
 -- Step 2: Add new composite unique constraint scoped to tenant
--- This ensures (tenant_id, slug) is unique, but same slug can exist in different tenants
-ALTER TABLE public.categories
-ADD CONSTRAINT categories_tenant_slug_unique UNIQUE (tenant_id, slug);
+-- CRITICAL: Use a partial unique index that excludes soft-deleted rows (deleted_at IS NULL)
+-- This allows deleted categories to be recreated with the same slug
+-- PostgreSQL doesn't support WHERE clause in UNIQUE constraints, so we use a unique index instead
 
--- Step 3: Drop and recreate the (tenant_id, slug) index to ensure it's optimized
+-- Step 3: Create a unique index instead (allows partial uniqueness)
+-- This ensures (tenant_id, slug) is unique ONLY for non-deleted rows
+-- Allows same slug to exist in different tenants and allows slug reuse after soft delete
+DROP INDEX IF EXISTS categories_slug_key;
 DROP INDEX IF EXISTS idx_categories_slug;
-CREATE INDEX IF NOT EXISTS idx_categories_tenant_slug 
+DROP INDEX IF EXISTS idx_categories_tenant_slug;
+
+CREATE UNIQUE INDEX categories_tenant_slug_unique 
 ON public.categories(tenant_id, slug)
 WHERE deleted_at IS NULL;
+
+-- Step 4: Create regular index for query performance
+CREATE INDEX IF NOT EXISTS idx_categories_tenant_slug_all 
+ON public.categories(tenant_id, slug);
 
 COMMIT;

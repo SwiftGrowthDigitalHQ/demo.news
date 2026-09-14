@@ -11,68 +11,71 @@ When trying to create a category with name "Technology", the POST fails with:
 }
 ```
 
+This happens especially when you:
+1. Created category "Technology"
+2. Deleted it
+3. Try to create it again - **ERROR!**
+
 ## Root Cause
-The `categories` table in the database has a **GLOBAL unique constraint on `slug`** instead of a **tenant-scoped** constraint.
+**Two issues combined**:
 
-**Migration `20260613000100`** defined categories with:
-```sql
-slug text not null unique  -- ❌ WRONG: Global constraint
-```
+1. **Global unique constraint on slug**: The table had `slug text not null unique` (global, not tenant-scoped)
+2. **Constraint includes soft-deleted rows**: Even though the row is marked `deleted_at`, it still counts toward the unique constraint
 
-But categories should be tenant-isolated, so each tenant should be able to have their own "technology" category.
+Result: You cannot reuse a slug even after soft-deleting a category.
 
 ## Solution
 Created new migration: **`20260914000002_fix_categories_unique_constraint.sql`**
 
 This migration:
 1. **Drops** the global unique constraint on `slug`
-2. **Creates** a composite unique constraint on `(tenant_id, slug)`
-3. **Ensures** each tenant can have independent category slugs
+2. **Creates a UNIQUE INDEX** (not constraint) on `(tenant_id, slug) WHERE deleted_at IS NULL`
+3. **Critical**: The `WHERE deleted_at IS NULL` clause excludes soft-deleted rows
+
+### Why UNIQUE INDEX instead of UNIQUE constraint?
+- PostgreSQL `UNIQUE` constraints cannot have `WHERE` clauses
+- `UNIQUE INDEX` can have `WHERE` clauses for partial uniqueness
+- This allows deleted categories to be recreated with the same slug
+
+### Results
+- ✅ Different tenants can have category slug "technology"
+- ✅ Can delete and recreate category with same slug
+- ✅ Uniqueness enforced only on non-deleted rows
+
+## Execute This SQL in Supabase
+
+Go to **Supabase Dashboard → SQL Editor** and run:
 
 ```sql
-ALTER TABLE public.categories 
-DROP CONSTRAINT categories_slug_key;
-
-ALTER TABLE public.categories
-ADD CONSTRAINT categories_tenant_slug_unique UNIQUE (tenant_id, slug);
-```
-
-## After Fix
-- ✅ Tenant A can have category slug: `technology`
-- ✅ Tenant B can ALSO have category slug: `technology`
-- ✅ Within the same tenant, slug must still be unique
-- ✅ No more HTTP 409 conflicts
-
-## What to Do
-
-### Run in Supabase SQL Editor:
-```sql
--- Execute the migration in Supabase Dashboard > SQL Editor:
-
 BEGIN;
 
+-- Drop old global unique constraint
 ALTER TABLE public.categories 
 DROP CONSTRAINT IF EXISTS categories_slug_key;
 
-ALTER TABLE public.categories
-ADD CONSTRAINT categories_tenant_slug_unique UNIQUE (tenant_id, slug);
-
-DROP INDEX IF EXISTS idx_categories_slug;
-CREATE INDEX IF NOT EXISTS idx_categories_tenant_slug 
+-- Create unique index scoped to (tenant_id, slug) for non-deleted rows
+CREATE UNIQUE INDEX categories_tenant_slug_unique 
 ON public.categories(tenant_id, slug)
 WHERE deleted_at IS NULL;
+
+-- Create regular index for query performance
+CREATE INDEX IF NOT EXISTS idx_categories_tenant_slug_all 
+ON public.categories(tenant_id, slug);
 
 COMMIT;
 ```
 
-### Test After Fix
+## Test After Fix
+
 1. Go to http://localhost:5173/admin/categories
 2. Click "New Category"
 3. Enter:
    - Name: "Technology"
    - Slug: will auto-populate as "technology"
 4. Click "Save Category"
-5. Should now return HTTP 200 ✅ (not 409)
+5. Should return **HTTP 200 ✅** (not 409)
+6. Delete the category
+7. Create it again - should work! ✅
 
 ## Files
 - **Migration**: `supabase/migrations/20260914000002_fix_categories_unique_constraint.sql`
@@ -80,4 +83,4 @@ COMMIT;
 
 ---
 
-**Status**: Ready to deploy. Migration file created. Needs execution in Supabase.
+**Status**: Migration ready. Awaiting Supabase SQL execution.
