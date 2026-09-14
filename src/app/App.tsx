@@ -236,9 +236,15 @@ function TenantRouter({ tenantPath }: { tenantPath: string }) {
   if (tenantPath.startsWith('/article/')) {
     return <ArticlePage slug={decodeURIComponent(tenantPath.replace('/article/', ''))} />;
   }
-  // Reporter pages removed - focus on main reporters showcase on homepage which uses CMS data
+  // Reporter pages - show individual reporter profiles with their articles
   if (tenantPath.startsWith('/reporter/')) {
-    return <div>Not found</div>;
+    const ReporterPage = lazy(() => import('./pages/ReporterPage').then(m => ({ default: m.ReporterPage })));
+    const reporterSlug = decodeURIComponent(tenantPath.replace('/reporter/', ''));
+    return (
+      <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
+        <ReporterPage slug={reporterSlug} />
+      </Suspense>
+    );
   }
   if (tenantPath.startsWith('/category/')) {
     return <CategoryPage slug={decodeURIComponent(tenantPath.replace('/category/', ''))} />;
