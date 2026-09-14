@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getSupabaseClient } from '../../lib/supabase';
 import { useCms, type PublicArticle } from './cms';
 
@@ -16,6 +16,13 @@ export function useOlderPosts(limit: number = 8, recentArticleIds?: Set<string>)
   const [olderPosts, setOlderPosts] = useState<PublicArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Convert Set to sorted array for stable dependency
+  const excludeIds = useMemo(
+    () => (recentArticleIds && recentArticleIds.size > 0 ? Array.from(recentArticleIds).sort() : []),
+    [recentArticleIds]
+  );
+  const excludeIdsKey = excludeIds.join(',');
 
   useEffect(() => {
     async function fetchOlderPosts() {
@@ -78,26 +85,33 @@ export function useOlderPosts(limit: number = 8, recentArticleIds?: Set<string>)
           .order('publish_at', { ascending: false, nullsFirst: false });
 
         // Exclude recent article IDs if provided
-        if (recentArticleIds && recentArticleIds.size > 0) {
-          query = query.not('id', 'in', `(${Array.from(recentArticleIds).join(',')})`);
+        if (excludeIds.length > 0) {
+          query = query.not('id', 'in', `(${excludeIds.join(',')})`);
         }
 
         const { data: olderData, error: olderError } = await query.limit(limit);
 
-        if (olderError) throw olderError;
+        if (olderError) {
+          console.error('[useOlderPosts] Error in primary query:', olderError);
+          throw olderError;
+        }
 
         let fetchedPosts = olderData ?? [];
+        
+        console.log(`[useOlderPosts] Fetched ${fetchedPosts.length} posts older than 3 days`);
 
         // If we got fewer posts than requested, fetch additional older posts (without 3-day filter)
         if (fetchedPosts.length < limit) {
+          console.log(`[useOlderPosts] Need ${limit - fetchedPosts.length} more posts, running fallback query`);
+          
           const remaining = limit - fetchedPosts.length;
           const existingIds = new Set(fetchedPosts.map(p => p.id));
           
           // Combine existing IDs with recent IDs to exclude
-          const allExcludedIds = new Set([
-            ...existingIds,
-            ...(recentArticleIds ? Array.from(recentArticleIds) : []),
-          ]);
+          const allExcludedIds = [
+            ...Array.from(existingIds),
+            ...excludeIds,
+          ];
 
           let fallbackQuery = client
             .from('articles')
@@ -134,17 +148,24 @@ export function useOlderPosts(limit: number = 8, recentArticleIds?: Set<string>)
             .order('publish_at', { ascending: false, nullsFirst: false });
 
           // Exclude all already-included IDs
-          if (allExcludedIds.size > 0) {
-            fallbackQuery = fallbackQuery.not('id', 'in', `(${Array.from(allExcludedIds).join(',')})`);
+          if (allExcludedIds.length > 0) {
+            fallbackQuery = fallbackQuery.not('id', 'in', `(${allExcludedIds.join(',')})`);
           }
 
           const { data: fallbackData, error: fallbackError } = await fallbackQuery.limit(remaining);
 
-          if (fallbackError) throw fallbackError;
+          if (fallbackError) {
+            console.error('[useOlderPosts] Error in fallback query:', fallbackError);
+            throw fallbackError;
+          }
+
+          console.log(`[useOlderPosts] Fallback query returned ${(fallbackData ?? []).length} posts`);
 
           // Combine both results
           fetchedPosts = [...fetchedPosts, ...(fallbackData ?? [])];
         }
+
+        console.log(`[useOlderPosts] Total posts after processing: ${fetchedPosts.length}`);
 
         // Transform the data to PublicArticle format
         const transformedPosts: PublicArticle[] = fetchedPosts.map((row: any) => {
@@ -204,6 +225,7 @@ export function useOlderPosts(limit: number = 8, recentArticleIds?: Set<string>)
           };
         });
 
+        console.log(`[useOlderPosts] Successfully transformed ${transformedPosts.length} posts`);
         setOlderPosts(transformedPosts);
       } catch (err) {
         console.error('[useOlderPosts] Error fetching older posts:', err);
@@ -215,7 +237,7 @@ export function useOlderPosts(limit: number = 8, recentArticleIds?: Set<string>)
     }
 
     void fetchOlderPosts();
-  }, [tenantId, limit, recentArticleIds]);
+  }, [tenantId, limit, excludeIdsKey]); // Use string key instead of Set for stable dependency
 
   return { olderPosts, loading, error };
 }
