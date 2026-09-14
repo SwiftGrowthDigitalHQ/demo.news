@@ -336,6 +336,15 @@ export function NewsManagement() {
       return;
     }
 
+    const contentParts = editor.content
+      .split('\n')
+      .map(part => part.trim())
+      .filter(Boolean);
+    if (contentParts.length === 0) {
+      toast.error('Content is required. Please add at least one paragraph.');
+      return;
+    }
+
     setSaving(true);
     try {
       const saved = await upsertAdminArticle({
@@ -343,10 +352,7 @@ export function NewsManagement() {
         title: editor.title.trim(),
         slug: editor.slug.trim(),
         excerpt: editor.excerpt.trim(),
-        content: editor.content
-          .split('\n')
-          .map(part => part.trim())
-          .filter(Boolean),
+        content: contentParts,
         category_id: editor.category_id,
         author_id: editor.author_id || null,
         reporter_id: editor.reporter_id || null,
