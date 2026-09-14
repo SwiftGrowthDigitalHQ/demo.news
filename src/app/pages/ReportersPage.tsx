@@ -1,6 +1,6 @@
 import { useCms } from '../lib/cms';
 import { AppLink } from '../lib/navigation';
-import { ImageWithFallback } from '../components/ImageWithFallback';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { User } from 'lucide-react';
 
 export function ReportersPage() {

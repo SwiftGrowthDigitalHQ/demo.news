@@ -236,13 +236,9 @@ function TenantRouter({ tenantPath }: { tenantPath: string }) {
   if (tenantPath.startsWith('/article/')) {
     return <ArticlePage slug={decodeURIComponent(tenantPath.replace('/article/', ''))} />;
   }
+  // Reporter pages removed - focus on main reporters showcase on homepage which uses CMS data
   if (tenantPath.startsWith('/reporter/')) {
-    const ReporterPage = lazy(() => import('./pages/ReporterPage').then(m => ({ default: m.ReporterPage })));
-    return (
-      <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
-        <ReporterPage />
-      </Suspense>
-    );
+    return <div>Not found</div>;
   }
   if (tenantPath.startsWith('/category/')) {
     return <CategoryPage slug={decodeURIComponent(tenantPath.replace('/category/', ''))} />;
