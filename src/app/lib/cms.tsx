@@ -262,6 +262,12 @@ async function loadPublicContent(tenantSlug: string | null) {
 
   const tenantId = tenantInfo.tenant_id;
 
+  // TEMPORARY DEBUG: Log tenant resolution
+  console.log('[CMS] Tenant resolution:', {
+    tenantSlug,
+    tenantId,
+  });
+
   // SECURITY: ALL queries filtered by tenant_id
   const [
     categoriesResult,
@@ -381,6 +387,13 @@ async function loadPublicContent(tenantSlug: string | null) {
   // Process reporters and calculate article counts
   const reporterRows = reportersResult.data ?? [];
   const articleCountByUserId = new Map<string, number>();
+  
+  // TEMPORARY DEBUG: Log reporters query result
+  console.log('[CMS] Reporters query result:', {
+    tenantId,
+    reporterCount: reporterRows.length,
+    reporterNames: reporterRows.map((r: any) => r.full_name),
+  });
   
   // Count articles by author_id (which maps to reporter's user_id)
   liveArticles.forEach(article => {
