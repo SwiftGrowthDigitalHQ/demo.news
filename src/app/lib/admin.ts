@@ -574,15 +574,17 @@ export async function upsertAdminArticle(payload: Partial<AdminArticle> & {
   const supabase = client();
   const { id, tags = [], ...rest } = payload;
   const tenantId = await getCurrentUserTenantId();
-  const articlePayload = {
+  
+  // Build payload with only known columns
+  // Exclude fields that may not exist in schema cache to avoid POST REST API errors
+  const articlePayload: Record<string, unknown> = {
     tenant_id: tenantId,
     title: rest.title,
     slug: rest.slug,
-    excerpt: rest.excerpt,
-    content: rest.content,
+    excerpt: rest.excerpt || '',  // excerpt can be empty string, but not null
+    // content must be JSONB array, not string. Keep as array per database schema
+    content: Array.isArray(rest.content) ? rest.content : [rest.content],
     category_id: rest.category_id,
-    author_id: rest.author_id || null,
-    reporter_id: rest.reporter_id || null,
     seo_title: rest.seo_title || null,
     seo_description: rest.seo_description || null,
     featured_image: rest.featured_image || null,
@@ -595,12 +597,30 @@ export async function upsertAdminArticle(payload: Partial<AdminArticle> & {
     publish_at: rest.publish_at || null,
     read_time: rest.read_time || null,
   };
+  
+  // Only add author_id if explicitly provided (to support existing single-author system)
+  if (rest.author_id) {
+    articlePayload.author_id = rest.author_id;
+  }
+  
+  // Only add reporter_id if explicitly provided (new field for multi-tenant system)
+  if (rest.reporter_id) {
+    articlePayload.reporter_id = rest.reporter_id;
+  }
 
   const articleResult = id
-    ? await supabase.from('articles').update(articlePayload).eq('id', id).select('id, title, slug').single()
-    : await supabase.from('articles').insert(articlePayload).select('id, title, slug').single();
+    ? await supabase.from('articles').update(articlePayload).eq('id', id).eq('tenant_id', tenantId).select('id').single()
+    : await supabase.from('articles').insert(articlePayload).select('id').single();
 
-  if (articleResult.error) throw articleResult.error;
+  if (articleResult.error) {
+    console.error('[ADMIN] Article save failed:', {
+      error: articleResult.error,
+      message: articleResult.error?.message,
+      code: articleResult.error?.code,
+      details: (articleResult.error as any)?.details,
+    });
+    throw articleResult.error;
+  }
 
   const articleId = articleResult.data.id as string;
   await supabase.from('article_tags').delete().eq('article_id', articleId);

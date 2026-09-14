@@ -336,11 +336,6 @@ export function NewsManagement() {
       return;
     }
 
-    if (!editor.excerpt.trim()) {
-      toast.error('Excerpt is required.');
-      return;
-    }
-
     const contentParts = editor.content
       .split('\n')
       .map(part => part.trim())
@@ -356,7 +351,7 @@ export function NewsManagement() {
         id: editor.id,
         title: editor.title.trim(),
         slug: editor.slug.trim(),
-        excerpt: editor.excerpt.trim(),
+        excerpt: editor.excerpt.trim() || '',
         content: contentParts,
         category_id: editor.category_id,
         author_id: editor.author_id || null,

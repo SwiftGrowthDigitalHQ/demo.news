@@ -52,7 +52,7 @@ BEGIN
   UPDATE public.categories
   SET article_count = (
     SELECT COUNT(*) FROM public.articles
-    WHERE category_id = $1 AND deleted_at IS NULL
+    WHERE articles.category_id = $1 AND articles.deleted_at IS NULL
   )
   WHERE id = $1;
 END;
