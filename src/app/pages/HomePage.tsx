@@ -21,6 +21,7 @@ import { TrendingTopics } from '../components/homepage/TrendingTopics';
 import { PageMetadata, resolveSEOTitle, resolveSEODescription, resolveSEOImage, normalizeCanonicalUrl, generateRobotsContent, generateWebSiteStructuredData, generateOrganizationStructuredData } from '../lib/seoMetadata';
 import { useSEODefaults } from '../lib/useSEODefaults';
 import { useTenant } from '../lib/useTenant';
+import { useOlderPosts } from '../lib/useOlderPosts';
 
 /* ─── UTILS ─── */
 
@@ -654,8 +655,28 @@ function PhotoGallery({ articles, tenantSlug }: { articles: PublicArticle[]; ten
 }
 
 /* ─── OLDER POSTS ─── */
-function OlderPostsSection({ articles, tenantSlug }: { articles: PublicArticle[]; tenantSlug: string }) {
-  // Only render if we have articles to display
+function OlderPostsSection({ articles, tenantSlug, loading }: { articles: PublicArticle[]; tenantSlug: string; loading: boolean }) {
+  // Show loading skeleton while fetching
+  if (loading) {
+    return (
+      <section>
+        <SectionHeader title="Older Posts" href="/older-posts" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-lg border border-gray-100 overflow-hidden animate-pulse">
+              <div className="aspect-[16/10] bg-gray-200" />
+              <div className="p-3 space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-3/4" />
+                <div className="h-3 bg-gray-200 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  // Hide section if no articles available
   if (!articles || articles.length === 0) return null;
 
   return (
@@ -1049,6 +1070,16 @@ export function HomePage() {
   const latestArticles = useMemo(() => articles.slice(0, 12), [articles]);
   const videoArticles = useMemo(() => articles.filter(a => a.media_type === 'video').slice(0, 4), [articles]);
 
+  // Collect IDs of articles shown in recent sections to exclude from Older Posts
+  const recentArticleIds = useMemo(() => {
+    const ids = new Set<string>();
+    [...heroArticles, ...featuredArticles, ...breakingArticles, ...latestArticles, ...videoArticles].forEach(a => ids.add(a.id));
+    return ids;
+  }, [heroArticles, featuredArticles, breakingArticles, latestArticles, videoArticles]);
+
+  // Fetch older posts directly from Supabase (not dependent on homepage articles array)
+  const { olderPosts, loading: olderPostsLoading } = useOlderPosts(8, recentArticleIds);
+
   // Dynamic category sections - filter by show_on_homepage=true
   const _homepageCategories = useMemo(() => {
     return categories.filter(c => c.show_on_homepage && c.status === 'published').sort((a, b) => a.sort_order - b.sort_order);
@@ -1066,50 +1097,6 @@ export function HomePage() {
   const nationalNews = useMemo(() => getCategoryArticles('national'), [getCategoryArticles]);
   const opinionArticles = useMemo(() => articles.slice(10, 13), [articles]);
   const galleryArticles = useMemo(() => articles.filter(a => a.featured_image || a.video_url).slice(0, 8), [articles]);
-
-  // Older Posts: Show posts older than 3 days, excluding recent sections
-  const olderArticles = useMemo(() => {
-    const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000); // 3 days in milliseconds
-    const usedIds = new Set<string>();
-    
-    // Collect IDs from recent sections to exclude
-    heroArticles.forEach(a => usedIds.add(a.id));
-    featuredArticles.forEach(a => usedIds.add(a.id));
-    breakingArticles.forEach(a => usedIds.add(a.id));
-    latestArticles.forEach(a => usedIds.add(a.id));
-    videoArticles.forEach(a => usedIds.add(a.id));
-    
-    // Filter for older posts (published more than 3 days ago)
-    const olderPosts = articles.filter(a => {
-      if (usedIds.has(a.id)) return false; // Exclude already shown
-      
-      const publishDate = new Date(a.publish_at || a.created_at || 0).getTime();
-      return publishDate < threeDaysAgo; // Only posts older than 3 days
-    });
-    
-    // If we don't have enough posts older than 3 days, fill with next oldest posts
-    if (olderPosts.length < 8) {
-      const remaining = articles
-        .filter(a => !usedIds.has(a.id))
-        .filter(a => !olderPosts.some(op => op.id === a.id))
-        .sort((a, b) => {
-          const dateA = new Date(a.publish_at || a.created_at || 0).getTime();
-          const dateB = new Date(b.publish_at || b.created_at || 0).getTime();
-          return dateB - dateA; // Newest to oldest
-        });
-      
-      return [...olderPosts, ...remaining].slice(0, 8);
-    }
-    
-    // Sort older posts from newest-old to oldest
-    return olderPosts
-      .sort((a, b) => {
-        const dateA = new Date(a.publish_at || a.created_at || 0).getTime();
-        const dateB = new Date(b.publish_at || b.created_at || 0).getTime();
-        return dateB - dateA; // Descending: newest-old to oldest
-      })
-      .slice(0, 8);
-  }, [articles, heroArticles, featuredArticles, breakingArticles, latestArticles, videoArticles]);
 
   const tickerItems = useMemo(() => breakingNews.slice(0, 8).map(b => ({
     headline: b.headline,
@@ -1253,7 +1240,7 @@ export function HomePage() {
             <PhotoGallery articles={galleryArticles} tenantSlug={tenantSlug} />
 
             {/* Older Posts */}
-            <OlderPostsSection articles={olderArticles} tenantSlug={tenantSlug} />
+            <OlderPostsSection articles={olderPosts} tenantSlug={tenantSlug} loading={olderPostsLoading} />
 
             {/* Reporter Showcase */}
             <ReporterShowcase />

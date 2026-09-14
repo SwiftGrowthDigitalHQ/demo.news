@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Clock, Eye, User } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -10,6 +10,7 @@ import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { getArticleThumbnail } from '../lib/articleImage';
 import { SmartAd } from '../components/SmartAd';
 import { useAppNavigation } from '../lib/navigation';
+import { useOlderPosts } from '../lib/useOlderPosts';
 
 /** Get the best thumbnail for an article */
 function thumb(a: PublicArticle): string {
@@ -35,7 +36,7 @@ function formatViews(count: number): string {
 
 export function OlderPostsPage() {
   const { search } = useAppNavigation();
-  const { articles, tenantSlug } = useCms();
+  const { tenantSlug } = useCms();
   const page = Math.max(1, Number(new URLSearchParams(search).get('page') ?? '1') || 1);
   const pageSize = 12;
 
@@ -47,36 +48,8 @@ export function OlderPostsPage() {
     }).catch(() => {});
   }, []);
 
-  // Calculate older posts: posts older than 3 days, sorted newest-old to oldest
-  const olderArticles = useMemo(() => {
-    const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000); // 3 days in milliseconds
-    
-    // Filter for older posts (published more than 3 days ago)
-    const olderPosts = articles.filter(a => {
-      const publishDate = new Date(a.publish_at || a.created_at || 0).getTime();
-      return publishDate < threeDaysAgo; // Only posts older than 3 days
-    });
-    
-    // If we don't have enough posts older than 3 days, fill with next oldest posts
-    if (olderPosts.length < pageSize) {
-      const remaining = articles
-        .filter(a => !olderPosts.some(op => op.id === a.id))
-        .sort((a, b) => {
-          const dateA = new Date(a.publish_at || a.created_at || 0).getTime();
-          const dateB = new Date(b.publish_at || b.created_at || 0).getTime();
-          return dateB - dateA; // Newest to oldest
-        });
-      
-      return [...olderPosts, ...remaining];
-    }
-    
-    // Sort older posts from newest-old to oldest
-    return olderPosts.sort((a, b) => {
-      const dateA = new Date(a.publish_at || a.created_at || 0).getTime();
-      const dateB = new Date(b.publish_at || b.created_at || 0).getTime();
-      return dateB - dateA; // Descending: newest-old to oldest
-    });
-  }, [articles, pageSize]);
+  // Fetch older posts directly from Supabase with larger limit for pagination
+  const { olderPosts: olderArticles, loading } = useOlderPosts(100); // Fetch up to 100 posts for pagination
 
   const totalPages = Math.max(1, Math.ceil(olderArticles.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -103,10 +76,12 @@ export function OlderPostsPage() {
           <p className="text-gray-600 mt-2">
             Browse through our archive of older news articles and stories
           </p>
-          <div className="flex items-center gap-3 mt-3 text-sm text-gray-500">
-            <span>{olderArticles.length} articles found</span>
-            {page > 1 && <span>• Page {currentPage} of {totalPages}</span>}
-          </div>
+          {!loading && (
+            <div className="flex items-center gap-3 mt-3 text-sm text-gray-500">
+              <span>{olderArticles.length} articles found</span>
+              {page > 1 && <span>• Page {currentPage} of {totalPages}</span>}
+            </div>
+          )}
         </section>
 
         {/* Content Grid */}
@@ -116,7 +91,21 @@ export function OlderPostsPage() {
             {/* Ad Banner */}
             <SmartAd placement="older_posts_top" />
 
-            {pagedResults.length === 0 ? (
+            {loading ? (
+              /* Loading skeleton */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-lg border border-gray-100 overflow-hidden animate-pulse">
+                    <div className="aspect-[16/10] bg-gray-200" />
+                    <div className="p-4 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4" />
+                      <div className="h-3 bg-gray-200 rounded w-1/2" />
+                      <div className="h-3 bg-gray-200 rounded w-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : pagedResults.length === 0 ? (
               <section className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
                 <h2 className="text-2xl font-semibold text-gray-900">No older posts available</h2>
                 <p className="text-gray-600 mt-2">Check back later for archived content.</p>
