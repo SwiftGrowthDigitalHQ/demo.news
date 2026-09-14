@@ -653,42 +653,51 @@ function PhotoGallery({ articles, tenantSlug }: { articles: PublicArticle[]; ten
   );
 }
 
-/* ─── OLDER CONTENT ─── */
-function OlderContent({ articles, tenantSlug }: { articles: PublicArticle[]; tenantSlug: string }) {
+/* ─── OLDER POSTS ─── */
+function OlderPostsSection({ articles, tenantSlug }: { articles: PublicArticle[]; tenantSlug: string }) {
   // Only render if we have articles to display
   if (!articles || articles.length === 0) return null;
 
   return (
     <section>
-      <SectionHeader title="Older Content" href="/search?q=archive" />
+      <SectionHeader title="Older Posts" href="/older-posts" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {articles.slice(0, 8).map(a => (
           <AppLink key={a.id} to={getArticleUrl(a.slug, tenantSlug)} className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md hover:border-red-200 transition-all group">
             {/* Image */}
-            <div className="relative w-full overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+            <div className="relative aspect-[16/10] overflow-hidden">
               <ImageWithFallback
                 src={thumb(a)}
                 alt={a.title}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
+              {a.category_name && (
+                <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded shadow">
+                  {a.category_name}
+                </span>
+              )}
             </div>
             {/* Content */}
             <div className="p-3">
-              {a.category && (
-                <div className="text-[10px] font-bold text-red-600 uppercase tracking-wide mb-1">
-                  {a.category}
-                </div>
-              )}
-              <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors mb-2">
+              <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors mb-2 leading-snug">
                 {a.title}
               </h3>
-              <div className="flex items-center justify-between text-[10px] text-gray-500">
-                <span>{getRelativeTime(a.published_at)}</span>
-                <span className="flex items-center gap-1">
-                  <Eye className="h-3 w-3" />
-                  {formatViews(a.views_count ?? 0)}
+              <div className="flex items-center justify-between text-[10px] text-gray-400">
+                <span className="flex items-center gap-0.5">
+                  <Clock className="h-2.5 w-2.5" />
+                  {getRelativeTime(a.publish_at)}
+                </span>
+                <span className="flex items-center gap-0.5">
+                  <Eye className="h-2.5 w-2.5" />
+                  {formatViews(a.views_count)}
                 </span>
               </div>
+              {a.author_name && (
+                <div className="flex items-center gap-0.5 text-[10px] text-gray-400 mt-1">
+                  <User className="h-2.5 w-2.5" />
+                  {a.author_name}
+                </div>
+              )}
             </div>
           </AppLink>
         ))}
@@ -1058,29 +1067,49 @@ export function HomePage() {
   const opinionArticles = useMemo(() => articles.slice(10, 13), [articles]);
   const galleryArticles = useMemo(() => articles.filter(a => a.featured_image || a.video_url).slice(0, 8), [articles]);
 
-  // Older Content: Exclude articles already displayed in main sections
+  // Older Posts: Show posts older than 3 days, excluding recent sections
   const olderArticles = useMemo(() => {
+    const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000); // 3 days in milliseconds
     const usedIds = new Set<string>();
     
-    // Collect IDs from all sections
+    // Collect IDs from recent sections to exclude
     heroArticles.forEach(a => usedIds.add(a.id));
     featuredArticles.forEach(a => usedIds.add(a.id));
     breakingArticles.forEach(a => usedIds.add(a.id));
     latestArticles.forEach(a => usedIds.add(a.id));
     videoArticles.forEach(a => usedIds.add(a.id));
-    galleryArticles.forEach(a => usedIds.add(a.id));
-    opinionArticles.forEach(a => usedIds.add(a.id));
     
-    // Filter articles not already shown, sort by published_at descending
-    return articles
-      .filter(a => !usedIds.has(a.id))
+    // Filter for older posts (published more than 3 days ago)
+    const olderPosts = articles.filter(a => {
+      if (usedIds.has(a.id)) return false; // Exclude already shown
+      
+      const publishDate = new Date(a.publish_at || a.created_at || 0).getTime();
+      return publishDate < threeDaysAgo; // Only posts older than 3 days
+    });
+    
+    // If we don't have enough posts older than 3 days, fill with next oldest posts
+    if (olderPosts.length < 8) {
+      const remaining = articles
+        .filter(a => !usedIds.has(a.id))
+        .filter(a => !olderPosts.some(op => op.id === a.id))
+        .sort((a, b) => {
+          const dateA = new Date(a.publish_at || a.created_at || 0).getTime();
+          const dateB = new Date(b.publish_at || b.created_at || 0).getTime();
+          return dateB - dateA; // Newest to oldest
+        });
+      
+      return [...olderPosts, ...remaining].slice(0, 8);
+    }
+    
+    // Sort older posts from newest-old to oldest
+    return olderPosts
       .sort((a, b) => {
-        const dateA = new Date(a.published_at || a.created_at || 0).getTime();
-        const dateB = new Date(b.published_at || b.created_at || 0).getTime();
-        return dateB - dateA;
+        const dateA = new Date(a.publish_at || a.created_at || 0).getTime();
+        const dateB = new Date(b.publish_at || b.created_at || 0).getTime();
+        return dateB - dateA; // Descending: newest-old to oldest
       })
       .slice(0, 8);
-  }, [articles, heroArticles, featuredArticles, breakingArticles, latestArticles, videoArticles, galleryArticles, opinionArticles]);
+  }, [articles, heroArticles, featuredArticles, breakingArticles, latestArticles, videoArticles]);
 
   const tickerItems = useMemo(() => breakingNews.slice(0, 8).map(b => ({
     headline: b.headline,
@@ -1221,10 +1250,10 @@ export function HomePage() {
             <CategorySection title="Education (शिक्षा)" articles={educationNews} href="/category/शिक्षा" />
 
             {/* Photo Gallery */}
-            <PhotoGallery articles={galleryArticles} />
+            <PhotoGallery articles={galleryArticles} tenantSlug={tenantSlug} />
 
-            {/* Older Content */}
-            <OlderContent articles={olderArticles} tenantSlug={tenantSlug} />
+            {/* Older Posts */}
+            <OlderPostsSection articles={olderArticles} tenantSlug={tenantSlug} />
 
             {/* Reporter Showcase */}
             <ReporterShowcase />

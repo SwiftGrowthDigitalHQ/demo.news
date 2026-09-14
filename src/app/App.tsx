@@ -38,6 +38,7 @@ const HomePage = lazy(() => import('./pages/HomePage').then(module => ({ default
 const ArticlePage = lazy(() => import('./pages/ArticlePage').then(module => ({ default: module.ArticlePage })));
 const CategoryPage = lazy(() => import('./pages/CategoryPage').then(module => ({ default: module.CategoryPage })));
 const SearchPage = lazy(() => import('./pages/SearchPage').then(module => ({ default: module.SearchPage })));
+const OlderPostsPage = lazy(() => import('./pages/OlderPostsPage').then(module => ({ default: module.OlderPostsPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then(module => ({ default: module.AdminPage })));
 const AuthPage = lazy(() => import('./pages/AuthPage').then(module => ({ default: module.AuthPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(module => ({ default: module.ProfilePage })));
@@ -174,11 +175,12 @@ async function resolveRoute(pathname: string): Promise<{
   }
 
   // ── Direct content routes without tenant prefix ──────────────────────────
-  // Handle /article/*, /category/*, /search without tenant slug
+  // Handle /article/*, /category/*, /search, /older-posts without tenant slug
   // This allows direct URLs like /article/sugarnews to work
   if (pathname.startsWith('/article/') || 
       pathname.startsWith('/category/') || 
-      pathname.startsWith('/search')) {
+      pathname.startsWith('/search') ||
+      pathname.startsWith('/older-posts')) {
     // Try to find a default/primary tenant to serve content
     const defaultTenant = await getDefaultTenant();
     if (defaultTenant) {
@@ -239,6 +241,9 @@ function TenantRouter({ tenantPath }: { tenantPath: string }) {
   }
   if (tenantPath.startsWith('/search')) {
     return <SearchPage />;
+  }
+  if (tenantPath.startsWith('/older-posts')) {
+    return <OlderPostsPage />;
   }
 
   // Tenant home
