@@ -597,8 +597,8 @@ export async function upsertAdminArticle(payload: Partial<AdminArticle> & {
   };
 
   const articleResult = id
-    ? await supabase.from('articles').update(articlePayload).eq('id', id).select('*').single()
-    : await supabase.from('articles').insert(articlePayload).select('*').single();
+    ? await supabase.from('articles').update(articlePayload).eq('id', id).select('id, title, slug').single()
+    : await supabase.from('articles').insert(articlePayload).select('id, title, slug').single();
 
   if (articleResult.error) throw articleResult.error;
 
