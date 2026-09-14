@@ -336,6 +336,11 @@ export function NewsManagement() {
       return;
     }
 
+    if (!editor.excerpt.trim()) {
+      toast.error('Excerpt is required.');
+      return;
+    }
+
     const contentParts = editor.content
       .split('\n')
       .map(part => part.trim())
